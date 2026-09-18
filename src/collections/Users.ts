@@ -5,7 +5,7 @@ import { tagsOfKind } from '../libs/tags'
 import { isSampleField } from '@/libs/sample-data'
 // import { isAdmin, isAdminOrSuperadmin, isFieldAdmin, isSelfOrAdmin, isStaff } from '../libs/access' // Replaced by granular permissions
 import { User } from '@/payload-types'
-import { hasPermission, isPrivilegedGroup, isSuperadmin } from '../libs/permissions'
+import { hasPermission, isPrivilegedGroup, isPrivilegedUser, isSuperadmin } from '../libs/permissions'
 import { syncUserGroups } from '../hooks/sync-user-groups'
 import { getMissingProfileFields, isProfileComplete } from '../libs/profile-completion'
 import { getSiteSettings } from '../libs/site-settings'
@@ -75,6 +75,10 @@ export const Users: CollectionConfig = {
     },
   },
   access: {
+    // Without this, Payload's default lets any logged-in user (visitor,
+    // member, ...) open the /admin panel UI itself, gated only afterward by
+    // per-collection read access.
+    admin: ({ req: { user } }) => isPrivilegedUser(user as User),
     read: ({ req: { user } }) => {
         if (!user) return false
         if (hasPermission(user as User, 'view_users') || hasPermission(user as User, 'manage_users')) return true
