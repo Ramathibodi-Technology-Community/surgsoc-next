@@ -11,9 +11,9 @@ const cspDirectives = [
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
   "style-src 'self' 'unsafe-inline'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
-  `connect-src 'self'${isDev ? ' ws: wss:' : ''}`,
-  "frame-src 'self' https://accounts.google.com",
+  `script-src 'self' 'unsafe-inline' https://vercel.live${isDev ? " 'unsafe-eval'" : ''}`,
+  `connect-src 'self' https://vercel.live wss://ws-us3.pusher.com${isDev ? ' ws: wss:' : ''}`,
+  "frame-src 'self' https://accounts.google.com https://vercel.live",
 ]
 
 if (!isDev) {
