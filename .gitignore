@@ -50,3 +50,8 @@ TODO.md
 
 # pnpm local store
 .pnpm-store
+.env*
+
+# Agent skill scaffolding (local tooling, not app code)
+.agents
+skills-lock.json
