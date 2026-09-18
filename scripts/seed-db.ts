@@ -14,23 +14,17 @@ import { seedDevData } from './seed-dev.js'
 import { seedTags, upsertTag, tagIdsBySlug } from './seed-tags.js'
 import type { Payload } from 'payload'
 
-export async function seedDatabase(payloadInstance?: Payload) {
-  // Fail before any writes, not mid-seed with half the data already inserted.
-  const adminEmail = seedAdminEmail()
-
-  console.log('🌱 Seeding database...\n')
-  console.log('────────────────────────────────────────')
-
-  const payload = payloadInstance || await getPayloadInstance()
-
-  // Tags first — groups link to them, and users, events and attendings all
-  // hold them. Nothing below can resolve until the vocabulary exists.
-  await seedTags(payload)
-
-  // Slug → id, so every row below reads as a slug instead of a magic number.
+/**
+ * Seeds the fixed set of system/role/department groups, linking each to the
+ * tag of the same slug (see the loop below for why). Idempotent — upserts on
+ * slug, same as seedTags. Requires the department tags to already exist.
+ *
+ * Usage: pnpm run db:seed:groups
+ */
+export async function seedGroups(payloadInstance?: Payload) {
+  const payload = payloadInstance || (await getPayloadInstance())
   const tag = await tagIdsBySlug(payload)
 
-  // ── Groups ───────────────────────────────────────
   console.log('\n📁 Seeding Groups...')
   const groups = [
     { name: 'Admin', slug: 'admin', type: 'system' as const, permissions: { manage_users: true, manage_content: true, manage_events: true, manage_forms: true } },
@@ -86,6 +80,25 @@ export async function seedDatabase(payloadInstance?: Payload) {
       console.log(`   ✅ ${group.name}`)
     }
   }
+}
+
+export async function seedDatabase(payloadInstance?: Payload) {
+  // Fail before any writes, not mid-seed with half the data already inserted.
+  const adminEmail = seedAdminEmail()
+
+  console.log('🌱 Seeding database...\n')
+  console.log('────────────────────────────────────────')
+
+  const payload = payloadInstance || await getPayloadInstance()
+
+  // Tags first — groups link to them, and users, events and attendings all
+  // hold them. Nothing below can resolve until the vocabulary exists.
+  await seedTags(payload)
+
+  // Slug → id, so every row below reads as a slug instead of a magic number.
+  const tag = await tagIdsBySlug(payload)
+
+  await seedGroups(payload)
 
   // ── Users ────────────────────────────────────────
   console.log('\n👤 Seeding Users...')

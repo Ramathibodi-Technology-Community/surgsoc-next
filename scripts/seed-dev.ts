@@ -729,22 +729,46 @@ export async function seedDevData(payloadInstance?: Payload) {
     { event: orDay, user: users['member7@test.com'], status: 'accepted', selected_by: staff, selected_at: at(-3) },
   ]
 
+  // `submission` on a registration is a relationship to a real form-submissions
+  // doc, not an inline blob — only the workshop actually collects an
+  // application form, so that's the only event these fixtures attach one to.
+  const applicationAnswers = {
+    student_id: '650XXXX',
+    shirt_size: 'm',
+    prior_experience: 'no',
+    motivation: 'Seeded application answer — shown in the applicants detail view.',
+    agree_terms: true,
+  }
+
   for (const reg of registrations) {
     if (!reg.event || !reg.user) continue
+    const submission =
+      reg.event === workshop && formIds['Workshop Application Form']
+        ? await upsert(
+            payload,
+            'form-submissions',
+            {
+              and: [
+                { form: { equals: formIds['Workshop Application Form'] } },
+                { user: { equals: reg.user } },
+              ],
+            },
+            {
+              form: formIds['Workshop Application Form'],
+              user: reg.user,
+              submissionData: Object.entries(applicationAnswers).map(([field, value]) => ({
+                field,
+                value: String(value),
+              })),
+            },
+            `application answer / user ${reg.user}`,
+          )
+        : undefined
     await upsert(
       payload,
       'registrations',
       { and: [{ event: { equals: reg.event } }, { user: { equals: reg.user } }] },
-      {
-        ...reg,
-        submission: {
-          student_id: '650XXXX',
-          shirt_size: 'm',
-          prior_experience: 'no',
-          motivation: 'Seeded application answer — shown in the applicants detail view.',
-          agree_terms: true,
-        },
-      },
+      { ...reg, submission },
       `event ${reg.event} / user ${reg.user} → ${reg.status}`,
     )
   }

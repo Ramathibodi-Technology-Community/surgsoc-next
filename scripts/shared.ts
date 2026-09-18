@@ -13,10 +13,20 @@ const _dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // Node 22 ships .env parsing; `engines` already pins 22.x. Unlike dotenv it
 // throws on a missing file — swallow that, since CI supplies env via the shell.
-try {
-  process.loadEnvFile(path.resolve(_dirname, '../.env'))
-} catch {
-  // no .env on disk; rely on the ambient environment
+// `loadEnvFile` never overwrites a var already in process.env, so loading
+// highest-precedence first and falling back down mirrors Next.js's own
+// .env.$(NODE_ENV).local > .env.local > .env.$(NODE_ENV) > .env order. This
+// matters locally: compose.override.yml remaps the Postgres container to a
+// different host port in .env.development.local (working around a stray
+// system Postgres on the default port), and without this order these scripts
+// silently fell back to .env's port instead.
+const NODE_ENV = process.env.NODE_ENV || 'development'
+for (const file of [`.env.${NODE_ENV}.local`, '.env.local', `.env.${NODE_ENV}`, '.env']) {
+  try {
+    process.loadEnvFile(path.resolve(_dirname, '../', file))
+  } catch {
+    // file not on disk; rely on the ambient environment / next file in the chain
+  }
 }
 
 let _seedPassword: string | undefined
