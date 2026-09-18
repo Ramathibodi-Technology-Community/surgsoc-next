@@ -1,7 +1,9 @@
 import React from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import type { Event } from '@/libs/event'
-import { deriveEventCta, eventStatus, eventWhen, campusShort } from '@/libs/event'
+import { deriveEventCta, eventStatus, eventWhen, campusShort, isOptimizedPosterUrl } from '@/libs/event'
+import type { EventCardImageDisplay } from '@/libs/site-settings'
 import { Button } from '@/components/ui/button'
 import StatusMark from './StatusMark'
 import { cn } from '@/libs/utils'
@@ -21,8 +23,9 @@ import { cn } from '@/libs/utils'
 export default function EventCard({
   event,
   className,
+  imageDisplay = 'shrink-img-to-fit',
   ...props
-}: { event: Event } & React.HTMLAttributes<HTMLElement>) {
+}: { event: Event; imageDisplay?: EventCardImageDisplay } & React.HTMLAttributes<HTMLElement>) {
   const cta = deriveEventCta(event)
   const when = eventWhen(event)
   const campus = campusShort(event.campus)
@@ -56,12 +59,35 @@ export default function EventCard({
     return raw
   }
 
+  const expand = imageDisplay === 'expand-card'
+  const fit = imageDisplay === 'crop-to-fit' ? 'object-cover' : 'object-contain'
+
   return (
     <article className={cn('event-card', className)} {...props}>
-      <div className="placeholder-hatch event-poster">
-        {event.posterUri ? (
+      <div className={cn('placeholder-hatch event-poster', expand && 'event-poster--expand')}>
+        {event.posterUri && isOptimizedPosterUrl(event.posterUri) ? (
+          expand ? (
+            <Image
+              className="h-auto w-full"
+              style={{ width: '100%', height: 'auto' }}
+              alt=""
+              src={event.posterUri}
+              width={1600}
+              height={1200}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+          ) : (
+            <Image
+              className={fit}
+              alt=""
+              src={event.posterUri}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+          )
+        ) : event.posterUri ? (
           <img
-            className="absolute inset-0 h-full w-full object-cover"
+            className={expand ? 'w-full' : cn('absolute inset-0 h-full w-full', fit)}
             alt=""
             src={event.posterUri}
           />

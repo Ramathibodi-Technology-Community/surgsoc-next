@@ -1772,6 +1772,14 @@ export interface SiteSetting {
    * Opens the public self-service password-reset path and sends an email through our (quota-limited) Resend account for every request. Normally leave this off; switch it on only while someone needs to recover an account, then switch it back off.
    */
   enablePasswordReset?: boolean | null;
+  /**
+   * Posters vary in shape — a portrait Drive upload next to a wide banner. "Shrink image to fit" keeps every card the same size and letterboxes the image inside it. "Crop image to fill card" keeps that same card size but crops the poster to fill it with no letterboxing. "Expand card to fit image" drops the fixed shape and lets each card grow to the poster’s own proportions, so the grid loses its even rows.
+   */
+  eventCardImageDisplay?: ('expand-card' | 'shrink-img-to-fit' | 'crop-to-fit') | null;
+  /**
+   * How the poster on an event’s own page sizes. "Shrink image to fit" keeps the banner’s fixed shape and letterboxes the image inside it. "Crop image to fill" keeps that same shape but crops the poster to fill it with no letterboxing. "Full size" shows the poster at its own proportions instead.
+   */
+  eventDetailImageDisplay?: ('full-size' | 'shrink-img-to-fit' | 'crop-to-fit') | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -1848,6 +1856,8 @@ export interface SiteSettingsSelect<T extends boolean = true> {
   enableI18n?: T;
   showSampleData?: T;
   enablePasswordReset?: T;
+  eventCardImageDisplay?: T;
+  eventDetailImageDisplay?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

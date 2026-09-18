@@ -29,6 +29,20 @@ function text(value: unknown): string | null {
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null
 }
 
+export type EventCardImageDisplay = 'expand-card' | 'shrink-img-to-fit' | 'crop-to-fit'
+export type EventDetailImageDisplay = 'full-size' | 'shrink-img-to-fit' | 'crop-to-fit'
+
+const EVENT_CARD_IMAGE_DISPLAYS: EventCardImageDisplay[] = [
+  'expand-card',
+  'shrink-img-to-fit',
+  'crop-to-fit',
+]
+const EVENT_DETAIL_IMAGE_DISPLAYS: EventDetailImageDisplay[] = [
+  'full-size',
+  'shrink-img-to-fit',
+  'crop-to-fit',
+]
+
 /**
  * Cached because this is on the critical path of EVERY route — layout
  * metadata, Header, Footer — so an uncached read here is what keeps the whole
@@ -68,5 +82,15 @@ export async function getSiteSettings() {
     // Same fail-safe: a failed/missing read must never open the password-reset
     // endpoints, so this defaults to false rather than true.
     enablePasswordReset: global.enablePasswordReset === true,
+    eventCardImageDisplay: EVENT_CARD_IMAGE_DISPLAYS.includes(
+      global.eventCardImageDisplay as EventCardImageDisplay,
+    )
+      ? (global.eventCardImageDisplay as EventCardImageDisplay)
+      : 'shrink-img-to-fit',
+    eventDetailImageDisplay: EVENT_DETAIL_IMAGE_DISPLAYS.includes(
+      global.eventDetailImageDisplay as EventDetailImageDisplay,
+    )
+      ? (global.eventDetailImageDisplay as EventDetailImageDisplay)
+      : 'shrink-img-to-fit',
   }
 }

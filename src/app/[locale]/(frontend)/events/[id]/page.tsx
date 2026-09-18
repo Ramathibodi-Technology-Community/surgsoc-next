@@ -3,8 +3,10 @@ import type { Metadata } from 'next'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import Link from 'next/link'
+import Image from 'next/image'
 import { notFound } from 'next/navigation'
-import { mapPayloadEvent, getUserEventStatuses } from '@/libs/event'
+import { mapPayloadEvent, getUserEventStatuses, isOptimizedPosterUrl } from '@/libs/event'
+import { getSiteSettings } from '@/libs/site-settings'
 import { hasPermission } from '@/libs/permissions'
 import type { User as PayloadUser } from '@/payload-types'
 import { deriveEventCta, eventStatus, eventWhen } from '@/libs/event'
@@ -15,6 +17,7 @@ import { Locale } from '@/i18n/config'
 import { Button } from '@/components/ui/button'
 import { headers } from 'next/headers'
 import { checkUserActionGate } from '@/libs/user-action-gate'
+import { cn } from '@/libs/utils'
 import EventActions from './EventActions'
 import { RichText } from '@payloadcms/richtext-lexical/react'
 
@@ -63,6 +66,9 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
   const statuses = await getUserEventStatuses(payload, user?.id, [eventDoc.id])
   const event = mapPayloadEvent(eventDoc, statuses[String(eventDoc.id)])
   const cta = deriveEventCta(event)
+  const { eventDetailImageDisplay } = await getSiteSettings()
+  const fullSizeImage = eventDetailImageDisplay === 'full-size'
+  const fit = eventDetailImageDisplay === 'crop-to-fit' ? 'object-cover' : 'object-contain'
 
   // Unified gate: auth → profile → form blocking → scheduling
   const gate = await checkUserActionGate(payload, user, {
@@ -264,12 +270,39 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
         {event.department && <span>{event.department}</span>}
       </div>
 
-      <div className="placeholder-hatch relative mb-9 aspect-[21/8] overflow-hidden rounded-[10px] border border-border">
-        <img
-          className="absolute inset-0 h-full w-full object-cover"
-          alt={event.name}
-          src={event.posterUri}
-        />
+      <div
+        className={cn(
+          'placeholder-hatch relative mb-9 rounded-[10px] border border-border',
+          fullSizeImage ? 'overflow-hidden' : 'aspect-[21/8] overflow-hidden',
+        )}
+      >
+        {isOptimizedPosterUrl(event.posterUri) ? (
+          fullSizeImage ? (
+            <Image
+              className="h-auto w-full"
+              style={{ width: '100%', height: 'auto' }}
+              alt={event.name}
+              src={event.posterUri}
+              width={1600}
+              height={900}
+              sizes="(max-width: 1280px) 100vw, 1200px"
+            />
+          ) : (
+            <Image
+              className={fit}
+              alt={event.name}
+              src={event.posterUri}
+              fill
+              sizes="(max-width: 1280px) 100vw, 1200px"
+            />
+          )
+        ) : (
+          <img
+            className={fullSizeImage ? 'w-full' : cn('absolute inset-0 h-full w-full', fit)}
+            alt={event.name}
+            src={event.posterUri}
+          />
+        )}
       </div>
 
       {/*

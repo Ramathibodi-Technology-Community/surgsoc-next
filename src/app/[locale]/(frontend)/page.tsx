@@ -40,7 +40,8 @@ export default async function Page({
     Counting them is the worse failure: a wrong list is obvious, a membership
     figure inflated by four test accounts reads as a real claim.
   */
-  const notSample = sampleWhere((await getSiteSettings()).showSampleData)
+  const siteSettings = await getSiteSettings()
+  const notSample = sampleWhere(siteSettings.showSampleData)
 
   const [upcoming, past, memberCount, sessionCount, advisorCount] = await Promise.all([
     payload.find({
@@ -231,7 +232,7 @@ export default async function Page({
       {upcomingEvents.length > 0 ? (
         <div className="card-grid mb-[52px]">
           {upcomingEvents.map((event) => (
-            <EventCard key={event.id} event={event} />
+            <EventCard key={event.id} event={event} imageDisplay={siteSettings.eventCardImageDisplay} />
           ))}
         </div>
       ) : (

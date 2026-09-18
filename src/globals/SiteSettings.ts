@@ -94,5 +94,35 @@ export const SiteSettings: GlobalConfig = {
           'Opens the public self-service password-reset path and sends an email through our (quota-limited) Resend account for every request. Normally leave this off; switch it on only while someone needs to recover an account, then switch it back off.',
       },
     },
+    {
+      name: 'eventCardImageDisplay',
+      type: 'select',
+      label: 'Event Card Image Display',
+      defaultValue: 'shrink-img-to-fit',
+      options: [
+        { label: 'Expand card to fit image', value: 'expand-card' },
+        { label: 'Shrink image to fit card', value: 'shrink-img-to-fit' },
+        { label: 'Crop image to fill card', value: 'crop-to-fit' },
+      ],
+      admin: {
+        description:
+          'Posters vary in shape — a portrait Drive upload next to a wide banner. "Shrink image to fit" keeps every card the same size and letterboxes the image inside it. "Crop image to fill card" keeps that same card size but crops the poster to fill it with no letterboxing. "Expand card to fit image" drops the fixed shape and lets each card grow to the poster’s own proportions, so the grid loses its even rows.',
+      },
+    },
+    {
+      name: 'eventDetailImageDisplay',
+      type: 'select',
+      label: 'Event Detail Image Display',
+      defaultValue: 'shrink-img-to-fit',
+      options: [
+        { label: 'Full size', value: 'full-size' },
+        { label: 'Shrink image to fit', value: 'shrink-img-to-fit' },
+        { label: 'Crop image to fill', value: 'crop-to-fit' },
+      ],
+      admin: {
+        description:
+          'How the poster on an event’s own page sizes. "Shrink image to fit" keeps the banner’s fixed shape and letterboxes the image inside it. "Crop image to fill" keeps that same shape but crops the poster to fill it with no letterboxing. "Full size" shows the poster at its own proportions instead.',
+      },
+    },
   ],
 }

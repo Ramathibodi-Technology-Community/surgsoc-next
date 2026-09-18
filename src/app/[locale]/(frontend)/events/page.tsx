@@ -27,7 +27,8 @@ export default async function EventsPage({
   const payload = await getPayload({ config })
   const { user } = await payload.auth({ headers: await headers() })
   const now = new Date().toISOString()
-  const notSample = sampleWhere((await getSiteSettings()).showSampleData)
+  const siteSettings = await getSiteSettings()
+  const notSample = sampleWhere(siteSettings.showSampleData)
 
   const [upcoming, past] = await Promise.all([
     payload.find({
@@ -81,7 +82,7 @@ export default async function EventsPage({
       {upcomingEvents.length > 0 ? (
         <div className="card-grid mb-[52px]">
           {upcomingEvents.map((event) => (
-            <EventCard key={event.id} event={event} />
+            <EventCard key={event.id} event={event} imageDisplay={siteSettings.eventCardImageDisplay} />
           ))}
         </div>
       ) : (

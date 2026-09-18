@@ -756,6 +756,11 @@
     aspect-ratio: 21 / 10;
     position: relative;
   }
+  /* Site setting: "Expand card to fit image" — the card grows to the
+     poster's own proportions instead of a fixed ratio the image is fit into. */
+  .event-poster--expand {
+    aspect-ratio: auto;
+  }
   .event-badge {
     position: absolute;
     top: 0.625rem;
