@@ -33,6 +33,13 @@ export async function generateMetadata() {
   return { title: siteName, description: metaDescription }
 }
 
+// Nearly every page under this layout reads `headers()` for `payload.auth()` to
+// personalize CTAs and gate content per user — genuinely per-request, not
+// something `use cache`/Suspense should paper over. `instant = false` here (the
+// lowest ancestor common to all of them) tells cacheComponents that's expected,
+// instead of every leaf page repeating the same opt-out.
+export const instant = false
+
 export async function generateStaticParams() {
   return locales.map((locale) => ({ locale }))
 }

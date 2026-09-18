@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { headers } from 'next/headers'
+import { connection } from 'next/server'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -25,6 +26,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
   fragment waits on the session lookup.
 */
 export default async function HeaderAuth() {
+  // `headers()` already makes this fragment request-time, but Payload's own
+  // auth check calls `new Date()` internally — a literal, non-API time read
+  // that cacheComponents can't tell apart from a value meant to be baked into
+  // the static shell. `connection()` marks the boundary explicitly so build
+  // doesn't try to prerender past it.
+  await connection()
   const payload = await getPayload({ config })
   const headersList = await headers()
   const { user } = await payload.auth({ headers: headersList })

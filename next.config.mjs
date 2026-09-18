@@ -30,6 +30,17 @@ const nextConfig = {
   // a streaming boundary; this flag is what also makes it a prerender cut
   // point. `experimental.ppr` folded into this top-level flag in Next 16.
   cacheComponents: true,
+  experimental: {
+    // Nearly every page under (frontend) reads `headers()` for per-user auth
+    // (personalized CTAs, gated content) — genuinely dynamic, not something
+    // `use cache`/Suspense should paper over. The framework default validates
+    // every Page/Default segment and warns on exactly that; 'manual-warning'
+    // makes validation opt-in via `instant`, instead of a false-positive dev
+    // warning on nearly every route.
+    instantInsights: {
+      validationLevel: 'manual-warning',
+    },
+  },
   serverExternalPackages: ['@payloadcms/db-postgres'],
   images: {
     // Google account avatars (OAuth users have a lh3.googleusercontent.com photo).
