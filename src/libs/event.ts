@@ -226,6 +226,16 @@ export async function getUserEventStatuses(
   return statuses
 }
 
+export function posterUrl(imageUrl: unknown): string {
+  if (typeof imageUrl !== 'string' || !imageUrl.trim()) return '/assets/beta.jpg'
+
+  const url = imageUrl.trim()
+  const driveFile = url.match(/^https:\/\/(?:www\.)?drive\.google\.com\/file\/d\/([^/?#]+)/)
+  return driveFile
+    ? `https://drive.google.com/uc?export=view&id=${encodeURIComponent(driveFile[1])}`
+    : url
+}
+
 export const mapPayloadEvent = (doc: any, userStatus?: EventUserStatus): Event => {
   const toDisplayText = (value: unknown): string => {
     if (typeof value === 'string') return value
@@ -282,7 +292,7 @@ export const mapPayloadEvent = (doc: any, userStatus?: EventUserStatus): Event =
     venue,
     campus,
     details: toDisplayText(doc.description) || (typeof doc.info === 'string' ? doc.info : '') || '',
-    posterUri: doc.image_url || '/assets/beta.jpg',
+    posterUri: posterUrl(doc.image_url),
     action: 'register',
     registrationOpen: !doc.is_registration_closed,
     participantCount: 0,
