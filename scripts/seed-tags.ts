@@ -19,18 +19,18 @@
 import { getPayloadInstance } from './shared.js'
 
 const EVENT_TYPES = [
-  ['type-special-lecture', 'Special Lecture'],
-  ['type-conference', 'Conference'],
-  ['type-workshop-observe', 'Workshop (Observe)'],
-  ['type-workshop-assistant', 'Workshop (Assistant)'],
-  ['type-workshop-full', 'Workshop (Full)'],
-  ['type-exchange', 'Exchange'],
-  ['type-volunteer', 'Volunteer'],
-  // Events.ts called this "Social Event"; libs/fields/interests.ts called the
-  // same value "Event". They had already drifted. Events.ts wins — it is the
-  // label an organiser picked from when filing the event.
-  ['type-event', 'Social Event'],
-  ['type-inspirational', 'Inspirational'],
+    ['type-special-lecture', 'Special Lecture'],
+    ['type-conference', 'Conference'],
+    ['type-workshop-observe', 'Workshop (Observe)'],
+    ['type-workshop-assistant', 'Workshop (Assistant Hands-on)'],
+    ['type-workshop-full', 'Workshop (Full Hands-on)'],
+    ['type-exchange', 'Exchange'],
+    ['type-volunteer', 'Volunteer'],
+    // Events.ts called this "Social Event"; libs/fields/interests.ts called the
+    // same value "Event". They had already drifted. Events.ts wins — it is the
+    // label an organiser picked from when filing the event.
+    ['type-event', 'Social Event'],
+    ['type-inspirational', 'Inspirational'],
 ]
 
 // The divisions of Ramathibodi's Department of Surgery, in the department's
@@ -38,16 +38,17 @@ const EVENT_TYPES = [
 // Orthopedics, which at Ramathibodi is a separate department, and split
 // Trauma, Vascular and Transplant into rows the faculty does not use.
 const SPECIALTIES = [
-  ['spec-gi-general', 'Gastrointestinal and General Surgery', 'ศัลยศาสตร์ทางเดินอาหารและศัลยศาสตร์ทั่วไป'],
-  ['spec-hpb', 'Hepatobiliary and Pancreatic Surgery', 'ศัลยศาสตร์ตับ ตับอ่อน และทางเดินน้ำดี'],
-  ['spec-breast-endocrine', 'Breast and Endocrine Surgery', 'ศัลยศาสตร์เต้านมและต่อมไร้ท่อ'],
-  ['spec-vascular-transplant', 'Vascular Surgery and Transplantation', 'ศัลยศาสตร์หลอดเลือดและปลูกถ่ายอวัยวะ'],
-  ['spec-trauma-critical-care', 'Trauma, Emergency and Critical Care Surgery', 'ศัลยศาสตร์อุบัติเหตุ เวชบำบัดฉุกเฉินและเวชบำบัดวิกฤต'],
-  ['spec-plastic', 'Plastic and Maxillofacial Surgery', 'ศัลยศาสตร์ตกแต่งและแม็กซิโลเฟเชียล'],
-  ['spec-neurosurgery', 'Neurosurgery', 'ประสาทศัลยศาสตร์'],
-  ['spec-urology', 'Urology', 'ศัลยศาสตร์ระบบปัสสาวะ'],
-  ['spec-pediatric', 'Pediatric Surgery', 'กุมารศัลยศาสตร์'],
-  ['spec-cardiothoracic', 'Cardiothoracic Surgery', 'ศัลยศาสตร์ทรวงอก'],
+    ['spec-gen1', 'General and Colorectal Surgery 1', 'ศัลยศาสตร์ทั่วไปและทางเดินอาหาร หน่วยที่ 1'],
+    ['spec-gen2', 'General and Colorectal Surgery 2', 'ศัลยศาสตร์ทั่วไปและทางเดินอาหาร หน่วยที่ 2'],
+    ['spec-hpb', 'Hepato-Pancreato-Billiary Surgery', 'ศัลยศาสตร์ตับ ตับอ่อน และทางเดินน้ำดี'],
+    ['spec-breast', 'Breast and Endocrine Surgery', 'ศัลยศาสตร์เต้านมและต่อมไร้ท่อ'],
+    ['spec-vasc', 'Vascular Surgery and Transplantation', 'ศัลยศาสตร์หลอดเลือดและปลูกถ่ายอวัยวะ'],
+    ['spec-trauma', 'Trauma Surgery', 'ศัลยศาสตร์อุบัติเหตุ เวชบำบัดฉุกเฉินและเวชบำบัดวิกฤต'],
+    ['spec-plastic', 'Plastic and Maxillofacial Surgery', 'ศัลยศาสตร์ตกแต่งและแม็กซิโลเฟเชียล'],
+    ['spec-neuro', 'Neurosurgery', 'ประสาทศัลยศาสตร์'],
+    ['spec-uro', 'Urology', 'ศัลยศาสตร์ระบบปัสสาวะ'],
+    ['spec-ped', 'Pediatric Surgery', 'กุมารศัลยศาสตร์'],
+    ['spec-cvt', 'Cardiovascular and Thoracic Surgery', 'ศัลยศาสตร์ทรวงอก'],
 ]
 
 // Slugs match the existing `groups` slugs on purpose — that is what lets
@@ -56,29 +57,29 @@ const SPECIALTIES = [
 // The Thai labels came out of src/i18n/locales/th/team.json, where they were
 // the only translated copy of this list and could only be changed by a deploy.
 const DEPARTMENTS = [
-  ['dept-ia', 'Internal Affairs', 'ฝ่ายกิจการภายใน'],
-  ['dept-ea', 'External Affairs', 'ฝ่ายกิจการภายนอก'],
-  ['dept-od', 'Organizational Development', 'ฝ่ายพัฒนาองค์กร'],
-  ['dept-pr', 'Public Relations', 'ฝ่ายประชาสัมพันธ์'],
+    ['dept-ia', 'Internal Affairs', 'ฝ่ายกิจการภายใน'],
+    ['dept-ea', 'External Affairs', 'ฝ่ายกิจการภายนอก'],
+    ['dept-od', 'Organizational Development', 'ฝ่ายพัฒนาองค์กร'],
+    ['dept-pr', 'Public Relations', 'ฝ่ายประชาสัมพันธ์'],
 ]
 
 // Gap Year last: it is the interruption, not the year after Year 6.
 const YEARS = [
-  ['year-1', 'Year 1'],
-  ['year-2', 'Year 2'],
-  ['year-3', 'Year 3'],
-  ['year-4', 'Year 4'],
-  ['year-5', 'Year 5'],
-  ['year-6', 'Year 6'],
-  ['year-gap', 'Gap Year'],
+    ['year-1', 'Year 1'],
+    ['year-2', 'Year 2'],
+    ['year-3', 'Year 3'],
+    ['year-4', 'Year 4'],
+    ['year-5', 'Year 5'],
+    ['year-6', 'Year 6'],
+    ['year-gap', 'Gap Year'],
 ]
 
 const TRACKS = [
-  ['track-md', 'M.D.'],
-  ['track-md-meng', 'M.D.-M.Eng.'],
-  ['track-md-mm', 'M.D.-M.M.'],
-  ['track-md-msc', 'M.D.-M.Sc.'],
-  ['track-rak', 'RAK'],
+    ['track-md', 'M.D.'],
+    ['track-md-meng', 'M.D.-M.Eng.'],
+    ['track-md-mm', 'M.D.-M.M.'],
+    ['track-md-msc', 'M.D.-M.Sc.'],
+    ['track-rak', 'RAK'],
 ]
 
 /*
@@ -95,22 +96,23 @@ const TRACKS = [
   bilingual picker at the same time.
 */
 const ACADEMIC_TITLES = [
-  ['title-prof-m', 'Prof. Dr.', 'ศ.นพ.'],
-  ['title-prof-f', 'Prof. Dr.', 'ศ.พญ.'],
-  ['title-assoc-prof-m', 'Assoc. Prof. Dr.', 'รศ.นพ.'],
-  ['title-assoc-prof-f', 'Assoc. Prof. Dr.', 'รศ.พญ.'],
-  ['title-asst-prof-m', 'Asst. Prof. Dr.', 'ผศ.นพ.'],
-  ['title-asst-prof-f', 'Asst. Prof. Dr.', 'ผศ.พญ.'],
-  ['title-lecturer-m', 'Dr.', 'อ.นพ.'],
-  ['title-lecturer-f', 'Dr.', 'อ.พญ.'],
+    ['title-prof-m', 'Prof. Dr.', 'ศ.นพ.'],
+    ['title-prof-f', 'Prof. Dr.', 'ศ.พญ.'],
+    ['title-assoc-prof-m', 'Assoc. Prof. Dr.', 'รศ.นพ.'],
+    ['title-assoc-prof-f', 'Assoc. Prof. Dr.', 'รศ.พญ.'],
+    ['title-asst-prof-m', 'Asst. Prof. Dr.', 'ผศ.นพ.'],
+    ['title-asst-prof-f', 'Asst. Prof. Dr.', 'ผศ.พญ.'],
+    ['title-lecturer-m', 'Dr.', 'อ.นพ.'],
+    ['title-lecturer-f', 'Dr.', 'อ.พญ.'],
 ]
 
 // Two campuses plus Online. A campus is the parent row; venues nest under it,
 // so the campus can only be spelt one way no matter how many rooms are added.
 const CAMPUSES = [
-  ['loc-pyt', 'Ramathibodi Hospital (Phayathai)', 'โรงพยาบาลรามาธิบดี (พญาไท)'],
-  ['loc-cnmi', 'Chakri Naruebodindra Medical Institute', 'สถาบันการแพทย์จักรีนฤบดินทร์'],
-  ['loc-online', 'Online', 'ออนไลน์'],
+    ['campus-pyt', 'Ramathibodi Hospital', 'โรงพยาบาลรามาธิบดี'],
+    ['campus-cnmi', 'Chakri Naruebodindra Medical Institute', 'สถาบันการแพทย์จักรีนฤบดินทร์'],
+    ['campus-sc', 'Faculty of Science', 'คณะวิทยาศาสตร์'],
+    ['campus-online', 'Online', 'ออนไลน์'],
 ]
 
 /*
@@ -124,13 +126,27 @@ const CAMPUSES = [
   Not exhaustive, and not meant to be. This is the collection whose whole point
   is "add a row to add an option" — rooms belong in the admin panel, not here.
 */
-const VENUES = [
-  ['loc-pyt', 'loc-pyt-learning', 'Medical Education and Ramathibodi School of Nursing Building', 'อาคารเรียนและปฏิบัติการรวมด้านการแพทย์และโรงเรียนพยาบาลรามาธิบดี'],
-  ['loc-pyt', 'loc-pyt-sdmc', 'Somdech Phra Debaratana Medical Center', 'อาคารสมเด็จพระเทพรัตน์'],
-  ['loc-pyt', 'loc-pyt-sirikit', 'Sirikit Medical Center', 'ศูนย์การแพทย์สิริกิติ์'],
-  ['loc-cnmi', 'loc-cnmi-hospital', 'Ramathibodi Chakri Naruebodindra Hospital', 'โรงพยาบาลรามาธิบดีจักรีนฤบดินทร์'],
-  ['loc-cnmi', 'loc-cnmi-learning', 'Queen Sirikit Learning and Research Centre', ''],
-  ['loc-cnmi', 'loc-cnmi-recreation', 'Recreation Building', 'อาคารนันทนาการ'],
+const BUILDINGS = [
+	['campus-sc', 'bld-sc-an1', 'Anatomy Building 1', 'อาคารกายวิภาค 1'],
+	['campus-cnmi', 'bld-cnmi-an', 'Clinical Anatomy Building', 'อาคารกายวิภาคทางคลินิก'], //fl4, fl3
+	['campus-cnmi', 'bld-cnmi-pc', 'Preclinical Building', 'อาคารพรีคลินิก'], //2C, 1C
+	['campus-cnmi', 'bld-cnmi-h', 'Ramathibodi Chakri Naruebodindra Hospital', 'โรงพยาบาลรามาธิบดีจักรีนฤบดินทร์'], //5e, 5f
+	['campus-pyt', 'bld-pyt-andand', 'School of Nursing Building', 'อาคารเรียนและปฏิบัติการรวมด้านการแพทย์และโรงเรียนพยาบาลรามาธิบดี'],
+	['campus-pyt', 'bld-pyt-1', 'Main Building (Building 1)', 'อาคารหลัก (อาคาร 1)'], // DeptSurg, fl2, premburi meeting, 
+	['campus-pyt', 'bld-pyt-qsmc', 'Queen Sirikit Medical Center', 'อาคารศูนย์การแพทย์สิริกิติ์'], //fl 4, 5
+	['campus-pyt', 'bld-pyt-sdmc', 'Somdech Phra Debratana Medical Center', 'ศูนย์การแพทย์สมเด็จพระเทพรัตน์'],
+]
+
+const LOCATIONS = [
+	['bld-cnmi-an', 'loc-cnmi-an-3', '3rd Floor', 'ชั้น 3'],
+	['bld-cnmi-an', 'loc-cnmi-an-4', '4rd Floor', 'ชั้น 4'],
+	['bld-cnmi-pc', 'loc-cnmi-pc-1c', '1C Room', 'ห้อง 1C'],
+	['bld-cnmi-pc', 'loc-cnmi-pc-2c', '2C Room', 'ห้อง 2C'],
+	['bld-cnmi-h', 'loc-cnmi-h-5e', '5E', '5E'],
+	['bld-cnmi-h', 'loc-cnmi-h-5f', '5F', '5F'],
+	['bld-pyt-1', 'loc-pyt-1-surg', 'Department of Surgery', 'ภาควิชาศัลยศาสตร์'],
+	['bld-pyt-1', 'loc-pyt-1-2', '2nd Floor', 'ชั้น 2'],
+	['bld-pyt-1', 'loc-pyt-1-prem', 'Prem Buri Meeting Room', 'ห้องประชุมเปรม บุรี'],
 ]
 
 /*
@@ -143,38 +159,52 @@ const VENUES = [
   out real records to tidy a dropdown.
 */
 const RETIRED = [
-  // Departments folded away — the society runs four.
-  'dept-ad',
-  'dept-cc',
-  // Specialties replaced by the Department of Surgery's own divisions.
-  'spec-general-surgery',
-  'spec-orthopedic',
-  'spec-vascular',
-  'spec-oncology',
-  'spec-trauma',
-  'spec-transplant',
-  'spec-other',
-  // Renamed to Gap Year under a slug that says so.
-  'year-m-eng-m-m',
-  // Ungendered titles, replaced by the นพ./พญ. pairs above.
-  'title-prof',
-  'title-assoc-prof',
-  'title-asst-prof',
-  'title-dr',
-  // Campus and rooms superseded by loc-pyt and its buildings.
-  'loc-ramathibodi',
-  'loc-rama-b1-r301',
-  'loc-rama-b1-r201',
-  'loc-rama-anatomy-hall-a',
+    // Departments folded away — the society runs four.
+    'dept-ad',
+    'dept-cc',
+    // Specialties replaced by the Department of Surgery's own divisions.
+    // NOTE: 'spec-trauma' is deliberately NOT here — the new SPECIALTIES list
+    // reintroduces that exact slug, and retiring it would leave it stuck
+    // inactive forever (upsertTag never un-retires on update).
+    'spec-general-surgery',
+    'spec-orthopedic',
+    'spec-vascular',
+    'spec-oncology',
+    'spec-transplant',
+    'spec-other',
+    // Old specialty slugs superseded by the split/renamed rows above.
+    'spec-gi-general',
+    'spec-breast-endocrine',
+    'spec-vascular-transplant',
+    'spec-trauma-critical-care',
+    'spec-neurosurgery',
+    'spec-urology',
+    'spec-pediatric',
+    'spec-cardiothoracic',
+    // Renamed to Gap Year under a slug that says so.
+    'year-m-eng-m-m',
+    // Ungendered titles, replaced by the นพ./พญ. pairs above.
+    'title-prof',
+    'title-assoc-prof',
+    'title-asst-prof',
+    'title-dr',
+    // Campus and rooms superseded by the campus-* / bld-* / loc-* hierarchy.
+    'loc-ramathibodi',
+    'loc-rama-b1-r301',
+    'loc-rama-b1-r201',
+    'loc-rama-anatomy-hall-a',
+    'loc-pyt',
+    'loc-cnmi',
+    'loc-online',
 ]
 
 const VOCABULARY = [
-  ...EVENT_TYPES.map(([slug, label], i) => ({ kind: 'event_type', slug, label, sort_order: i })),
-  ...SPECIALTIES.map(([slug, label, label_th], i) => ({ kind: 'specialty', slug, label, label_th, sort_order: i })),
-  ...DEPARTMENTS.map(([slug, label, label_th], i) => ({ kind: 'department', slug, label, label_th, sort_order: i })),
-  ...YEARS.map(([slug, label], i) => ({ kind: 'year', slug, label, sort_order: i })),
-  ...TRACKS.map(([slug, label], i) => ({ kind: 'track', slug, label, sort_order: i })),
-  ...ACADEMIC_TITLES.map(([slug, label, label_th], i) => ({ kind: 'academic_title', slug, label, label_th, sort_order: i })),
+    ...EVENT_TYPES.map(([slug, label], i) => ({ kind: 'event_type', slug, label, sort_order: i })),
+    ...SPECIALTIES.map(([slug, label, label_th], i) => ({ kind: 'specialty', slug, label, label_th, sort_order: i })),
+    ...DEPARTMENTS.map(([slug, label, label_th], i) => ({ kind: 'department', slug, label, label_th, sort_order: i })),
+    ...YEARS.map(([slug, label], i) => ({ kind: 'year', slug, label, sort_order: i })),
+    ...TRACKS.map(([slug, label], i) => ({ kind: 'track', slug, label, sort_order: i })),
+    ...ACADEMIC_TITLES.map(([slug, label, label_th], i) => ({ kind: 'academic_title', slug, label, label_th, sort_order: i })),
 ]
 
 /**
@@ -183,113 +213,125 @@ const VOCABULARY = [
  * or wipe a translation someone typed in the admin panel.
  */
 export async function upsertTag(payload, row) {
-  const found = await payload.find({
-    collection: 'tags',
-    where: { slug: { equals: row.slug } },
-    limit: 1,
-    overrideAccess: true,
-  })
-
-  if (found.docs[0]) {
-    await payload.update({
-      collection: 'tags',
-      id: found.docs[0].id,
-      data: {
-        kind: row.kind,
-        label: row.label,
-        sort_order: row.sort_order,
-        parent: row.parent,
-        // Only fill a blank one. An editor's translation outranks the seed's.
-        label_th: found.docs[0].label_th || row.label_th || null,
-      },
-      overrideAccess: true,
+    const found = await payload.find({
+        collection: 'tags',
+        where: { slug: { equals: row.slug } },
+        limit: 1,
+        overrideAccess: true,
     })
-    return found.docs[0].id
-  }
 
-  const created = await payload.create({
-    collection: 'tags',
-    data: { active: true, ...row },
-    overrideAccess: true,
-  })
-  return created.id
+    if (found.docs[0]) {
+        await payload.update({
+            collection: 'tags',
+            id: found.docs[0].id,
+            data: {
+                kind: row.kind,
+                label: row.label,
+                sort_order: row.sort_order,
+                parent: row.parent,
+                // Only fill a blank one. An editor's translation outranks the seed's.
+                label_th: found.docs[0].label_th || row.label_th || null,
+            },
+            overrideAccess: true,
+        })
+        return found.docs[0].id
+    }
+
+    const created = await payload.create({
+        collection: 'tags',
+        data: { active: true, ...row },
+        overrideAccess: true,
+    })
+    return created.id
 }
 
-/** Locations, campuses first so each venue has a parent id to point at. */
+/** Locations, campuses → buildings → rooms, each level giving the next a parent id. */
 async function seedLocations(payload) {
-  const campusIds = {}
-  for (const [slug, label, label_th] of CAMPUSES) {
-    // Online sorts last so the physical campuses lead the dropdown.
-    const sort_order = slug === 'loc-online' ? 99 : Object.keys(campusIds).length
-    campusIds[slug] = await upsertTag(payload, { kind: 'location', slug, label, label_th, sort_order })
-  }
+    const campusIds = {}
+    for (const [slug, label, label_th] of CAMPUSES) {
+        // Online sorts last so the physical campuses lead the dropdown.
+        const sort_order = slug === 'campus-online' ? 99 : Object.keys(campusIds).length
+        campusIds[slug] = await upsertTag(payload, { kind: 'location', slug, label, label_th, sort_order })
+    }
 
-  for (const [campus, slug, label, label_th] of VENUES) {
-    await upsertTag(payload, {
-      kind: 'location',
-      slug,
-      label,
-      label_th: label_th || undefined,
-      parent: campusIds[campus],
-      sort_order: VENUES.filter((v) => v[0] === campus).findIndex((v) => v[1] === slug),
-    })
-  }
+    const buildingIds = {}
+    for (const [campus, slug, label, label_th] of BUILDINGS) {
+        buildingIds[slug] = await upsertTag(payload, {
+            kind: 'location',
+            slug,
+            label,
+            label_th: label_th || undefined,
+            parent: campusIds[campus],
+            sort_order: BUILDINGS.filter((b) => b[0] === campus).findIndex((b) => b[1] === slug),
+        })
+    }
 
-  return VENUES.length + CAMPUSES.length
+    for (const [building, slug, label, label_th] of LOCATIONS) {
+        await upsertTag(payload, {
+            kind: 'location',
+            slug,
+            label,
+            label_th: label_th || undefined,
+            parent: buildingIds[building],
+            sort_order: LOCATIONS.filter((l) => l[0] === building).findIndex((l) => l[1] === slug),
+        })
+    }
+
+    return CAMPUSES.length + BUILDINGS.length + LOCATIONS.length
 }
 
 /** Hide superseded rows without touching the records that still hold them. */
 async function retireTags(payload) {
-  let retired = 0
-  for (const slug of RETIRED) {
-    const { docs } = await payload.find({
-      collection: 'tags',
-      where: { slug: { equals: slug } },
-      limit: 1,
-      overrideAccess: true,
-    })
-    if (!docs[0] || docs[0].active === false) continue
-    await payload.update({
-      collection: 'tags',
-      id: docs[0].id,
-      data: { active: false },
-      overrideAccess: true,
-    })
-    retired++
-  }
-  return retired
+    let retired = 0
+    for (const slug of RETIRED) {
+        const { docs } = await payload.find({
+            collection: 'tags',
+            where: { slug: { equals: slug } },
+            limit: 1,
+            overrideAccess: true,
+        })
+        if (!docs[0] || docs[0].active === false) continue
+        await payload.update({
+            collection: 'tags',
+            id: docs[0].id,
+            data: { active: false },
+            overrideAccess: true,
+        })
+        retired++
+    }
+    return retired
 }
 
 export async function seedTags(payloadInstance?) {
-  const payload = payloadInstance || (await getPayloadInstance())
+    const payload = payloadInstance || (await getPayloadInstance())
 
-  console.log('\n🏷  Seeding tag vocabulary...')
-  for (const row of VOCABULARY) await upsertTag(payload, row)
-  const locations = await seedLocations(payload)
-  console.log(`   ✅ ${VOCABULARY.length + locations} tags`)
+    console.log('\n🏷  Seeding tag vocabulary...')
+    for (const row of VOCABULARY) await upsertTag(payload, row)
+    const locations = await seedLocations(payload)
+    console.log(`   ✅ ${VOCABULARY.length + locations} tags`)
 
-  const retired = await retireTags(payload)
-  if (retired > 0) console.log(`   🗄  ${retired} superseded tags retired`)
+    const retired = await retireTags(payload)
+    if (retired > 0) console.log(`   🗄  ${retired} superseded tags retired`)
 }
 
 
 /** Every tag's id keyed by slug, for seeds that need to reference one. */
 export async function tagIdsBySlug(payloadInstance?) {
-  const payload = payloadInstance || (await getPayloadInstance())
-  const { docs } = await payload.find({
-    collection: 'tags',
-    limit: 500,
-    depth: 0,
-    overrideAccess: true,
-  })
-  return Object.fromEntries(docs.map((tag) => [tag.slug, tag.id]))
+    const payload = payloadInstance || (await getPayloadInstance())
+    const { docs } = await payload.find({
+        collection: 'tags',
+        limit: 500,
+        depth: 0,
+        overrideAccess: true,
+    })
+    return Object.fromEntries(docs.map((tag) => [tag.slug, tag.id]))
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  seedTags()
-    .then(() => process.exit(0))
-    .catch((err) => {
-      console.error('❌ Unhandled error:', err)
-      process.exit(1)
-    })
+    seedTags()
+        .then(() => process.exit(0))
+        .catch((err) => {
+            console.error('❌ Unhandled error:', err)
+            process.exit(1)
+        })
 }
