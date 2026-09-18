@@ -231,9 +231,35 @@ export function posterUrl(imageUrl: unknown): string {
 
   const url = imageUrl.trim()
   const driveFile = url.match(/^https:\/\/(?:www\.)?drive\.google\.com\/file\/d\/([^/?#]+)/)
+  // drive.google.com/uc?export=view redirects to drive.usercontent.google.com,
+  // which serves the image with Cross-Origin-Resource-Policy: same-site —
+  // browsers block it as an <img> src on any other origin. The lh3 thumbnail
+  // host carries no such restriction (and is already in next.config.mjs's
+  // image remotePatterns).
   return driveFile
-    ? `https://drive.google.com/uc?export=view&id=${encodeURIComponent(driveFile[1])}`
+    ? `https://lh3.googleusercontent.com/d/${encodeURIComponent(driveFile[1])}=w1000`
     : url
+}
+
+/**
+ * Whether `posterUrl`'s output can be trusted to a plain `<img>` tag.
+ *
+ * lh3.googleusercontent.com serves images with no Cross-Origin-Resource-Policy
+ * header, but Chrome's ORB (Opaque Response Blocking) still intermittently
+ * blocks it as a hotlinked cross-origin `<img>` src — it loads fine on direct
+ * navigation but fails silently when embedded. Routing it through next/image
+ * (already configured for this host in next.config.mjs) fetches it server-side
+ * instead, sidestepping the browser-side block entirely. Arbitrary external
+ * poster URLs (any other host) stay on plain `<img>`, since next/image throws
+ * for hosts not in `images.remotePatterns`.
+ */
+export function isOptimizedPosterUrl(url: string): boolean {
+  if (url.startsWith('/')) return true
+  try {
+    return new URL(url).hostname === 'lh3.googleusercontent.com'
+  } catch {
+    return false
+  }
 }
 
 export const mapPayloadEvent = (doc: any, userStatus?: EventUserStatus): Event => {
