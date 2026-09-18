@@ -1,0 +1,71 @@
+{
+  "title": "Terms & Privacy Policy",
+  "last_updated": "Last updated",
+  "intro": "The Ramathibodi Surgical Society (RASS), under the Faculty of Medicine Ramathibodi Hospital, Mahidol University, is committed to protecting the personal data of all users in accordance with the Thailand Personal Data Protection Act B.E. 2562 (2019) (PDPA).",
+  "sections": {
+    "data_controller": {
+      "title": "1. Data Controller",
+      "content": "Ramathibodi Surgical Society (RASS)\nFaculty of Medicine Ramathibodi Hospital\nMahidol University\n270 Rama VI Road, Ratchathewi, Bangkok 10400"
+    },
+    "data_collected": {
+      "title": "2. Personal Data Collected",
+      "content": "We collect the following categories of personal data:",
+      "items": [
+        "Full name (Thai and English)",
+        "Student ID and academic information (track, year)",
+        "Date of birth",
+        "Email address",
+        "Phone number and LINE ID",
+        "Social media accounts",
+        "Interests and extracurricular portfolio",
+        "Event registration and participation records",
+        "Profile image (via Google Account)"
+      ]
+    },
+    "purpose": {
+      "title": "3. Purpose of Data Processing",
+      "content": "Your personal data is processed for:",
+      "items": [
+        "Managing event registrations, attendance, and reflections",
+        "Communicating event updates and society announcements",
+        "Academic tracking and portfolio management for members",
+        "Internal organisational administration and reporting",
+        "Maintaining records for institutional accountability"
+      ]
+    },
+    "legal_basis": {
+      "title": "4. Legal Basis",
+      "content": "We rely on the following legal grounds:",
+      "items": [
+        "Consent: For collecting and processing your profile data when you create or update your account.",
+        "Legitimate Interest: For event management and internal organisational operations.",
+        "Legal Obligation: For maintaining records as required by Mahidol University regulations."
+      ]
+    },
+    "retention": {
+      "title": "5. Data Retention",
+      "content": "Personal data is retained for the duration of your membership and up to 5 years after graduation. Event registration data is retained for institutional reporting purposes. You may request earlier deletion by contacting the Data Controller."
+    },
+    "rights": {
+      "title": "6. Your Rights",
+      "content": "Under the PDPA, you have the following rights:",
+      "items": [
+        "Right to access your personal data",
+        "Right to rectify inaccurate or incomplete data",
+        "Right to erasure (right to be forgotten)",
+        "Right to data portability",
+        "Right to restrict or object to processing",
+        "Right to withdraw consent at any time"
+      ],
+      "footer": "To exercise any of these rights, please contact us at the address above or through the contact information provided below."
+    },
+    "cookies": {
+      "title": "7. Cookies & Authentication",
+      "content": "We use essential cookies for authentication and session management. These cookies are strictly necessary for the operation of the platform and cannot be disabled. No third-party tracking cookies are used."
+    },
+    "contact": {
+      "title": "8. Contact",
+      "content": "For enquiries regarding your personal data or this policy, please contact:\n\nRamathibodi Surgical Society\nEmail: rass@mahidol.ac.th"
+    }
+  }
+}

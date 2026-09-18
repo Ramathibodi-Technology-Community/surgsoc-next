@@ -1,0 +1,40 @@
+{
+  "welcome_to": "Welcome to",
+  "rass": "Ramathibodi Surgical Society",
+  "upcoming": "Upcoming Events",
+  "past": "Past Events",
+  "see_more": "See All",
+  "no_upcoming": "No upcoming events at the moment.",
+  "stay_tuned": "Stay tuned for future updates!",
+  "no_past": "No past events found.",
+  "about": {
+    "place": "A place where",
+    "passion": "Passion,",
+    "determination": "Determination and",
+    "family": "Family aligned"
+  },
+  "back_to_events": "Back to Events",
+  "about_event": "About this Event",
+  "duration": "Duration",
+  "date": "Date",
+  "time": "Time",
+  "venue": "Venue",
+  "event_type": "Type",
+  "department": "Department",
+  "coordinator": "Coordinator",
+  "participant_limit": "Participant Limit",
+  "registration_opens": "Registration Opens",
+  "tba": "TBA",
+  "unlimited": "Unlimited",
+  "actions": {
+    "see_details": "See Details",
+    "register": "Register Now",
+    "reflect": "Submit Reflection",
+    "feedback": "Give Feedback",
+    "closed": "Registration Closed",
+    "full": "Full",
+    "blocked": "Not Eligible",
+    "complete_profile": "Complete your profile",
+    "open_required_form": "Open the required form"
+  }
+}

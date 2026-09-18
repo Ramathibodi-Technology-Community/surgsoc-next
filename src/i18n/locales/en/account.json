@@ -1,0 +1,70 @@
+{
+  "title": "My Account",
+  "not_logged_in": "Not Logged In",
+  "please_sign_in": "Please sign in to access your account.",
+  "go_to_login": "Go to Login",
+  "registrations": "My Registrations",
+  "tasks_title": "My Tasks",
+  "no_tasks": "You have no pending tasks right now.",
+  "tasks_assigned_forms": "Assigned Forms",
+  "tasks_event_confirmations": "Event Confirmations",
+  "tasks_complete_form": "Complete your assigned form",
+  "tasks_open_form": "Open Form",
+  "tasks_confirm_attendance": "Confirm your attendance from the event page",
+  "tasks_hint": "Tasks are auto-updated when you submit forms or confirm event participation.",
+  "attended_title": "Events attended",
+  "no_attended": "No attended sessions on record yet.",
+  "attended_hint": "A session appears here once the coordinator marks the register.",
+  "no_registrations": "You haven't registered for any events yet.",
+  "view_details": "View Details",
+  "unknown_event": "Unknown Event",
+  "date_tba": "Date TBA",
+  "status": {
+    "confirmed": "Confirmed",
+    "rejected": "Rejected",
+    "participant": "Participant",
+    "pending": "Pending",
+    "unknown": "Unknown"
+  },
+  "sections": {
+    "personal": "Personal Info",
+    "academic": "Academic",
+    "contact": "Contact & Social Media",
+    "portfolio": "Portfolio / Activities",
+    "interests": "Interests"
+  },
+  "fields": {
+    "first_name_thai": "Thai First Name",
+    "last_name_thai": "Thai Last Name",
+    "first_name_english": "English First Name",
+    "last_name_english": "English Last Name",
+    "nickname_thai": "Thai Nickname",
+    "nickname_english": "English Nickname",
+    "dob": "Date of Birth",
+    "student_id": "Student ID",
+    "track": "Track",
+    "year": "Year",
+    "phone": "Phone Number",
+    "line_id": "LINE ID",
+    "platform": "Platform",
+    "handle": "Handle / URL",
+    "activity": "Activity Name",
+    "role": "Role (Optional)"
+  },
+  "actions": {
+    "edit": "Edit",
+    "cancel": "Cancel",
+    "save": "Save All Changes",
+    "saving": "Saving...",
+    "add_account": "Add Account",
+    "add_activity": "Add Activity"
+  },
+  "messages": {
+    "saved": "Saved successfully!",
+    "failed": "Failed to update",
+    "no_social": "No social accounts added",
+    "no_activity": "No activities added yet",
+    "no_interest": "No interests selected",
+    "select": "Select"
+  }
+}

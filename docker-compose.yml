@@ -1,0 +1,19 @@
+services:
+  payload-db:
+    image: postgres:18
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: surgsoc_payload
+    ports:
+      - "5432:5432"
+    volumes:
+      - payload-db-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d surgsoc_payload"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  payload-db-data:

@@ -1,0 +1,878 @@
+/* Hallmark · macrostructure: Stat-Led · genre: modern-minimal · tone: utilitarian
+ * theme: custom (paper oklch(23.4% 0.009 256) dark · accent oklch(71.3% 0.116 179) teal/cool
+ *        · display Noto Serif Thai + body IBM Plex Sans Thai — no mono face, removed with
+ *          the uppercase-tracked label idiom it carried)
+ * axes: dark paper / roman-serif display / cool accent
+ * nav: N1b canonical three-section · footer: Ft2 inline single line
+ * enrichment: none — typography + real photography
+ * audit: 2026-09-14 · 3 critical + 8 major + 9 minor closed
+ * audit: 2026-09-14 · ProfileEditor pass: 3 critical + 1 major + 2 minor closed
+ * audit: 2026-09-15 · account cards + events/[id] · feedback · forms/[formId]
+ *        new: .panel radius, .panel-head/.panel-title, .field-help, 54px field floor
+ *        Input's system fill propagated to Textarea + SelectTrigger (were stock shadcn)
+ * audit: 2026-09-15 · .card-grid consolidates five drifted grid tracks into one
+ *        /account → rails + infoboxes + attended events · /attendings → specialty
+ *        sections with secretary cards · applicants toolbar → pills + hollow tabs
+ * audit: 2026-09-15 · .record-tag — people records lead with the role
+ *        /account profile saves per section (updateProfile is section-scoped, so
+ *        a partial post can no longer blank the fields it did not carry)
+ */
+
+@import "tailwindcss";
+@plugin "tailwindcss-animate";
+
+/*
+  This site has one theme, and it is dark. Tailwind v4's stock `dark:` variant
+  resolves to `prefers-color-scheme`, so without this the shadcn components'
+  ~20 `dark:` branches would fire off the *visitor's OS setting* rather than
+  ours — a visitor on a light-mode laptop got the light-mode Button, Input and
+  Select rendered on a dark page. Making the variant unconditional is what ties
+  those branches to the theme we actually ship.
+*/
+@custom-variant dark (&);
+
+@theme {
+  /*
+    Neutral ramp. base-0 is the page, base-1 the raised surface (header, footer,
+    panels), base-2 the card, base-3/4 the two border weights. Four files still
+    address these directly; everything else goes through the semantic names below.
+  */
+  --color-base-0: oklch(23.4% 0.009 255.6);
+  --color-base-1: oklch(21.3% 0.008 264.4);
+  --color-base-2: oklch(25.9% 0.013 258.4);
+  --color-base-3: oklch(31.0% 0.015 252.3);
+  --color-base-4: oklch(37.5% 0.019 251.4);
+  /* Dim, but still ≥4.5:1 on base-0 — this rung carries body text in places. */
+  --color-base-5: oklch(65.9% 0.017 248.1);
+  --color-base-6: oklch(71.1% 0.018 250.9);
+  --color-base-7: oklch(83.6% 0.012 248.0);
+  --color-base-8: oklch(91.6% 0.008 241.7);
+  --color-base-9: oklch(99.4% 0.006 84.6);
+  --color-primary-1: oklch(54.0% 0.087 179.5);
+  --color-primary-2: oklch(71.3% 0.116 179.1);
+
+  /* ShadCN mappings */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  /*
+    shadcn's components use `accent` to mean "the quiet fill under a hovered or
+    keyboard-focused menu row". This design uses `accent` to mean the brand
+    teal, so every dropdown item and ghost button was painting itself in full
+    brand colour on hover. `highlight` is the fill those components actually
+    wanted; the ui/ primitives point here, and `accent` stays the brand.
+  */
+  --color-highlight: var(--highlight);
+  --color-highlight-foreground: var(--highlight-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-info: var(--info);
+  --color-warning: var(--warning);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /*
+    One radius. The design uses 10px on every button, card, field and panel, so
+    the scale is flat rather than a ramp — rounded-md and rounded-xl must not
+    disagree when both appear on the same row.
+  */
+  --radius: 0.625rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.625rem;
+  --radius-xl: 0.625rem;
+
+  /*
+    Two faces, two jobs. Noto Serif Thai carries every heading and covers Latin
+    and Thai in one family, so headings need no script fallback. Plex Sans Thai
+    runs the interface, captions and numerals included.
+
+    There is deliberately no mono face. It used to carry the labels, in caps
+    with 0.15em tracking — and that combination, not the typeface, is the tell.
+  */
+  --font-sans: var(--font-sans-family), ui-sans-serif, system-ui, sans-serif;
+  /*
+    Registered here only so the `font-display` utility exists. Its usable value
+    comes from the body declaration below — see the note there.
+  */
+  --font-display: var(--font-display-family), ui-serif, Georgia, serif;
+
+  /* Page gutter matches the design's 1100px column. */
+  --container-page: 1100px;
+
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+
+  @keyframes accordion-down {
+    from { height: 0; }
+    to { height: var(--radix-accordion-content-height); }
+  }
+  @keyframes accordion-up {
+    from { height: var(--radix-accordion-content-height); }
+    to { height: 0; }
+  }
+}
+
+:root {
+  color-scheme: dark;
+
+  --background: var(--color-base-0);
+  --foreground: var(--color-base-9);
+
+  /* Raised surface: header, footer, forms, tables, the hero panel. */
+  --surface: var(--color-base-1);
+
+  --card: var(--color-base-2);
+  --card-foreground: var(--color-base-9);
+
+  --popover: var(--color-base-1);
+  --popover-foreground: var(--color-base-9);
+
+  --primary: var(--color-primary-1);
+  --primary-foreground: var(--color-base-9);
+
+  /* Quiet fill — segmented controls, secondary buttons, table footers. */
+  --secondary: var(--color-base-3);
+  --secondary-foreground: var(--color-base-7);
+
+  --muted: var(--color-base-2);
+  --muted-foreground: var(--color-base-6);
+
+  --accent: var(--color-primary-2);
+  --accent-foreground: oklch(18.7% 0.009 224.0);
+
+  /* Menu-row and ghost-button fill. See the note in @theme above. */
+  --highlight: var(--color-base-3);
+  --highlight-foreground: var(--color-base-8);
+
+  /*
+    Status hues share the accent's lightness (71.3%) and chroma (0.13) and vary
+    only in hue. They were previously three imported pastels sitting a whole
+    lightness band above the rest of the palette, which read as borrowed rather
+    than chosen. Matching L and C is what makes them look like the same system;
+    55°+ of hue separation is what keeps danger and warning distinguishable.
+  */
+  --destructive: oklch(71.3% 0.13 20);
+  --destructive-foreground: var(--color-base-0);
+
+  /*
+    `success` was green, one hue-step from the teal accent, so Open and Complete
+    read as the same family. Blue at hue 258 sits 79° away and carries a
+    different meaning: teal is the brand and means "you can act here", blue
+    means "this is settled and on record". The token keeps its old name so
+    existing callers keep working.
+  */
+  --success: oklch(71.3% 0.13 258);
+  --info: var(--success);
+  --warning: oklch(71.3% 0.13 75);
+
+  /* Two weights: hairline between rows, stronger under section headings. */
+  --border: var(--color-base-3);
+  --border-strong: var(--color-base-4);
+  /*
+    Field boundaries are a control affordance, so WCAG 1.4.11 wants 3:1 against
+    what sits either side of them. At base-4 the border measured 1.53:1 against
+    its own fill and 1.73:1 against the panel behind it — the input was
+    effectively invisible until focused. This rung clears 3:1 on all three
+    backgrounds it ever lands on (card 3.20, panel 3.62, page 3.44).
+  */
+  --input: oklch(55% 0.012 250);
+  --ring: var(--color-primary-2);
+
+  /*
+    Elevation on a dark surface comes from lightness, not from a big soft
+    shadow — a 48px black bloom just muddies the panel edge. This is the one
+    shadow in the system: tight, dark, and used only where an element genuinely
+    overlaps another.
+  */
+  --shadow-lifted: 0 6px 16px oklch(0% 0 0 / 0.45);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  /*
+    Backstop, not a licence. Any real overflow still gets fixed at its source —
+    this only stops one stray wide child turning the whole page into a sideways
+    scroller. `clip` rather than `hidden`, because `hidden` on the root silently
+    kills `position: sticky` on the header.
+  */
+  html,
+  body {
+    overflow-x: clip;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+
+    /*
+      Redeclared on body — next/font puts --font-display-family on the body
+      element, so the copy @theme emits at :root resolves against an undefined
+      variable and computes to invalid. This declaration shadows it for every
+      descendant; without it each heading silently falls back to the sans stack.
+    */
+    --font-display: var(--font-display-family), ui-serif, Georgia, serif;
+  }
+
+  ::selection {
+    background: var(--primary);
+    color: var(--foreground);
+  }
+}
+
+/*
+  Type scale — six roles, one definition each.
+
+  Every page heading uses one of these. They exist as classes rather than loose
+  utilities so a new page cannot quietly invent a seventh heading treatment.
+  Sizes are fluid (clamp) so there are no per-breakpoint overrides to keep in sync.
+
+  The roles are named for the job, not for a heading level. `.type-story` is
+  bigger than `.type-h2` on purpose — it is the headline of a feature block, not
+  a subsection of one — and it was called `.type-h3` until that name started
+  promising a hierarchy the sizes contradicted.
+*/
+@layer components {
+  /*
+    Display type sits at the widest sizes, so it is where a single long
+    unbroken word (a Thai compound, a URL, a pasted title) overflows first.
+    `min-width: 0` lets the heading shrink inside a flex or grid parent;
+    `overflow-wrap: anywhere` lets the word itself break rather than the layout.
+  */
+  .type-display,
+  .type-h1,
+  .type-h2,
+  .type-story,
+  .type-card-title {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  /* Page-defining statement. One per page, at most. */
+  .type-display {
+    font-family: var(--font-display);
+    font-size: clamp(2.2rem, 4.4vw, 3.2rem);
+    font-weight: 600;
+    line-height: 1.06;
+    letter-spacing: -0.022em;
+    text-wrap: balance;
+  }
+
+  /* Page title. */
+  .type-h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 3.8vw, 2.8rem);
+    font-weight: 600;
+    line-height: 1.08;
+    letter-spacing: -0.022em;
+    text-wrap: balance;
+  }
+
+  /* Section heading within a page. */
+  .type-h2 {
+    font-family: var(--font-display);
+    font-size: clamp(1.375rem, 2vw, 1.625rem);
+    font-weight: 600;
+    line-height: 1.18;
+    letter-spacing: -0.018em;
+  }
+
+  /* Headline of a story block. Deliberately above .type-h2 — see the note above. */
+  .type-story {
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 2.8vw, 2.1rem);
+    font-weight: 600;
+    line-height: 1.16;
+    letter-spacing: -0.018em;
+  }
+
+  /* Card and list-item title. */
+  .type-card-title {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.28;
+  }
+
+  /* Standfirst under a display or h1. Sans, never the display face. */
+  .type-lead {
+    font-size: clamp(1rem, 1.3vw, 1.0625rem);
+    line-height: 1.7;
+    color: var(--muted-foreground);
+    text-wrap: pretty;
+  }
+
+  /*
+    Caption roles.
+
+    These were monospace, uppercase and letter-spaced. That combination is the
+    most reliable generated-interface tell there is, and swapping the typeface
+    does not fix it — the caps and the tracking are the tell. Weight, size and
+    colour carry the hierarchy now, and the mono family is gone from the project
+    entirely. Sentence case, zero tracking, everywhere.
+
+    The names are kept so the diff stays readable; `-mono` now means "caption",
+    which is a lie worth fixing on the next pass through these files.
+  */
+
+  /* Kicker above a title. Rare — only where it carries real content. */
+  .eyebrow {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--accent);
+  }
+
+  /* Field caption, table header, status word. Inherits its colour. */
+  .label-mono {
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.3;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Dates, counts, IDs. Tabular so columns line up. */
+  .meta-mono {
+    font-size: 0.75rem;
+    font-weight: 400;
+    line-height: 1.4;
+    color: var(--muted-foreground);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /*
+    Section header: title on the left, optional count or link pushed right,
+    over the heavier of the two border weights.
+  */
+  .section-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-strong);
+  }
+
+  /*
+    Bordered surface panel — hero, forms, tables, the sign-in box, and the
+    account's section cards.
+
+    The radius lives here rather than at each call site. It was missing, so
+    every panel on the site shipped square while the design says one radius on
+    every button, card, field and panel; the home page and the loading skeleton
+    had each hand-added `rounded-[10px]` to compensate, which is the tell that
+    it belonged to the class.
+
+    Surface is base-1 — *darker* than the page at base-0, where card is lighter.
+    That direction matters: a panel recedes so the records sitting on it (which
+    are `--card`) read as raised. Building a section card on `--card` instead
+    would put the same fill on both and lose the nesting entirely.
+  */
+  .panel {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+  }
+
+  /*
+    The head of a titled panel: title left, a count or a quiet action pushed
+    right. Separated from the body by space, not a rule — rule 5 says reach for
+    the weakest separator that works, and inside a box we have already spent the
+    strongest one. This is why it is not `.rail`, which brings its own line and
+    would separate twice.
+  */
+  .panel-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem 0.875rem;
+    /*
+      The tight step. This briefly ran at 26px, when a single outer "Profile"
+      panel wrapped section rails and needed the distance to stop reading as a
+      stack of two headings. That wrapper is now a rail like every other page's,
+      so the only thing wearing a panel head is a small infobox — where 26px
+      leaves the title floating away from the three facts under it.
+    */
+    margin-bottom: 1.125rem;
+  }
+  .panel-head > :last-child:not(:first-child) {
+    margin-left: auto;
+  }
+  .panel-title {
+    font-family: var(--font-display);
+    font-size: 1.0625rem;
+    font-weight: 600;
+    line-height: 1.3;
+    margin: 0;
+  }
+
+  /*
+    List row. The design has two column shapes: a leading date stamp, or a
+    title that takes the slack. Both share the hairline rule and padding.
+  */
+  .list-row {
+    display: grid;
+    gap: 1.25rem;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border);
+    /*
+      minmax(0, 1fr), not 1fr — a bare 1fr track floors at the content's
+      min-content width, so one long event or form title pushed the whole row
+      past the viewport instead of wrapping inside it.
+    */
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+  .list-row-dated {
+    grid-template-columns: 84px minmax(0, 1fr) auto;
+  }
+
+  /*
+    Under 30rem the three columns have nowhere left to go: the status word and
+    the button stop fitting beside the title and start squeezing it to a
+    two-word column. Stack instead, and let the date stamp sit inline above.
+  */
+  @media (width < 30rem) {
+    .list-row,
+    .list-row-dated {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.625rem;
+      justify-items: start;
+    }
+  }
+
+  /* Definition grid: mono label, sans value. Used on every detail view. */
+  .spec-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    row-gap: 0.5rem;
+    column-gap: 0.875rem;
+  }
+  .spec-grid > dt {
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: var(--muted-foreground);
+  }
+  .spec-grid > dd {
+    margin: 0;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--secondary-foreground);
+  }
+
+  /*
+    Raw <select> and <textarea> have no shadcn wrapper, so they get the field
+    treatment here — same fill, border and radius as <Input>, one definition.
+  */
+  .field {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--input);
+    border-radius: var(--radius);
+    padding: 0.875rem;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    /*
+      Chrome refuses the author `line-height` on a <select>, computing `normal`
+      regardless — so a select next to an input in the same grid row came out
+      49.5px against 54px, and the two help slots beneath them sat on different
+      baselines. Pinning the height is what actually makes a row of mixed
+      controls line up. Textareas are already far taller, so this never binds
+      on them.
+    */
+    min-height: 3.375rem;
+    color: var(--foreground);
+    color-scheme: dark;
+    outline: none;
+  }
+  .field:focus-visible {
+    border-color: var(--ring);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 50%, transparent);
+  }
+
+  /* Field caption above a .field or <Input>. */
+  .field-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1;
+    color: var(--secondary-foreground);
+  }
+
+  /*
+    Help slot under a .field or <Input>. Always rendered, so the error that
+    later lands in it *replaces* the hint instead of inserting a line and
+    pushing every field below it down the page — nothing moves while a member
+    is part-way through filling the form in.
+
+    It reserves one line rather than locking to a fixed px height: a hint that
+    wraps on a 320px screen should grow, not clip. What matters is that the slot
+    exists before there is anything to put in it.
+  */
+  .field-help {
+    display: block;
+    min-height: 1.4em;
+    margin-top: 0.375rem;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: var(--muted-foreground);
+  }
+  /* Errors name the number — "Needs 10 digits, this has 5" — never "Invalid". */
+  .field-help[data-state='error'] {
+    color: var(--destructive);
+    font-weight: 500;
+  }
+
+  /* Count badge beside a section heading. */
+  .pill-count {
+    display: inline-flex;
+    align-self: center;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    background: var(--warning);
+    color: var(--surface);
+    padding: 0.4375rem 0.625rem;
+    border-radius: 9999px;
+  }
+
+  /*
+    Diagonal hatch standing in for a missing photo. Real images sit on top of
+    it, so a slow or broken load degrades to the placeholder rather than a hole.
+  */
+  .placeholder-hatch {
+    background-color: color-mix(in oklab, var(--color-base-2) 70%, var(--color-base-3));
+    background-image: repeating-linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--color-base-6) 13%, transparent) 0 8px,
+      transparent 8px 16px
+    );
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+     Chart — the record system.
+     See design.md at the project root for the rules these encode.
+     ───────────────────────────────────────────────────────────── */
+
+  /*
+    Status marker. Five shapes in one 12px box so labels align down a column —
+    the circle is a mask like the rest rather than a rounded div, because a
+    border-radius box and a mask do not centre identically.
+
+    Shape carries the KIND of state, colour carries urgency. That keeps the set
+    readable in greyscale and for anyone who cannot separate teal from green.
+  */
+  .mark {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+  .mark::before {
+    content: "";
+    flex: none;
+    width: 12px;
+    height: 12px;
+    background: currentColor;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+  }
+  .mark-circle::before {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Ccircle cx='7' cy='7' r='4.1' fill='%23000'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Ccircle cx='7' cy='7' r='4.1' fill='%23000'/%3E%3C/svg%3E");
+  }
+  .mark-play::before {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M4.6 3.3 L10.4 7 L4.6 10.7 Z' fill='%23000' stroke='%23000' stroke-width='2.6' stroke-linejoin='round'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M4.6 3.3 L10.4 7 L4.6 10.7 Z' fill='%23000' stroke='%23000' stroke-width='2.6' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
+  .mark-check::before {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M3 7.4 L5.8 10.2 L11 4.2' fill='none' stroke='%23000' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M3 7.4 L5.8 10.2 L11 4.2' fill='none' stroke='%23000' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
+  .mark-cross::before {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M4.2 4.2 L9.8 9.8 M9.8 4.2 L4.2 9.8' stroke='%23000' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M4.2 4.2 L9.8 9.8 M9.8 4.2 L4.2 9.8' stroke='%23000' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E");
+  }
+  /* Inert. A dot reads as actionable, so states with nothing to do get a rule. */
+  .mark-rule::before {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M3.2 7 L10.8 7' stroke='%23000' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M3.2 7 L10.8 7' stroke='%23000' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  }
+
+  /*
+    Mini record. title · tag + meta · right slot · chevron.
+    The right slot takes a square, a portrait, or a status — that one
+    substitution is what lets events, people, forms and tasks share a component.
+  */
+  .record {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 0.75rem;
+    align-items: center;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--card);
+    padding: 0.6875rem 0.6875rem 0.6875rem 0.875rem;
+    transition: border-color 140ms var(--ease-out, ease);
+  }
+  .record:hover {
+    border-color: var(--border-strong);
+  }
+  .record-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+    justify-content: center;
+  }
+  .record-title {
+    font-family: var(--font-display);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.28;
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+  /*
+    The tag on its own line above the title, for people records. Same 12px as
+    the meta row it was lifted out of — it is a caption, not a second heading,
+    and sizing it up would put two headings on one card.
+  */
+  .record-tag {
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.3;
+    margin: 0;
+  }
+  .record-sub {
+    font-size: 0.8125rem;
+    line-height: 1.3;
+    color: var(--secondary-foreground);
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+  .record-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.5625rem;
+    min-width: 0;
+    line-height: 1.25;
+    font-size: 0.75rem;
+    color: var(--muted-foreground);
+    font-variant-numeric: tabular-nums;
+  }
+  .record-meta .sep {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--border-strong);
+    flex: none;
+  }
+  .record-slot {
+    flex: none;
+    width: 62px;
+    height: 62px;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+  }
+  /* People crop 4:5 — faces sit badly in a square, and the ratio marks the kind. */
+  .record-slot-portrait {
+    height: 78px;
+  }
+  .record-chevron {
+    color: var(--muted-foreground);
+    font-size: 17px;
+    line-height: 1;
+  }
+
+  /*
+    Title marquee. container-type gives 100cqw = the visible width, so the travel
+    is exactly calc(100cqw - 100%) — zero when the text already fits, which is
+    why short titles never move. Duration comes from --mq-dur, set per record
+    from the title's length, so every marquee runs at the same speed rather than
+    the same duration.
+
+    No fade mask: a mask hides the last characters exactly when the animation
+    finally reveals them.
+  */
+  .marquee {
+    container-type: inline-size;
+    overflow: hidden;
+    height: 1.28em;
+  }
+  .marquee > span {
+    display: inline-block;
+    width: max-content;
+    white-space: nowrap;
+  }
+  @keyframes chart-marquee {
+    0%, 14% { transform: translateX(0); }
+    86%, 100% { transform: translateX(min(0px, calc(100cqw - 100%))); }
+  }
+  .record:hover .marquee > span,
+  .record:focus-within .marquee > span {
+    animation: chart-marquee var(--mq-dur, 6s) ease-in-out infinite alternate;
+  }
+
+  /* Full card — upcoming events only, where a poster earns its place. */
+  .event-card {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--card);
+    overflow: hidden;
+    height: 100%;
+  }
+  .event-poster {
+    aspect-ratio: 21 / 10;
+    position: relative;
+  }
+  .event-badge {
+    position: absolute;
+    top: 0.625rem;
+    left: 0.625rem;
+    background: color-mix(in oklab, var(--surface) 86%, transparent);
+    border: 1px solid var(--border-strong);
+    border-radius: 7px;
+    padding: 0.3125rem 0.5625rem;
+    backdrop-filter: blur(6px);
+  }
+  .event-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4375rem;
+    padding: 0.9375rem 0.9375rem 0;
+    flex: 1;
+  }
+  /* No border-top: rule 5, space separates before a line does. */
+  .event-foot {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.8125rem 0.9375rem;
+  }
+  .event-overline {
+    display: flex;
+    align-items: baseline;
+    gap: 0.625rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--secondary-foreground);
+    font-variant-numeric: tabular-nums;
+    margin: 0;
+    min-width: 0;
+  }
+  .event-overline .at {
+    color: var(--muted-foreground);
+    font-weight: 400;
+  }
+  /* Campus, not venue — the venue is on the detail page. */
+  .campus-chip {
+    margin-left: auto;
+    flex: none;
+    align-self: flex-start;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--muted-foreground);
+    border: 1px solid var(--border-strong);
+    border-radius: 5px;
+    padding: 0.125rem 0.375rem;
+    line-height: 1.4;
+  }
+
+  /*
+    One track for every grid of records or cards on the site.
+
+    This was written out five times as a magic string and had already drifted:
+    upcoming events used a 240px floor with an 18px gap while past events used
+    310px with 12px, so the two sections under one page header came out four
+    columns against three, on column widths 4px apart — visibly unaligned, and
+    the narrow upcoming card left its status badge covering a tenth of the
+    poster.
+
+    Sharing the track does not undo rule "upcoming and past must not share a
+    component": the components stay different (a full card versus a mini
+    record), only the rhythm they sit on is common. That is what makes two
+    adjacent sections read as one page.
+
+    310px floor with a 14px gap gives 3 / 2 / 1 columns at 1100 / 768 / 414.
+  */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(310px, 100%), 1fr));
+    gap: 0.875rem;
+  }
+
+  /* Rail — a section head that separates with space, not a box. */
+  .rail {
+    display: flex;
+    align-items: baseline;
+    gap: 0.875rem;
+    margin-bottom: 0.875rem;
+  }
+  .rail-bar {
+    flex: 1;
+    height: 1px;
+    background: var(--border-strong);
+    transform: translateY(-3px);
+  }
+
+  /* An empty section says what is absent and when it changes. Never a slogan. */
+  .empty-note {
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius);
+    padding: 1.625rem 1.25rem;
+    text-align: center;
+  }
+}
+
+/*
+  Thai carries no inter-word spaces, so a long Thai string is a single
+  unbreakable token and overflows rather than wraps. The attribute is required —
+  without lang="th" on the element, this never matches.
+*/
+:lang(th) {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  line-break: loose;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee {
+    height: auto;
+    overflow: visible;
+  }
+  .marquee > span {
+    white-space: normal;
+    width: auto;
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "nav": {
+    "home": "Home",
+    "forms": "Forms",
+    "events": "Events",
+    "attendings": "Attendings",
+    "team": "Our Team",
+    "admin": "Admin",
+    "logout": "Log out",
+    "signin": "Sign in",
+    "signin_google": "Sign in with Google",
+    "signin_email": "Sign in with Email",
+    "or": "or",
+    "email": "Email",
+    "password": "Password",
+    "login_error": "Invalid email or password.",
+    "terms": "Terms & Privacy"
+  },
+  "footer": {
+    "copyright": "© 2026 Ramathibodi Surgical Society",
+    "terms": "Terms & Privacy Policy"
+  },
+  "auth": {
+    "forgot_password_title": "Reset your password",
+    "forgot_password_prompt": "Enter your account email and we'll send you a reset link.",
+    "forgot_password_submit": "Send reset link",
+    "forgot_password_success": "If that address is registered, we've sent a reset link.",
+    "reset_password_title": "Set a new password",
+    "new_password": "New password",
+    "confirm_password": "Confirm password",
+    "reset_password_submit": "Reset password",
+    "reset_password_mismatch": "Passwords do not match.",
+    "reset_password_missing_token": "This reset link is missing or invalid.",
+    "reset_password_error": "Something went wrong. The link may have expired.",
+    "disabled": "Password reset is currently disabled. Please contact an administrator."
+  },
+  "actions": {
+    "edit": "Edit",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "back": "Go Back"
+  },
+  "not_found": {
+    "title": "Page not found",
+    "lead": "The page you're looking for doesn't exist or may have moved.",
+    "cta": "Back to home"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "title": "My Forms",
+  "sign_in_required": "Sign In Required",
+  "please_sign_in": "Please sign in to view your forms and submissions.",
+  "sign_in_google": "Sign in with Google",
+  "assigned_forms": "Assigned Forms",
+  "no_pending": "No pending forms assigned to you.",
+  "pending": "Pending",
+  "completed_submissions": "Completed Submissions",
+  "no_submissions": "No submissions yet.",
+  "completed": "Completed",
+  "assigned_date": "Assigned {{date}}",
+  "submitted_date": "Submitted {{date}}",
+  "required": "Required",
+  "select_option": "Select an option",
+  "submit": "Submit",
+  "submitting": "Submitting...",
+  "submitted": "Submitted successfully!",
+  "error": "Error submitting form"
+}

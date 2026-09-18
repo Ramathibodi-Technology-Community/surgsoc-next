@@ -1,0 +1,123 @@
+.container {
+  padding: 2rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: center;
+}
+
+.badgeContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.badge {
+  border-radius: 9999px;
+  padding: 0.25rem 0.75rem;
+  font-weight: 500;
+  display: inline-flex;
+}
+
+.badgeTotal {
+  background-color: var(--theme-elevation-150, #333);
+  color: var(--theme-text, #fff);
+}
+
+.badgeSuccess {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.badgeWarning {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.emptyState {
+  display: flex;
+  height: 8rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.375rem;
+  border: 1px dashed var(--theme-elevation-200, #555);
+  color: var(--theme-elevation-400, #888);
+}
+
+.tableContainer {
+  overflow-x: auto;
+  border-radius: 0.375rem;
+  border: 1px solid var(--theme-elevation-150, #444);
+}
+
+.table {
+  width: 100%;
+  font-size: 0.875rem;
+  border-collapse: collapse;
+}
+
+.table th {
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 1px solid var(--theme-elevation-150, #444);
+  background-color: var(--theme-elevation-50, #222);
+  white-space: nowrap;
+  color: var(--theme-elevation-500, #aaa);
+}
+
+.table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--theme-elevation-100, #333);
+  color: var(--theme-text, #fff);
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.truncate {
+  max-width: 20rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.button {
+  display: inline-flex;
+  height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.375rem;
+  background-color: var(--theme-elevation-200, #444);
+  padding: 0 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--theme-text, #fff);
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.button:hover {
+  background-color: var(--theme-elevation-300, #555);
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
