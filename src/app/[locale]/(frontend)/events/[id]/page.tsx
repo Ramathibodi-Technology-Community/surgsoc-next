@@ -15,7 +15,6 @@ import { Locale } from '@/i18n/config'
 import { Button } from '@/components/ui/button'
 import { headers } from 'next/headers'
 import { checkUserActionGate } from '@/libs/user-action-gate'
-import Image from 'next/image'
 import EventActions from './EventActions'
 import { RichText } from '@payloadcms/richtext-lexical/react'
 
@@ -257,7 +256,7 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
         </span>
       </div>
 
-      <h1 className="type-h1 mb-3 max-w-[26ch]">{event.name}</h1>
+      <h1 className="type-h1 mb-3">{event.name}</h1>
 
       <div className="mb-7 flex flex-wrap gap-x-3 gap-y-1.5 text-[13px] text-muted-foreground">
         {event.eventType && <span className="font-medium text-accent">{event.eventType}</span>}
@@ -266,12 +265,10 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
       </div>
 
       <div className="placeholder-hatch relative mb-9 aspect-[21/8] overflow-hidden rounded-[10px] border border-border">
-        <Image
-          className="object-cover"
+        <img
+          className="absolute inset-0 h-full w-full object-cover"
           alt={event.name}
           src={event.posterUri}
-          fill
-          sizes="(max-width: 1280px) 100vw, 1200px"
         />
       </div>
 

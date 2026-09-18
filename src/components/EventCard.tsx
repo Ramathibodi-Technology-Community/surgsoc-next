@@ -1,6 +1,5 @@
 import React from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import type { Event } from '@/libs/event'
 import { deriveEventCta, eventStatus, eventWhen, campusShort } from '@/libs/event'
 import { Button } from '@/components/ui/button'
@@ -61,12 +60,10 @@ export default function EventCard({
     <article className={cn('event-card', className)} {...props}>
       <div className="placeholder-hatch event-poster">
         {event.posterUri ? (
-          <Image
-            className="object-cover"
+          <img
+            className="absolute inset-0 h-full w-full object-cover"
             alt=""
             src={event.posterUri}
-            fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         ) : null}
         <span className="event-badge">
