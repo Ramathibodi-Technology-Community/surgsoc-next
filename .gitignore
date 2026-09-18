@@ -52,6 +52,10 @@ TODO.md
 .pnpm-store
 .env*
 
+# Personal local docker-compose overrides (e.g. remapping the Postgres port
+# around a machine's own Postgres install) — not a team-wide default.
+compose.override.yml
+
 # Agent skill scaffolding (local tooling, not app code)
 .agents
 skills-lock.json
