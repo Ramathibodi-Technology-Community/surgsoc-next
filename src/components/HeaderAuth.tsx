@@ -48,7 +48,14 @@ export default async function HeaderAuth() {
   const initial = (user.name_english?.first_name || user.email || '?').charAt(0).toUpperCase()
 
   return (
-    <DropdownMenu>
+    // Radix's default `modal` scroll-lock sets `overflow: hidden` on <body>.
+    // Since <header> is a sticky direct child of <body> and <html> is the
+    // scrolling element, that turns <body> into a second, unscrolled sticky
+    // containing block: the header snaps back to its unstuck document
+    // position while the viewport is still scrolled, so it vanishes off the
+    // top of the screen. This menu needs no focus trap or scroll lock, so
+    // non-modal avoids the conflict entirely.
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger className="flex cursor-pointer items-center gap-2.5 outline-none">
         <span className="hidden text-[13px] leading-none text-secondary-foreground sm:inline">
           {displayName}
