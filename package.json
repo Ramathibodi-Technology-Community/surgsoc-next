@@ -19,6 +19,7 @@
     "db:seed": "tsx --import ./scripts/css-stub.mjs scripts/seed-db.ts",
     "db:seed:tags": "tsx --import ./scripts/css-stub.mjs scripts/seed-tags.ts",
     "db:seed:groups": "tsx --import ./scripts/css-stub.mjs scripts/seed-groups.ts",
+    "db:seed:attendings": "tsx --import ./scripts/css-stub.mjs scripts/push-attendings.ts",
     "db:migrate": "pnpm exec payload migrate",
     "db:migrate:prod": "NODE_ENV=production pnpm exec payload migrate",
     "db:refresh": "tsx --import ./scripts/css-stub.mjs scripts/refresh-db.ts",

@@ -82,6 +82,118 @@ export async function seedGroups(payloadInstance?: Payload) {
   }
 }
 
+/**
+ * Seeds the Department of Surgery's faculty into `attendings`, as [specialty,
+ * title, Thai first, Thai last, English first, English last].
+ *
+ * Thai spellings and the official English transliterations come from the
+ * department's own per-division faculty pages and the CNMI school listing —
+ * not transliterated here. Where the two disagreed with the list we were
+ * given, the department's spelling wins: it is the one printed on their
+ * letterhead. That resolved "รุ่งวรโศกิต" to "รุ่งวรโศภิต" and gave ranks for
+ * the entries listed without one.
+ *
+ * Two names had no published English spelling and are transliterated:
+ * Janisada Sakulsampaopol and Warut Saisopa. Worth an editor's eye.
+ *
+ * Real people, so no `is_sample` — they belong in the advisor count.
+ *
+ * Idempotent — upserts by English name, same as the rest of this file.
+ * Takes the caller's `tag` slug→id map, since `seedDatabase` already builds
+ * one and a standalone caller (e.g. `pnpm run db:seed:attendings`) can pass
+ * its own after upserting just the tags this data needs.
+ */
+export async function seedAttendings(payload: Payload, tag: Record<string, number>) {
+  console.log('\n🩺 Seeding Attendings...')
+  const attendings = [
+    ['spec-gen2', 'title-assoc-prof-m', 'วีรพัฒน์', 'สุวรรณธรรมา', 'Weerapat', 'Suwanthanma'],
+    ['spec-gen1', 'title-asst-prof-m', 'จักรพันธ์', 'จิรสิริธรรม', 'Jakrapan', 'Jirasiritham'],
+    ['spec-gen-cnmi', 'title-asst-prof-m', 'ฐัชกร', 'พรหมบุญ', 'Tatchakorn', 'Promboon'],
+    ['spec-gen-cnmi', 'title-lecturer-f', 'พิมพ์ชนก', 'รุ่งวรโศภิต', 'Pimchanok', 'Roongwarasopit'],
+    ['spec-gen-cnmi', 'title-lecturer-m', 'ภัทรพล', 'โชติสันต์', 'Pattarapon', 'Chotisun'],
+
+    ['spec-hpb', 'title-asst-prof-m', 'ปรมินทร์', 'ม่วงแก้ว', 'Paramin', 'Muangkaew'],
+    ['spec-hpb', 'title-asst-prof-m', 'พงศธร', 'ตั้งทวี', 'Pongsatorn', 'Tungtawee'],
+    ['spec-hpb', 'title-lecturer-f', 'วรินทร์ทิพย์', 'ธงชัย', 'Varinthip', 'Thongchai'],
+    ['spec-hpb', 'title-lecturer-f', 'วธู', 'วาสนสิริ ฟาร์เกอร์สัน', 'Watoo', 'Vassanasiri Farquharson'],
+
+    ['spec-breast', 'title-assoc-prof-m', 'ภาณุวัฒน์', 'เลิศสิทธิชัย', 'Panuwat', 'Lertsitthichai'],
+    ['spec-breast', 'title-lecturer-f', 'ลักขณา', 'อดิเรกลาภวงศ์', 'Lakkana', 'Adireklarpwong'],
+
+    ['spec-vasc', 'title-asst-prof-m', 'เชาวนันท์', 'พรวรากรณ์', 'Chaowanun', 'Pornwaragorn'],
+    ['spec-vasc', 'title-asst-prof-f', 'กรวีร์', 'เทพสัมฤทธิ์พร', 'Gorawee', 'Tepsamrithporn'],
+    ['spec-vasc', 'title-assoc-prof-f', 'ปิยนุช', 'พูตระกูล', 'Piyanut', 'Pootracool'],
+    ['spec-vasc', 'title-asst-prof-m', 'สุทัศน์', 'ฮ้อศิริมานนท์', 'Suthas', 'Horsirimanont'],
+    ['spec-vasc', 'title-lecturer-f', 'กนกลดา', 'ศรีเกื้อ', 'Kanoklada', 'Srikuea'],
+    ['spec-vasc', 'title-asst-prof-f', 'ณัฐสิริ', 'กิตติถิระพงษ์', 'Nutsiri', 'Kittitirapong'],
+    ['spec-vasc', 'title-lecturer-m', 'กรกช', 'เกษประเสริฐ', 'Goragoch', 'Gesprasert'],
+    ['spec-vasc', 'title-lecturer-m', 'ณัฐพัชร์', 'เขมวรพงศ์', 'Nattapat', 'Khemworapong'],
+    ['spec-vasc', 'title-lecturer-m', 'บัณฑิต', 'สกุลชัยรุ่งเรือง', 'Bundit', 'Sakulchairungrueng'],
+
+    ['spec-trauma', 'title-assoc-prof-f', 'ชลลดา', 'ครุฑศรี', 'Chonlada', 'Krutsri'],
+    ['spec-trauma', 'title-asst-prof-f', 'วิสารัช', 'ผลิตนนท์เกียรติ', 'Visarat', 'Palitnonkiat'],
+    ['spec-trauma', 'title-lecturer-f', 'อิสรวดี', 'จงกิตติรักษ์', 'Israwadee', 'Chongkittiruk'],
+
+    ['spec-plastic', 'title-assoc-prof-m', 'เฉลิมพงษ์', 'ฉัตรดอกไม้ไพร', 'Chalermpong', 'Chatdokmaiprai'],
+    ['spec-plastic', 'title-lecturer-m', 'สรายุทธ', 'ดำรงวงศ์ศิริ', 'Sarayuth', 'Dumrongwongsiri'],
+    ['spec-plastic', 'title-assoc-prof-m', 'กิดากร', 'กิระนันทวัฒน์', 'Kidakorn', 'Kiranantawat'],
+    ['spec-plastic', 'title-lecturer-m', 'วสันต์', 'เจนธนากุล', 'Wasan', 'Janetanakul'],
+
+    ['spec-neuro', 'title-assoc-prof-m', 'อัตถพร', 'บุญเกิด', 'Atthaporn', 'Boongird'],
+    ['spec-neuro', 'title-assoc-prof-m', 'สรยุทธ', 'ชำนาญเวช', 'Sorayouth', 'Chumnanvej'],
+    ['spec-neuro', 'title-lecturer-f', 'จณิสดา', 'สกุลสำเภาพล', 'Janisada', 'Sakulsampaopol'],
+    ['spec-neuro', 'title-asst-prof-m', 'วสวัตติ์', 'มุนินทร', 'Wasawat', 'Muninthorn'],
+
+    ['spec-uro', 'title-lecturer-m', 'ทรงยศ', 'แตงมีแสง', 'Songyos', 'Tangmesang'],
+    ['spec-uro', 'title-assoc-prof-f', 'ปกเกศ', 'ศิริศรีตรีรัตน์', 'Pokket', 'Sirisreetreerux'],
+
+    ['spec-ped', 'title-lecturer-m', 'ชวินธีร์', 'พุทธธนะพิทักษ์', 'Chawintee', 'Puttanapitak'],
+    ['spec-ped', 'title-lecturer-f', 'อำไพพรรณ', 'บุญไทย', 'Ampaipan', 'Boonthai'],
+    ['spec-ped', 'title-lecturer-f', 'ศนิ', 'มลกุล', 'Sani', 'Molagool'],
+
+    ['spec-cvt', 'title-lecturer-m', 'ปิยะ', 'เชิญถนอมวงศ์', 'Piya', 'Cherntanomwong'],
+    ['spec-cvt', 'title-lecturer-m', 'วรุตม์', 'สายโสภา', 'Warut', 'Saisopa'],
+    ['spec-cvt', 'title-lecturer-m', 'ปิติพงษ์', 'สิทธิอำนวย', 'Pitipong', 'Sithiamnuai'],
+    ['spec-cvt', 'title-lecturer-m', 'กิตติพศ', 'พีระพัฒนะพงษ์', 'Kittipos', 'Peerapatanapong'],
+  ]
+
+  for (const [index, row] of attendings.entries()) {
+    const [specialty, title, thaiFirst, thaiLast, engFirst, engLast] = row
+
+    const existing = await payload.find({
+      collection: 'attendings',
+      where: {
+        and: [
+          { 'name_english.first_name': { equals: engFirst } },
+          { 'name_english.last_name': { equals: engLast } },
+        ],
+      },
+      limit: 1,
+    })
+
+    if (existing.totalDocs > 0) {
+      console.log(`   ℹ️  ${engFirst} ${engLast} (exists)`)
+      continue
+    }
+
+    await payload.create({
+      collection: 'attendings',
+      data: {
+        name_thai: { first_name: thaiFirst, last_name: thaiLast },
+        name_english: { first_name: engFirst, last_name: engLast },
+        title: tag[title],
+        specialty: tag[specialty],
+        is_visible: true,
+        // Listed in the order above, which is the department's own — within a
+        // specialty that runs senior-first.
+        sort_order: index,
+      },
+      overrideAccess: true,
+    })
+    console.log(`   ✅ ${engFirst} ${engLast}`)
+  }
+}
+
 export async function seedDatabase(payloadInstance?: Payload) {
   // Fail before any writes, not mid-seed with half the data already inserted.
   const adminEmail = seedAdminEmail()
@@ -263,110 +375,7 @@ export async function seedDatabase(payloadInstance?: Payload) {
   }
 
   // ── Attendings ─────────────────────────────────────
-  /*
-    The Department of Surgery's faculty, as [specialty, title, Thai first,
-    Thai last, English first, English last].
-
-    Thai spellings and the official English transliterations come from the
-    department's own per-division faculty pages and the CNMI school listing —
-    not transliterated here. Where the two disagreed with the list we were
-    given, the department's spelling wins: it is the one printed on their
-    letterhead. That resolved "รุ่งวรโศกิต" to "รุ่งวรโศภิต" and gave ranks for
-    the entries listed without one.
-
-    Two names had no published English spelling and are transliterated:
-    Janisada Sakulsampaopol and Warut Saisopa. Worth an editor's eye.
-
-    Real people, so no `is_sample` — they belong in the advisor count.
-  */
-  console.log('\n🩺 Seeding Attendings...')
-  const attendings = [
-    ['spec-gi-general', 'title-assoc-prof-m', 'วีรพัฒน์', 'สุวรรณธรรมา', 'Weerapat', 'Suwanthanma'],
-    ['spec-gi-general', 'title-asst-prof-m', 'จักรพันธ์', 'จิรสิริธรรม', 'Jakrapan', 'Jirasiritham'],
-    ['spec-gi-general', 'title-asst-prof-m', 'ฐัชกร', 'พรหมบุญ', 'Tatchakorn', 'Promboon'],
-    ['spec-gi-general', 'title-lecturer-f', 'พิมพ์ชนก', 'รุ่งวรโศภิต', 'Pimchanok', 'Roongwarasopit'],
-    ['spec-gi-general', 'title-lecturer-m', 'ภัทรพล', 'โชติสันต์', 'Pattarapon', 'Chotisun'],
-
-    ['spec-hpb', 'title-asst-prof-m', 'ปรมินทร์', 'ม่วงแก้ว', 'Paramin', 'Muangkaew'],
-    ['spec-hpb', 'title-asst-prof-m', 'พงศธร', 'ตั้งทวี', 'Pongsatorn', 'Tungtawee'],
-    ['spec-hpb', 'title-lecturer-f', 'วรินทร์ทิพย์', 'ธงชัย', 'Varinthip', 'Thongchai'],
-    ['spec-hpb', 'title-lecturer-f', 'วธู', 'วาสนสิริ ฟาร์เกอร์สัน', 'Watoo', 'Vassanasiri Farquharson'],
-
-    ['spec-breast-endocrine', 'title-assoc-prof-m', 'ภาณุวัฒน์', 'เลิศสิทธิชัย', 'Panuwat', 'Lertsitthichai'],
-    ['spec-breast-endocrine', 'title-lecturer-f', 'ลักขณา', 'อดิเรกลาภวงศ์', 'Lakkana', 'Adireklarpwong'],
-
-    ['spec-vascular-transplant', 'title-asst-prof-m', 'เชาวนันท์', 'พรวรากรณ์', 'Chaowanun', 'Pornwaragorn'],
-    ['spec-vascular-transplant', 'title-asst-prof-f', 'กรวีร์', 'เทพสัมฤทธิ์พร', 'Gorawee', 'Tepsamrithporn'],
-    ['spec-vascular-transplant', 'title-assoc-prof-f', 'ปิยนุช', 'พูตระกูล', 'Piyanut', 'Pootracool'],
-    ['spec-vascular-transplant', 'title-asst-prof-m', 'สุทัศน์', 'ฮ้อศิริมานนท์', 'Suthas', 'Horsirimanont'],
-    ['spec-vascular-transplant', 'title-lecturer-f', 'กนกลดา', 'ศรีเกื้อ', 'Kanoklada', 'Srikuea'],
-    ['spec-vascular-transplant', 'title-asst-prof-f', 'ณัฐสิริ', 'กิตติถิระพงษ์', 'Nutsiri', 'Kittitirapong'],
-    ['spec-vascular-transplant', 'title-lecturer-m', 'กรกช', 'เกษประเสริฐ', 'Goragoch', 'Gesprasert'],
-    ['spec-vascular-transplant', 'title-lecturer-m', 'ณัฐพัชร์', 'เขมวรพงศ์', 'Nattapat', 'Khemworapong'],
-    ['spec-vascular-transplant', 'title-lecturer-m', 'บัณฑิต', 'สกุลชัยรุ่งเรือง', 'Bundit', 'Sakulchairungrueng'],
-
-    ['spec-trauma-critical-care', 'title-assoc-prof-f', 'ชลลดา', 'ครุฑศรี', 'Chonlada', 'Krutsri'],
-    ['spec-trauma-critical-care', 'title-asst-prof-f', 'วิสารัช', 'ผลิตนนท์เกียรติ', 'Visarat', 'Palitnonkiat'],
-    ['spec-trauma-critical-care', 'title-lecturer-f', 'อิสรวดี', 'จงกิตติรักษ์', 'Israwadee', 'Chongkittiruk'],
-
-    ['spec-plastic', 'title-assoc-prof-m', 'เฉลิมพงษ์', 'ฉัตรดอกไม้ไพร', 'Chalermpong', 'Chatdokmaiprai'],
-    ['spec-plastic', 'title-lecturer-m', 'สรายุทธ', 'ดำรงวงศ์ศิริ', 'Sarayuth', 'Dumrongwongsiri'],
-    ['spec-plastic', 'title-assoc-prof-m', 'กิดากร', 'กิระนันทวัฒน์', 'Kidakorn', 'Kiranantawat'],
-    ['spec-plastic', 'title-lecturer-m', 'วสันต์', 'เจนธนากุล', 'Wasan', 'Janetanakul'],
-
-    ['spec-neurosurgery', 'title-assoc-prof-m', 'อัตถพร', 'บุญเกิด', 'Atthaporn', 'Boongird'],
-    ['spec-neurosurgery', 'title-assoc-prof-m', 'สรยุทธ', 'ชำนาญเวช', 'Sorayouth', 'Chumnanvej'],
-    ['spec-neurosurgery', 'title-lecturer-f', 'จณิสดา', 'สกุลสำเภาพล', 'Janisada', 'Sakulsampaopol'],
-    ['spec-neurosurgery', 'title-asst-prof-m', 'วสวัตติ์', 'มุนินทร', 'Wasawat', 'Muninthorn'],
-
-    ['spec-urology', 'title-lecturer-m', 'ทรงยศ', 'แตงมีแสง', 'Songyos', 'Tangmesang'],
-    ['spec-urology', 'title-assoc-prof-f', 'ปกเกศ', 'ศิริศรีตรีรัตน์', 'Pokket', 'Sirisreetreerux'],
-
-    ['spec-pediatric', 'title-lecturer-m', 'ชวินธีร์', 'พุทธธนะพิทักษ์', 'Chawintee', 'Puttanapitak'],
-    ['spec-pediatric', 'title-lecturer-f', 'อำไพพรรณ', 'บุญไทย', 'Ampaipan', 'Boonthai'],
-    ['spec-pediatric', 'title-lecturer-f', 'ศนิ', 'มลกุล', 'Sani', 'Molagool'],
-
-    ['spec-cardiothoracic', 'title-lecturer-m', 'ปิยะ', 'เชิญถนอมวงศ์', 'Piya', 'Cherntanomwong'],
-    ['spec-cardiothoracic', 'title-lecturer-m', 'วรุตม์', 'สายโสภา', 'Warut', 'Saisopa'],
-    ['spec-cardiothoracic', 'title-lecturer-m', 'ปิติพงษ์', 'สิทธิอำนวย', 'Pitipong', 'Sithiamnuai'],
-    ['spec-cardiothoracic', 'title-lecturer-m', 'กิตติพศ', 'พีระพัฒนะพงษ์', 'Kittipos', 'Peerapatanapong'],
-  ]
-
-  for (const [index, row] of attendings.entries()) {
-    const [specialty, title, thaiFirst, thaiLast, engFirst, engLast] = row
-
-    const existing = await payload.find({
-      collection: 'attendings',
-      where: {
-        and: [
-          { 'name_english.first_name': { equals: engFirst } },
-          { 'name_english.last_name': { equals: engLast } },
-        ],
-      },
-      limit: 1,
-    })
-
-    if (existing.totalDocs > 0) {
-      console.log(`   ℹ️  ${engFirst} ${engLast} (exists)`)
-      continue
-    }
-
-    await payload.create({
-      collection: 'attendings',
-      data: {
-        name_thai: { first_name: thaiFirst, last_name: thaiLast },
-        name_english: { first_name: engFirst, last_name: engLast },
-        title: tag[title],
-        specialty: tag[specialty],
-        is_visible: true,
-        // Listed in the order above, which is the department's own — within a
-        // specialty that runs senior-first.
-        sort_order: index,
-      },
-      overrideAccess: true,
-    })
-    console.log(`   ✅ ${engFirst} ${engLast}`)
-  }
+  await seedAttendings(payload, tag)
 
   // ── Team Members ──────────────────────────────────
   console.log('\n👥 Seeding Team Members...')

@@ -40,6 +40,7 @@ const EVENT_TYPES = [
 const SPECIALTIES = [
     ['spec-gen1', 'General and Colorectal Surgery 1', 'ศัลยศาสตร์ทั่วไปและทางเดินอาหาร หน่วยที่ 1'],
     ['spec-gen2', 'General and Colorectal Surgery 2', 'ศัลยศาสตร์ทั่วไปและทางเดินอาหาร หน่วยที่ 2'],
+    ['spec-gen-cnmi', 'General and Colorectal Surgery, CNMI', 'ศัลยศาสตร์ทั่วไปและทางเดินอาหาร สถาบันการแพทย์จักรีนฤบดินทร์'],
     ['spec-hpb', 'Hepato-Pancreato-Billiary Surgery', 'ศัลยศาสตร์ตับ ตับอ่อน และทางเดินน้ำดี'],
     ['spec-breast', 'Breast and Endocrine Surgery', 'ศัลยศาสตร์เต้านมและต่อมไร้ท่อ'],
     ['spec-vasc', 'Vascular Surgery and Transplantation', 'ศัลยศาสตร์หลอดเลือดและปลูกถ่ายอวัยวะ'],
