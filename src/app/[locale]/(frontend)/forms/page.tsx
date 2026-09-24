@@ -3,7 +3,6 @@ import type { Metadata } from 'next'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { getCurrentUser } from '@/libs/auth/current-user'
-import Link from 'next/link'
 import { getDictionary } from '@/i18n/server'
 import { Locale } from '@/i18n/config'
 import { Button } from '@/components/ui/button'
@@ -31,7 +30,8 @@ export default async function FormsPage({
         <h1 className="type-h2 mb-2">{t.sign_in_required}</h1>
         <p className="mb-6 text-sm leading-relaxed text-muted-foreground">{t.please_sign_in}</p>
         <Button asChild className="w-full">
-          <Link href="/api/auth/google">{t.sign_in_google}</Link>
+          {/* Plain <a>, not next/link — see LoginForm.tsx for why. */}
+          <a href="/api/auth/google">{t.sign_in_google}</a>
         </Button>
       </div>
     )

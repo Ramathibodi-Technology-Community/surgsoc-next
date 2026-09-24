@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useState } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from '@/i18n/client'
 import { loginWithEmail } from './actions'
@@ -46,9 +45,13 @@ export default function LoginForm({ redirectTo = '/account' }: { redirectTo?: st
         </p>
 
         <Button asChild size="lg" className="h-auto w-full py-[15px] text-[15px]">
-          <Link href={`/api/auth/google?redirect=${encodeURIComponent(redirectTo)}`}>
+          {/* A plain <a>, not next/link: Link's client-side fetch navigation
+              would follow this route's redirect to accounts.google.com itself,
+              and that fetch is subject to CSP connect-src (unlike a real
+              top-level navigation). */}
+          <a href={`/api/auth/google?redirect=${encodeURIComponent(redirectTo)}`}>
             {t('nav.signin_google')}
-          </Link>
+          </a>
         </Button>
 
         <div className="my-[22px] flex items-center gap-3.5">
