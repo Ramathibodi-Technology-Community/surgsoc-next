@@ -76,8 +76,3 @@ export async function exchangeCodeForUser(currentUrl: URL, code_verifier: string
   const userInfo = await client.fetchUserInfo(config, accessToken, subject)
   return userInfo
 }
-
-export function validateEmailDomain(email: string): boolean {
-  if (!email) return false
-  return email.endsWith('@mahidol.edu') || email.endsWith('@student.mahidol.edu')
-}

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslation } from '@/i18n/client'
 
 interface Applicant {
   id: string
@@ -17,20 +18,29 @@ interface ApplicantPoolManagerProps {
   participantLimit: number
 }
 
+// Statuses that hold a seat; mirrors the DB capacity trigger.
+const SEATED = ['accepted', 'confirmed', 'participant']
+
 export default function ApplicantPoolManager({
   eventId,
   applicants,
   participantLimit
 }: ApplicantPoolManagerProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set())
-  const [filter, setFilter] = useState<'all' | 'applicant' | 'accepted' | 'rejected'>('all')
+  const [filter, setFilter] = useState<'all' | 'applicant' | 'accepted' | 'confirmed' | 'rejected'>('all')
   const router = useRouter()
+  const { t, locale } = useTranslation()
+  // Interpolation is `{placeholder}` string replacement — the dictionary is
+  // plain JSON with no format function of its own.
+  const tf = (key: string, values: Record<string, string | number>) =>
+    Object.entries(values).reduce((s, [k, v]) => s.replace(`{${k}}`, String(v)), t(key))
 
   const filteredApplicants = applicants.filter(a =>
     filter === 'all' || a.status === filter
   )
 
   const acceptedCount = applicants.filter(a => a.status === 'accepted').length
+  const confirmedCount = applicants.filter(a => a.status === 'confirmed').length
   const pendingCount = applicants.filter(a => a.status === 'applicant').length
   const rejectedCount = applicants.filter(a => a.status === 'rejected').length
 
@@ -39,18 +49,19 @@ export default function ApplicantPoolManager({
     Pending, because that is what the status means and what the count answers —
     the raw enum value read as a synonym for "All" sitting next to it.
 
-    Accepted carries the limit, since accepting is the one action on this page
-    that the limit can block; the others are just sizes.
+    Accepted and Confirmed are separate because only the former still asks the
+    attendee for a decision. Both occupy a seat when checking capacity.
   */
   const TABS = [
-    { key: 'all' as const, label: 'All', count: String(applicants.length) },
-    { key: 'applicant' as const, label: 'Pending', count: String(pendingCount) },
+    { key: 'all' as const, label: t('events.applicants.tabs.all'), count: String(applicants.length) },
+    { key: 'applicant' as const, label: t('events.applicants.tabs.pending'), count: String(pendingCount) },
     {
       key: 'accepted' as const,
-      label: 'Accepted',
-      count: participantLimit > 0 ? `${acceptedCount} / ${participantLimit}` : String(acceptedCount),
+      label: t('events.applicants.tabs.accepted'),
+      count: String(acceptedCount),
     },
-    { key: 'rejected' as const, label: 'Rejected', count: String(rejectedCount) },
+    { key: 'confirmed' as const, label: t('events.applicants.tabs.confirmed'), count: String(confirmedCount) },
+    { key: 'rejected' as const, label: t('events.applicants.tabs.rejected'), count: String(rejectedCount) },
   ]
 
   const toggleSelect = (id: string) => {
@@ -63,8 +74,11 @@ export default function ApplicantPoolManager({
     setSelected(newSelected)
   }
 
+  // Mirrors BATCHABLE_STATUSES in the batch route, which enforces it.
+  const selectable = filteredApplicants.filter(a => ['applicant', 'accepted', 'rejected', 'subscribed'].includes(a.status))
+
   const selectAll = () => {
-    setSelected(new Set(filteredApplicants.map(a => a.id)))
+    setSelected(new Set(selectable.map(a => a.id)))
   }
 
   const deselectAll = () => {
@@ -73,12 +87,13 @@ export default function ApplicantPoolManager({
 
   const batchAccept = async () => {
     // Check participant limit
-    if (participantLimit > 0 && acceptedCount + selected.size > participantLimit) {
-      alert(`Cannot accept: would exceed participant limit of ${participantLimit}`)
+    const seatsAfter = applicants.filter(a => SEATED.includes(a.status) || selected.has(a.id)).length
+    if (participantLimit > 0 && seatsAfter > participantLimit) {
+      alert(tf('events.applicants.limit_exceeded', { limit: participantLimit }))
       return
     }
 
-    if (!confirm(`Are you sure you want to accept ${selected.size} applicants?`)) return
+    if (!confirm(tf('events.applicants.confirm_accept', { count: selected.size }))) return
 
     try {
       const res = await fetch(`/api/events/${eventId}/applicants/batch`, {
@@ -94,12 +109,12 @@ export default function ApplicantPoolManager({
 
       router.refresh()
     } catch (err) {
-      alert('Failed to update applicants. Please try again.')
+      alert(t('events.applicants.batch_failed'))
     }
   }
 
   const batchReject = async () => {
-    if (!confirm(`Are you sure you want to REJECT ${selected.size} applicants?`)) return
+    if (!confirm(tf('events.applicants.confirm_reject', { count: selected.size }))) return
 
     try {
       const res = await fetch(`/api/events/${eventId}/applicants/batch`, {
@@ -115,7 +130,7 @@ export default function ApplicantPoolManager({
 
       router.refresh()
     } catch (err) {
-      alert('Failed to update applicants. Please try again.')
+      alert(t('events.applicants.batch_failed'))
     }
   }
 
@@ -173,13 +188,13 @@ export default function ApplicantPoolManager({
             onClick={selectAll}
             className="rounded-[10px] border border-border-strong px-4 py-2 text-[13px] font-medium whitespace-nowrap outline-none transition-colors hover:bg-secondary focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
           >
-            Select All
+            {t('events.applicants.select_all')}
           </button>
           <button
             onClick={deselectAll}
             className="rounded-[10px] border border-border-strong px-4 py-2 text-[13px] font-medium whitespace-nowrap outline-none transition-colors hover:bg-secondary focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
           >
-            Deselect All
+            {t('events.applicants.deselect_all')}
           </button>
           {/*
             design.md: "Disabled does not exist." A greyed-out Accept/Reject told
@@ -201,7 +216,7 @@ export default function ApplicantPoolManager({
                 onClick={batchAccept}
                 className="rounded-[10px] bg-primary px-4 py-2 text-[13px] font-medium text-primary-foreground whitespace-nowrap outline-none transition-colors hover:bg-primary/90 focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
-                Accept ({selected.size})
+                {tf('events.applicants.accept_count', { count: selected.size })}
               </button>
               {/*
                 Reject outlines rather than fills. Filled red is reserved for
@@ -213,7 +228,7 @@ export default function ApplicantPoolManager({
                 onClick={batchReject}
                 className="rounded-[10px] border border-destructive/50 px-4 py-2 text-[13px] font-medium text-destructive whitespace-nowrap outline-none transition-colors hover:bg-destructive/10 focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
-                Reject ({selected.size})
+                {tf('events.applicants.reject_count', { count: selected.size })}
               </button>
             </>
           )}
@@ -229,22 +244,22 @@ export default function ApplicantPoolManager({
                 <input
                     type="checkbox"
                     className="rounded w-4 h-4"
-                    checked={filteredApplicants.length > 0 && selected.size === filteredApplicants.length}
+                    checked={selectable.length > 0 && selected.size === selectable.length}
                     onChange={(e) => e.target.checked ? selectAll() : deselectAll()}
                 />
               </th>
-              <th className="label-mono whitespace-nowrap border-b border-border-strong p-4 text-left text-muted-foreground">Name</th>
-              <th className="label-mono whitespace-nowrap border-b border-border-strong p-4 text-left text-muted-foreground">Email</th>
-              <th className="label-mono whitespace-nowrap border-b border-border-strong p-4 text-left text-muted-foreground">Student ID</th>
-              <th className="label-mono whitespace-nowrap border-b border-border-strong p-4 text-left text-muted-foreground">Applied At</th>
-              <th className="label-mono whitespace-nowrap border-b border-border-strong p-4 text-left text-muted-foreground">Status</th>
+              <th className="label-mono whitespace-nowrap border-b border-border-strong p-4 text-left text-muted-foreground">{t('events.applicants.table.name')}</th>
+              <th className="label-mono whitespace-nowrap border-b border-border-strong p-4 text-left text-muted-foreground">{t('events.applicants.table.email')}</th>
+              <th className="label-mono whitespace-nowrap border-b border-border-strong p-4 text-left text-muted-foreground">{t('events.applicants.table.student_id')}</th>
+              <th className="label-mono whitespace-nowrap border-b border-border-strong p-4 text-left text-muted-foreground">{t('events.applicants.table.applied_at')}</th>
+              <th className="label-mono whitespace-nowrap border-b border-border-strong p-4 text-left text-muted-foreground">{t('events.applicants.table.status')}</th>
             </tr>
           </thead>
           <tbody>
             {filteredApplicants.length === 0 ? (
                 <tr>
                     <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                        No applicants found in this category.
+                        {t('events.applicants.empty')}
                     </td>
                 </tr>
             ) : (
@@ -254,12 +269,15 @@ export default function ApplicantPoolManager({
                     className="border-b border-border transition-colors hover:bg-card/60"
                   >
                     <td className="p-4">
-                      <input
-                        type="checkbox"
-                        checked={selected.has(applicant.id)}
-                        onChange={() => toggleSelect(applicant.id)}
-                        className="rounded w-4 h-4 cursor-pointer"
-                      />
+                      {/* design.md: no disabled controls — a resolved row simply has no box; its status says why. */}
+                      {selectable.includes(applicant) && (
+                        <input
+                          type="checkbox"
+                          checked={selected.has(applicant.id)}
+                          onChange={() => toggleSelect(applicant.id)}
+                          className="rounded w-4 h-4 cursor-pointer"
+                        />
+                      )}
                     </td>
                     <td className="p-4 text-sm">
                       <div className="font-medium">
@@ -272,7 +290,7 @@ export default function ApplicantPoolManager({
                     <td className="meta-mono p-4 [overflow-wrap:anywhere]">{applicant.user?.email}</td>
                     <td className="meta-mono p-4">{applicant.user?.academic?.student_id || '—'}</td>
                     <td className="meta-mono whitespace-nowrap p-4">
-                      {new Date(applicant.createdAt).toLocaleDateString('en-GB', {
+                      {new Date(applicant.createdAt).toLocaleDateString(locale === 'th' ? 'th-TH' : 'en-GB', {
                           year: 'numeric',
                           month: 'short',
                           day: 'numeric'
@@ -280,13 +298,13 @@ export default function ApplicantPoolManager({
                     </td>
                     <td className="p-4">
                       <span className={`label-mono ${
-                        applicant.status === 'accepted'
+                        SEATED.includes(applicant.status)
                           ? 'text-success'
                           : applicant.status === 'rejected'
                             ? 'text-destructive'
                             : 'text-warning'
                       }`}>
-                        {applicant.status}
+                        {t(`events.applicants.status.${applicant.status}`)}
                       </span>
                     </td>
                   </tr>

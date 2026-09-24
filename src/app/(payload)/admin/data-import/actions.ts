@@ -438,7 +438,6 @@ function normalizeEventsFromCSV(rows: RowRecord[]): Record<string, unknown>[] {
   return rows.map((row) => {
     const parsedVisible = parseBoolean(row.is_visible)
     const parsedClosed = parseBoolean(row.is_registration_closed)
-    const parsedAutoPromote = parseBoolean(row.auto_promote)
     const parsedReflectionOpen = parseBoolean(row.is_reflection_open)
     const parsedParticipantLimit = parseNumber(row.participant_limit)
     const parsedMaxWaitingList = parseNumber(row.max_waiting_list)
@@ -471,7 +470,7 @@ function normalizeEventsFromCSV(rows: RowRecord[]): Record<string, unknown>[] {
       participant_limit: parsedParticipantLimit,
       is_registration_closed: parsedClosed,
       status_override: row.status_override || undefined,
-      auto_promote: parsedAutoPromote,
+      registration_selection_mode: row.registration_selection_mode || undefined,
       max_waiting_list: parsedMaxWaitingList,
       is_reflection_open: parsedReflectionOpen,
       reflection_form: reflectionFormValue,

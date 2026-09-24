@@ -123,7 +123,9 @@ export async function submitEventApplication(
       data: {
         event: Number(eventId),
         user: user!.id,
-        status: 'applicant',
+        status: event.registration_selection_mode === 'accepted' || event.registration_selection_mode === 'confirmed'
+          ? event.registration_selection_mode
+          : 'applicant',
         submission: submission.id,
       },
       req,
@@ -133,6 +135,9 @@ export async function submitEventApplication(
   } catch (error) {
     if (transactionID) await payload.db.rollbackTransaction(transactionID)
     console.error(`Error submitting event application: ${getErrorMessage(error)}`)
+    // drizzle wraps the pg error; the capacity trigger's code is on the cause.
+    const cause = (error as { cause?: { code?: string } } | null)?.cause
+    if (cause?.code === '23514') throw new Error('This event is full.')
     throw new Error('Failed to submit registration')
   }
 }

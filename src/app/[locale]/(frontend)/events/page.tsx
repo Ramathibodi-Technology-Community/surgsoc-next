@@ -3,12 +3,12 @@ import type { Metadata } from 'next'
 import Record from '@/components/Record'
 import { getPayload } from 'payload'
 import config from '@payload-config'
+import { getCurrentUser } from '@/libs/auth/current-user'
 import EventCard from '@/components/EventCard'
 import PageHeader from '@/components/PageHeader'
 import { mapPayloadEvent, getUserEventStatuses } from '@/libs/event'
 import { getDictionary } from '@/i18n/server'
 import { Locale } from '@/i18n/config'
-import { headers } from 'next/headers'
 import { sampleWhere } from '@/libs/sample-data'
 import { getSiteSettings } from '@/libs/site-settings'
 
@@ -25,7 +25,7 @@ export default async function EventsPage({
   const { locale } = await params as { locale: Locale }
   const t = (await getDictionary(locale)).events
   const payload = await getPayload({ config })
-  const { user } = await payload.auth({ headers: await headers() })
+  const user = await getCurrentUser(payload)
   const now = new Date().toISOString()
   const siteSettings = await getSiteSettings()
   const notSample = sampleWhere(siteSettings.showSampleData)

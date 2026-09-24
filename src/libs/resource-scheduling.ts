@@ -4,6 +4,15 @@ type SchedulableResource = {
   status_override?: 'auto' | 'open' | 'closed' | null
 }
 
+export function registrationCutoff(
+  dateEnd?: string | null,
+  registrationClosesAt?: string | null,
+): string | null {
+  if (!dateEnd) return registrationClosesAt || null
+  if (!registrationClosesAt) return dateEnd
+  return new Date(dateEnd) < new Date(registrationClosesAt) ? dateEnd : registrationClosesAt
+}
+
 export const ResourceScheduling = {
   /**
    * schema:
@@ -21,19 +30,16 @@ export const ResourceScheduling = {
 
     // 1. Force Override
     if (status_override === 'closed') return { isOpen: false, reason: 'force_closed' }
+    // 2. Closing time is a hard limit, including when an override says Open.
+    const now = new Date()
+    const end = closes_at ? new Date(closes_at) : null
+    if (end && now >= end) return { isOpen: false, reason: 'closed' }
     if (status_override === 'open') return { isOpen: true }
 
-    // 2. Time-based Logic
-    const now = new Date()
     const start = opens_at ? new Date(opens_at) : null
-    const end = closes_at ? new Date(closes_at) : null
 
     if (start && now < start) {
       return { isOpen: false, reason: 'not_open_yet' }
-    }
-
-    if (end && now > end) {
-      return { isOpen: false, reason: 'closed' }
     }
 
     return { isOpen: true }

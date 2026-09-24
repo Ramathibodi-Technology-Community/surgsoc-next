@@ -2,8 +2,8 @@ import React from 'react'
 import type { Metadata } from 'next'
 import { getPayload } from 'payload'
 import config from '@payload-config'
+import { getCurrentUser } from '@/libs/auth/current-user'
 import { notFound } from 'next/navigation'
-import { headers } from 'next/headers'
 import Link from 'next/link'
 import PayloadForm from '@/components/PayloadForm'
 import StatusMark from '@/components/StatusMark'
@@ -38,8 +38,7 @@ export default async function FormPage({ params }: { params: Promise<{ formId: s
   }
 
   // Fetch user for prefilling
-  const headersList = await headers()
-  const { user } = await payload.auth({ headers: headersList })
+  const user = await getCurrentUser(payload)
 
   // Check multiple submission policy
   let alreadySubmitted = false

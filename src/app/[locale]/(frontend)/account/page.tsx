@@ -2,7 +2,7 @@ import React from 'react'
 import type { Metadata } from 'next'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import { headers } from 'next/headers'
+import { getCurrentUser } from '@/libs/auth/current-user'
 import Link from 'next/link'
 import PageHeader from '@/components/PageHeader'
 import ProfileEditor from '@/components/ProfileEditor'
@@ -29,8 +29,7 @@ export default async function AccountPage({
   const { locale } = await params as { locale: Locale }
   const t = (await getDictionary(locale)).account
   const payload = await getPayload({ config })
-  const headersList = await headers()
-  const { user } = await payload.auth({ headers: headersList })
+  const user = await getCurrentUser(payload)
 
   if (!user) {
     return (

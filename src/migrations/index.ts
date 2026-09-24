@@ -2,6 +2,8 @@ import * as migration_20260918_052152_initial_schema from './20260918_052152_ini
 import * as migration_20260918_102500_add_form_submission_policy from './20260918_102500_add_form_submission_policy';
 import * as migration_20260918_183913_add_event_image_display_settings from './20260918_183913_add_event_image_display_settings';
 import * as migration_20260918_185028_add_event_image_display_crop_option from './20260918_185028_add_event_image_display_crop_option';
+import * as migration_20260923_155724_hotfix_members_and_registration from './20260923_155724_hotfix_members_and_registration';
+import * as migration_20260923_164845_upgrade_payload_3_90 from './20260923_164845_upgrade_payload_3_90';
 
 export const migrations = [
   {
@@ -22,6 +24,16 @@ export const migrations = [
   {
     up: migration_20260918_185028_add_event_image_display_crop_option.up,
     down: migration_20260918_185028_add_event_image_display_crop_option.down,
-    name: '20260918_185028_add_event_image_display_crop_option'
+    name: '20260918_185028_add_event_image_display_crop_option',
+  },
+  {
+    up: migration_20260923_155724_hotfix_members_and_registration.up,
+    down: migration_20260923_155724_hotfix_members_and_registration.down,
+    name: '20260923_155724_hotfix_members_and_registration',
+  },
+  {
+    up: migration_20260923_164845_upgrade_payload_3_90.up,
+    down: migration_20260923_164845_upgrade_payload_3_90.down,
+    name: '20260923_164845_upgrade_payload_3_90'
   },
 ];

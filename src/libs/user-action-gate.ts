@@ -3,7 +3,7 @@ import type { User } from '@/payload-types'
 import { getBlockingForms } from './form-blocking'
 import { canInteractAsMember } from './permissions'
 import { getMissingProfileFields } from './profile-completion'
-import { ResourceScheduling } from './resource-scheduling'
+import { ResourceScheduling, registrationCutoff } from './resource-scheduling'
 
 // ─── Types ───────────────────────────────────────────────────────
 
@@ -33,6 +33,8 @@ export interface GateOptions {
     closes_at?: string | null
     registration_opens_at?: string | null
     registration_closes_at?: string | null
+    date_end?: string | null
+    is_registration_closed?: boolean | null
     status_override?: string | null
   }
 }
@@ -107,9 +109,12 @@ export async function checkUserActionGate(
 
   // 5. Scheduling (optional — only if resource provided)
   if (resource) {
+    if (resource.is_registration_closed && resource.status_override !== 'open') {
+      return { allowed: false, reason: 'schedule_closed', message: 'Registration is closed.' }
+    }
     const schedulingResource = {
       opens_at: resource.opens_at ?? resource.registration_opens_at,
-      closes_at: resource.closes_at ?? resource.registration_closes_at,
+      closes_at: registrationCutoff(resource.date_end, resource.closes_at ?? resource.registration_closes_at),
       status_override: resource.status_override,
     }
 

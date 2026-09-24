@@ -266,7 +266,7 @@ export async function seedDevData(payloadInstance?: Payload) {
       roles: ['member'],
       name_english: { first_name: 'Gun', last_name: 'Thanawat', nickname: 'Gun' },
       name_thai: { first_name: 'กัน', last_name: 'ธนวัฒน์', nickname: 'กัน' },
-      academic: { student_id: '6500025', year: tag['year-m-eng-m-m'], track: tag['track-md-meng'] },
+      academic: { student_id: '6500025', year: tag['year-gap'], track: tag['track-md-meng'] },
     },
   ]
 
@@ -533,7 +533,6 @@ export async function seedDevData(payloadInstance?: Payload) {
       subscription_form: formIds['Workshop Application Form'],
       loa_form: formIds['Leave of Absence Request'],
       reflection_form: formIds['Post-Event Reflection'],
-      auto_promote: false,
       max_waiting_list: 10,
       custom_acceptance_email: 'Bring your own loupes if you have them. Lunch is provided.',
       participant_detail: rich(
@@ -585,7 +584,6 @@ export async function seedDevData(payloadInstance?: Payload) {
       registration_closes_at: at(30),
       status_override: 'auto',
       max_waiting_list: 5,
-      auto_promote: true, // declining a seat promotes the oldest waitlisted applicant
       subscription_form: formIds['Workshop Application Form'],
       loa_form: formIds['Leave of Absence Request'],
     },
@@ -706,7 +704,6 @@ export async function seedDevData(payloadInstance?: Payload) {
       selected_at: at(-1),
       rejection_reason: 'Places were allocated to students who have not yet attended a skills workshop.',
     },
-    // auto_promote is off on this event, so a decline here promotes nobody.
     { event: workshop, user: users['member5@test.com'], status: 'declined' },
     { event: workshop, user: users['member6@test.com'], status: 'withdrawn' },
 

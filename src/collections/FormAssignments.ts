@@ -83,7 +83,7 @@ export const FormAssignments: CollectionConfig = {
     {
       name: 'deadline',
       type: 'date',
-      admin: { date: { pickerAppearance: 'dayAndTime' } },
+      admin: { date: { pickerAppearance: 'dayAndTime', timeIntervals: 10 } },
     },
     {
       name: 'completed',

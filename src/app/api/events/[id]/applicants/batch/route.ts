@@ -4,6 +4,8 @@ import { headers } from 'next/headers'
 import { hasPermission } from '@/libs/permissions'
 import type { User } from '@/payload-types'
 
+const BATCHABLE_STATUSES = new Set(['applicant', 'accepted', 'rejected', 'subscribed'])
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -63,6 +65,19 @@ export async function POST(
       {
         error: 'One or more registrations do not belong to this event',
         mismatchedIds,
+      },
+      { status: 400 },
+    )
+  }
+
+  // Only pre-attendance decisions are batchable; declined/withdrawn/confirmed/
+  // participant are the attendee's (or the event's) to change, not the organizer's.
+  const locked = scopedRegistrations.filter((r) => !BATCHABLE_STATUSES.has(String(r.status)))
+  if (locked.length > 0) {
+    return Response.json(
+      {
+        error: 'One or more registrations can no longer be accepted or rejected',
+        lockedIds: locked.map((r) => r.id),
       },
       { status: 400 },
     )

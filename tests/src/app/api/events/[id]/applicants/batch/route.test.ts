@@ -93,8 +93,8 @@ describe('POST /api/events/[id]/applicants/batch', () => {
     hasPermissionMock.mockReturnValue(false)
     payloadMock.find.mockResolvedValue({
       docs: [
-        { id: 101, event: 'evt_2' },
-        { id: 102, event: 'evt_2' },
+        { id: 101, event: 'evt_2', status: 'applicant' },
+        { id: 102, event: 'evt_2', status: 'subscribed' },
       ],
     })
     payloadMock.update.mockResolvedValue({})
@@ -128,7 +128,7 @@ describe('POST /api/events/[id]/applicants/batch', () => {
   it('uses rejected status when action is reject', async () => {
     payloadMock.auth.mockResolvedValue({ user: { id: 6 } })
     payloadMock.findByID.mockResolvedValue({ id: 'evt_3', owner: 6 })
-    payloadMock.find.mockResolvedValue({ docs: [{ id: 201, event: 'evt_3' }] })
+    payloadMock.find.mockResolvedValue({ docs: [{ id: 201, event: 'evt_3', status: 'applicant' }] })
     payloadMock.update.mockResolvedValue({})
 
     const { POST } = await import('@/app/api/events/[id]/applicants/batch/route')
@@ -161,6 +161,30 @@ describe('POST /api/events/[id]/applicants/batch', () => {
 
     const res = await POST(req, { params: Promise.resolve({ id: 'evt_3' }) })
     expect(res.status).toBe(400)
+    expect(payloadMock.update).not.toHaveBeenCalled()
+  })
+
+  it('refuses to flip registrations the attendee already resolved', async () => {
+    payloadMock.auth.mockResolvedValue({ user: { id: 5 } })
+    payloadMock.findByID.mockResolvedValue({ id: 'evt_4', owner: 5 })
+    hasPermissionMock.mockReturnValue(false)
+    payloadMock.find.mockResolvedValue({
+      docs: [
+        { id: 301, event: 'evt_4', status: 'applicant' },
+        { id: 302, event: 'evt_4', status: 'declined' },
+      ],
+    })
+
+    const { POST } = await import('@/app/api/events/[id]/applicants/batch/route')
+    const req = new Request('http://localhost/api/events/evt_4/applicants/batch', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'accept', registrationIds: [301, 302] }),
+      headers: { 'content-type': 'application/json' },
+    })
+
+    const res = await POST(req, { params: Promise.resolve({ id: 'evt_4' }) })
+    expect(res.status).toBe(400)
+    expect((await res.json()).lockedIds).toEqual([302])
     expect(payloadMock.update).not.toHaveBeenCalled()
   })
 })

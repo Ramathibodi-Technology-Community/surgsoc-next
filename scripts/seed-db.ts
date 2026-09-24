@@ -233,7 +233,6 @@ export async function seedDatabase(payloadInstance?: Payload) {
       registration_opens_at: '2026-04-01T00:00:00Z',
       registration_closes_at: '2026-05-01T23:59:59Z',
       max_waiting_list: 10,
-      auto_promote: true,
       status_override: 'auto' as const,
       is_sample: true,
     },

@@ -42,6 +42,7 @@
     "nickname_english": "English Nickname",
     "dob": "Date of Birth",
     "student_id": "Student ID",
+    "student_id_digits": "Student ID (7 digits)",
     "track": "Track",
     "year": "Year",
     "phone": "Phone Number",
@@ -49,15 +50,22 @@
     "platform": "Platform",
     "handle": "Handle / URL",
     "activity": "Activity Name",
-    "role": "Role (Optional)"
+    "activity_year": "Year",
+    "role": "Role (Optional)",
+    "thai_name": "Thai Name",
+    "english_name": "English Name",
+    "social_media": "Social Media"
   },
   "actions": {
     "edit": "Edit",
     "cancel": "Cancel",
-    "save": "Save All Changes",
+    "discard": "Discard",
+    "save": "Save",
     "saving": "Saving...",
     "add_account": "Add Account",
-    "add_activity": "Add Activity"
+    "add_activity": "Add Activity",
+    "remove_account": "Remove social media account",
+    "remove_activity": "Remove activity"
   },
   "messages": {
     "saved": "Saved successfully!",

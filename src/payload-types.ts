@@ -163,6 +163,7 @@ export interface User {
    */
   department?: (number | null) | Tag;
   google_id?: string | null;
+  student_email_verified?: boolean | null;
   image_url?: string | null;
   dob?: string | null;
   age?: number | null;
@@ -223,6 +224,7 @@ export interface User {
   resetPasswordExpiration?: string | null;
   salt?: string | null;
   hash?: string | null;
+  resetPasswordRequestedAt?: string | null;
   loginAttempts?: number | null;
   lockUntil?: string | null;
   password?: string | null;
@@ -350,10 +352,7 @@ export interface Event {
    * Override automatic opening/closing times
    */
   status_override?: ('auto' | 'open' | 'closed') | null;
-  /**
-   * Automatically promote waiting list users when a slot opens
-   */
-  auto_promote?: boolean | null;
+  registration_selection_mode: 'manual' | 'accepted' | 'confirmed';
   /**
    * Limit size of waiting list (0 = unlimited)
    */
@@ -1029,6 +1028,7 @@ export interface UsersSelect<T extends boolean = true> {
   groups?: T;
   department?: T;
   google_id?: T;
+  student_email_verified?: T;
   image_url?: T;
   dob?: T;
   age?: T;
@@ -1090,6 +1090,7 @@ export interface UsersSelect<T extends boolean = true> {
   resetPasswordExpiration?: T;
   salt?: T;
   hash?: T;
+  resetPasswordRequestedAt?: T;
   loginAttempts?: T;
   lockUntil?: T;
 }
@@ -1114,7 +1115,7 @@ export interface EventsSelect<T extends boolean = true> {
   participant_limit?: T;
   is_registration_closed?: T;
   status_override?: T;
-  auto_promote?: T;
+  registration_selection_mode?: T;
   max_waiting_list?: T;
   custom_acceptance_email?: T;
   participant_detail?: T;

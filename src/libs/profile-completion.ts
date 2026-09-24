@@ -3,7 +3,8 @@ import type { User } from '@/payload-types'
 const REQUIRED_PROFILE_FIELDS = [
   { path: 'name_thai.first_name', label: 'Thai First Name' },
   { path: 'name_thai.last_name', label: 'Thai Last Name' },
-  { path: 'academic.student_id', label: 'Student ID' },
+  { path: 'academic.student_id', label: '7-digit Student ID' },
+  { path: 'academic.year', label: 'Year' },
 ] as const
 
 function getFieldValue(obj: Record<string, unknown>, path: string): unknown {
@@ -18,7 +19,7 @@ function getFieldValue(obj: Record<string, unknown>, path: string): unknown {
 
 function isFieldFilled(value: unknown): boolean {
   if (value == null || value === '') return false
-  if (typeof value === 'string' && value.startsWith('TEMP_')) return false
+  if (typeof value === 'string' && !value.trim()) return false
   return true
 }
 
@@ -29,7 +30,12 @@ function isFieldFilled(value: unknown): boolean {
  */
 export function getMissingProfileFields(data: Record<string, unknown>): string[] {
   return REQUIRED_PROFILE_FIELDS.filter(
-    ({ path }) => !isFieldFilled(getFieldValue(data, path)),
+    ({ path }) => {
+      const value = getFieldValue(data, path)
+      return path === 'academic.student_id'
+        ? typeof value !== 'string' || !/^\d{7}$/.test(value)
+        : !isFieldFilled(value)
+    },
   ).map(({ label }) => label)
 }
 

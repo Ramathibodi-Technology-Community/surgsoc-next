@@ -2,6 +2,7 @@ import React from 'react'
 import type { Metadata } from 'next'
 import { getPayload } from 'payload'
 import config from '@payload-config'
+import { getCurrentUser } from '@/libs/auth/current-user'
 import Link from 'next/link'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
@@ -15,7 +16,6 @@ import { formatEventDuration } from '@/libs/event'
 import { getDictionary } from '@/i18n/server'
 import { Locale } from '@/i18n/config'
 import { Button } from '@/components/ui/button'
-import { headers } from 'next/headers'
 import { checkUserActionGate } from '@/libs/user-action-gate'
 import { cn } from '@/libs/utils'
 import EventActions from './EventActions'
@@ -40,7 +40,7 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
   const { id, locale } = await params as { id: string, locale: Locale }
   const t = (await getDictionary(locale)).events
   const payload = await getPayload({ config })
-  const { user } = await payload.auth({ headers: await headers() })
+  const user = await getCurrentUser(payload)
 
   // overrideAccess: true is needed so `participant_detail` (field-access-gated
   // to staff in the REST API) is available here. The UI still only renders
@@ -75,6 +75,8 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
     resource: {
       opens_at: event.opens_at,
       closes_at: event.closes_at,
+      date_end: event.date_end,
+      is_registration_closed: !event.registrationOpen,
       status_override: event.status_override,
     },
   })
@@ -90,6 +92,23 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
   */
   const actionConfig = (() => {
     if (!gate.allowed) {
+      // A signed-out visitor always fails the gate's first check
+      // (`unauthenticated`), even on an event that is otherwise open — the
+      // gate has no way to know what a logged-in user would see. `cta` was
+      // derived above from the event alone, so for a visitor (no user_status)
+      // it already tells us whether registration would be open: send them to
+      // sign in instead of reporting the event closed. A genuinely closed
+      // event still falls through to the `closed` branch below, since cta is
+      // then null.
+      if (gate.reason === 'unauthenticated' && cta?.kind === 'register') {
+        return {
+          label: t.actions.sign_in,
+          note: null,
+          href: `/login?redirect=${encodeURIComponent(`/${locale}/events/${event.id}`)}`,
+          disabled: false,
+          kind: 'sign_in',
+        }
+      }
       const isClickable = gate.reason === 'form_blocked' || gate.reason === 'profile_incomplete'
       if (isClickable) {
         return {

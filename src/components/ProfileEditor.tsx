@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateProfile } from '@/app/[locale]/(frontend)/account/actions'
 import { tagId, tagLabel, type TagLike } from '@/libs/tags'
+import { useTranslation } from '@/i18n/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -49,6 +50,7 @@ function EditableSection({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  const { t } = useTranslation()
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -69,7 +71,7 @@ function EditableSection({
       setEditing(false)
       router.refresh()
     } else {
-      setError(result.message || 'Failed to save.')
+      setError(result.message || t('account.messages.failed'))
     }
   }
 
@@ -83,7 +85,7 @@ function EditableSection({
             onClick={() => setEditing(true)}
             className="rounded-md text-[13px] font-medium text-accent transition-colors hover:text-accent/80 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
           >
-            Edit
+            {t('account.actions.edit')}
           </button>
         </div>
         {children}
@@ -116,7 +118,7 @@ function EditableSection({
             aria-busy={saving}
           >
             {saving && <Loader2 className="animate-spin" aria-hidden="true" />}
-            Save
+            {t('account.actions.save')}
           </Button>
           <button
             type="button"
@@ -126,7 +128,7 @@ function EditableSection({
             }}
             className="inline-flex h-[34px] items-center rounded-md px-3 text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
           >
-            Discard
+            {t('account.actions.discard')}
           </button>
 
           {/*
@@ -146,12 +148,12 @@ function EditableSection({
 }
 
 // ─── Input Helper ───────────────────────────────────────────────────
-function Field({ label, name, defaultValue, placeholder, type = 'text', readOnly }: {
-  label: string; name: string; defaultValue?: string; placeholder?: string; type?: string; readOnly?: boolean
+function Field({ label, name, defaultValue, placeholder, type = 'text', readOnly, required, pattern }: {
+  label: string; name: string; defaultValue?: string; placeholder?: string; type?: string; readOnly?: boolean; required?: boolean; pattern?: string
 }) {
   return (
     <div className="space-y-1">
-      <Label htmlFor={name} className="text-xs text-muted-foreground">{label}</Label>
+      <Label htmlFor={name} className="text-xs text-muted-foreground">{label}{required && <span className="text-destructive"> *</span>}</Label>
       <Input
         id={name}
         name={name}
@@ -159,6 +161,8 @@ function Field({ label, name, defaultValue, placeholder, type = 'text', readOnly
         defaultValue={defaultValue}
         placeholder={placeholder}
         readOnly={readOnly}
+        required={required}
+        pattern={pattern}
         className={cn(readOnly && 'opacity-50 cursor-not-allowed')}
       />
     </div>
@@ -175,26 +179,10 @@ function InfoRow({ label, value }: { label: string; value?: string | null }) {
   )
 }
 
-function getFieldLabel(key: string) {
-  const labels: Record<string, string> = {
-      first_name_thai: 'First Name (Thai)',
-      last_name_thai: 'Last Name (Thai)',
-      first_name_english: 'First Name (English)',
-      last_name_english: 'Last Name (English)',
-      nickname_thai: 'Nickname (Thai)',
-      nickname_english: 'Nickname (English)',
-      dob: 'Date of Birth',
-      student_id: 'Student ID',
-      track: 'Track',
-      year: 'Year',
-      phone: 'Phone',
-      line_id: 'Line ID',
-      platform: 'Platform',
-      handle: 'Handle',
-      activity: 'Activity',
-      role: 'Role',
-  }
-  return labels[key] || key
+// Field labels live in the `account.fields` dictionary namespace, keyed the
+// same way as the form field names below.
+function getFieldLabel(t: (key: string) => string, key: string) {
+  return t(`account.fields.${key}`)
 }
 
 // ─── Main Component ─────────────────────────────────────────────────
@@ -228,6 +216,8 @@ export default function ProfileEditor({
   const [socialMedia, setSocialMedia] = useState<any[]>(
     Array.isArray(user.social_media) ? user.social_media : []
   )
+  const { t, locale } = useTranslation()
+  const label = (key: string) => getFieldLabel(t, key)
 
   return (
     /*
@@ -242,38 +232,38 @@ export default function ProfileEditor({
     */
     <div className="space-y-3.5">
       {/* ── Personal Info ── */}
-      <EditableSection section="personal" title="Personal Information"
+      <EditableSection section="personal" title={t('account.sections.personal')}
         editForm={
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field label={getFieldLabel('first_name_thai')} name="first_name_thai" defaultValue={user.name_thai?.first_name} />
-            <Field label={getFieldLabel('last_name_thai')} name="last_name_thai" defaultValue={user.name_thai?.last_name} />
-            <Field label={getFieldLabel('first_name_english')} name="first_name_english" defaultValue={user.name_english?.first_name} />
-            <Field label={getFieldLabel('last_name_english')} name="last_name_english" defaultValue={user.name_english?.last_name} />
-            <Field label={getFieldLabel('nickname_thai')} name="nickname_thai" defaultValue={user.name_thai?.nickname} />
-            <Field label={getFieldLabel('nickname_english')} name="nickname_english" defaultValue={user.name_english?.nickname} />
-            <Field label={getFieldLabel('dob')} name="dob" type="date" defaultValue={user.dob ? new Date(user.dob).toISOString().split('T')[0] : ''} />
+            <Field label={label('first_name_thai')} name="first_name_thai" defaultValue={user.name_thai?.first_name} required />
+            <Field label={label('last_name_thai')} name="last_name_thai" defaultValue={user.name_thai?.last_name} required />
+            <Field label={label('first_name_english')} name="first_name_english" defaultValue={user.name_english?.first_name} />
+            <Field label={label('last_name_english')} name="last_name_english" defaultValue={user.name_english?.last_name} />
+            <Field label={label('nickname_thai')} name="nickname_thai" defaultValue={user.name_thai?.nickname} />
+            <Field label={label('nickname_english')} name="nickname_english" defaultValue={user.name_english?.nickname} />
+            <Field label={label('dob')} name="dob" type="date" defaultValue={user.dob ? new Date(user.dob).toISOString().split('T')[0] : ''} />
           </div>
         }
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8">
-          <InfoRow label="Thai Name" value={`${user.name_thai?.first_name || ''} ${user.name_thai?.last_name || ''}`.trim() || undefined} />
-          <InfoRow label="English Name" value={`${user.name_english?.first_name || ''} ${user.name_english?.last_name || ''}`.trim() || undefined} />
-          <InfoRow label={getFieldLabel('nickname_thai')} value={user.name_thai?.nickname} />
-          <InfoRow label={getFieldLabel('nickname_english')} value={user.name_english?.nickname} />
-          <InfoRow label={getFieldLabel('dob')} value={user.dob ? new Date(user.dob).toLocaleDateString('en-US') : undefined} />
+          <InfoRow label={label('thai_name')} value={`${user.name_thai?.first_name || ''} ${user.name_thai?.last_name || ''}`.trim() || undefined} />
+          <InfoRow label={label('english_name')} value={`${user.name_english?.first_name || ''} ${user.name_english?.last_name || ''}`.trim() || undefined} />
+          <InfoRow label={label('nickname_thai')} value={user.name_thai?.nickname} />
+          <InfoRow label={label('nickname_english')} value={user.name_english?.nickname} />
+          <InfoRow label={label('dob')} value={user.dob ? new Date(user.dob).toLocaleDateString(locale === 'th' ? 'th-TH' : 'en-GB') : undefined} />
         </div>
       </EditableSection>
 
       {/* ── Academic Info ── */}
-      <EditableSection section="academic" title="Academic Information"
+      <EditableSection section="academic" title={t('account.sections.academic')}
         editForm={
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Field label={getFieldLabel('student_id')} name="student_id" defaultValue={user.academic?.student_id} />
+            <Field label={label('student_id_digits')} name="student_id" defaultValue={user.academic?.student_id} required pattern="[0-9]{7}" />
             <div className="space-y-1">
-              <Label htmlFor="track" className="text-xs text-muted-foreground">{getFieldLabel('track')}</Label>
+              <Label htmlFor="track" className="text-xs text-muted-foreground">{label('track')}</Label>
               <Select name="track" defaultValue={String(tagId(user.academic?.track) ?? '')}>
                 <SelectTrigger id="track">
-                  <SelectValue placeholder="Select" />
+                  <SelectValue placeholder={t('account.messages.select')} />
                 </SelectTrigger>
                 <SelectContent>
                   {trackOptions.map((opt) => (
@@ -283,10 +273,10 @@ export default function ProfileEditor({
               </Select>
             </div>
             <div className="space-y-1">
-              <Label htmlFor="year" className="text-xs text-muted-foreground">{getFieldLabel('year')}</Label>
-              <Select name="year" defaultValue={String(tagId(user.academic?.year) ?? '')}>
+              <Label htmlFor="year" className="text-xs text-muted-foreground">{label('year')}<span className="text-destructive"> *</span></Label>
+              <Select name="year" required defaultValue={String(tagId(user.academic?.year) ?? '')}>
                 <SelectTrigger id="year">
-                  <SelectValue placeholder="Select" />
+                  <SelectValue placeholder={t('account.messages.select')} />
                 </SelectTrigger>
                 <SelectContent>
                   {yearOptions.map((opt) => (
@@ -299,53 +289,53 @@ export default function ProfileEditor({
         }
       >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 gap-x-8">
-          <InfoRow label={getFieldLabel('student_id')} value={user.academic?.student_id} />
-          <InfoRow label={getFieldLabel('track')} value={tagLabel(user.academic?.track) ?? undefined} />
-          <InfoRow label={getFieldLabel('year')} value={tagLabel(user.academic?.year) ?? undefined} />
+          <InfoRow label={label('student_id')} value={user.academic?.student_id} />
+          <InfoRow label={label('track')} value={tagLabel(user.academic?.track) ?? undefined} />
+          <InfoRow label={label('year')} value={tagLabel(user.academic?.year) ?? undefined} />
         </div>
       </EditableSection>
 
       {/* ── Contact & Social Media (Merged) ── */}
       <EditableSection
         section="contact"
-        title="Contact & Social Media"
+        title={t('account.sections.contact')}
         serialize={(fd) => fd.set('social_media_json', JSON.stringify(socialMedia))}
         editForm={
           <div className="space-y-6">
             {/* Contact fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field label={getFieldLabel('phone')} name="phone_number" defaultValue={user.contact?.phone_number} placeholder="08X-XXX-XXXX" />
-              <Field label={getFieldLabel('line_id')} name="line_id" defaultValue={user.contact?.line_id} />
+              <Field label={label('phone')} name="phone_number" defaultValue={user.contact?.phone_number} placeholder="08X-XXX-XXXX" />
+              <Field label={label('line_id')} name="line_id" defaultValue={user.contact?.line_id} />
             </div>
 
             <Separator />
 
             {/* Social media entries */}
             <div className="space-y-3">
-              <Label className="text-xs text-muted-foreground">Social Media</Label>
+              <Label className="text-xs text-muted-foreground">{label('social_media')}</Label>
               {socialMedia.map((item, i) => (
                 <div key={i} className="flex gap-2 items-center bg-muted/20 p-3 rounded-lg border">
                   <Input
                     value={item.platform}
                     onChange={e => { const n = [...socialMedia]; n[i] = { ...n[i], platform: e.target.value }; setSocialMedia(n) }}
-                    aria-label={`${getFieldLabel('platform')} ${i + 1}`}
-                    placeholder={getFieldLabel('platform')}
+                    aria-label={`${label('platform')} ${i + 1}`}
+                    placeholder={label('platform')}
                     className="flex-1 h-8 text-sm"
                   />
                   <Input
                     value={item.handle}
                     onChange={e => { const n = [...socialMedia]; n[i] = { ...n[i], handle: e.target.value }; setSocialMedia(n) }}
-                    aria-label={`${getFieldLabel('handle')} ${i + 1}`}
-                    placeholder={getFieldLabel('handle')}
+                    aria-label={`${label('handle')} ${i + 1}`}
+                    placeholder={label('handle')}
                     className="flex-[2] h-8 text-sm"
                   />
-                  <Button type="button" variant="ghost" size="icon" onClick={() => setSocialMedia(socialMedia.filter((_, j) => j !== i))} aria-label={`Remove social media account ${i + 1}`} className="h-8 w-8 text-destructive hover:text-destructive/90 hover:bg-destructive/10">
+                  <Button type="button" variant="ghost" size="icon" onClick={() => setSocialMedia(socialMedia.filter((_, j) => j !== i))} aria-label={`${t('account.actions.remove_account')} ${i + 1}`} className="h-8 w-8 text-destructive hover:text-destructive/90 hover:bg-destructive/10">
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
               ))}
               <Button type="button" variant="outline" size="sm" onClick={() => setSocialMedia([...socialMedia, { platform: '', handle: '' }])}>
-                <Plus className="w-4 h-4 mr-2" /> Add Account
+                <Plus className="w-4 h-4 mr-2" /> {t('account.actions.add_account')}
               </Button>
             </div>
           </div>
@@ -353,8 +343,8 @@ export default function ProfileEditor({
       >
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8">
-            <InfoRow label={getFieldLabel('phone')} value={user.contact?.phone_number} />
-            <InfoRow label={getFieldLabel('line_id')} value={user.contact?.line_id} />
+            <InfoRow label={label('phone')} value={user.contact?.phone_number} />
+            <InfoRow label={label('line_id')} value={user.contact?.line_id} />
           </div>
           {socialMedia.length > 0 && (
             <>
@@ -371,7 +361,7 @@ export default function ProfileEditor({
             </>
           )}
           {socialMedia.length === 0 && (
-            <p className="text-muted-foreground italic text-sm">No social media accounts added.</p>
+            <p className="text-muted-foreground italic text-sm">{t('account.messages.no_social')}</p>
           )}
         </div>
       </EditableSection>
@@ -379,7 +369,7 @@ export default function ProfileEditor({
       {/* ── Portfolio ── */}
       <EditableSection
         section="portfolio"
-        title="Portfolio"
+        title={t('account.sections.portfolio')}
         serialize={(fd) => fd.set('portfolio_json', JSON.stringify(portfolio))}
         editForm={
           <div className="space-y-3">
@@ -390,8 +380,8 @@ export default function ProfileEditor({
                         value={item.year}
                         onValueChange={val => { const n = [...portfolio]; n[i] = { ...n[i], year: val }; setPortfolio(n) }}
                      >
-                        <SelectTrigger aria-label={`Year for activity ${i + 1}`} className="h-9">
-                            <SelectValue placeholder="Year" />
+                        <SelectTrigger aria-label={`${label('activity_year')} ${i + 1}`} className="h-9">
+                            <SelectValue placeholder={label('activity_year')} />
                         </SelectTrigger>
                         <SelectContent>
                              {Array.from({ length: new Date().getFullYear() - 2019 }, (_, i) => 2020 + i).map(y => (
@@ -401,16 +391,16 @@ export default function ProfileEditor({
                      </Select>
                  </div>
                 <div className="flex-1 space-y-2">
-                  <Input value={item.activity} onChange={e => { const n = [...portfolio]; n[i] = { ...n[i], activity: e.target.value }; setPortfolio(n) }} aria-label={`${getFieldLabel('activity')} ${i + 1}`} placeholder={getFieldLabel('activity')} className="h-9 text-sm" />
-                  <Input value={item.role || ''} onChange={e => { const n = [...portfolio]; n[i] = { ...n[i], role: e.target.value }; setPortfolio(n) }} aria-label={`${getFieldLabel('role')} ${i + 1}`} placeholder={getFieldLabel('role')} className="h-9 text-sm" />
+                  <Input value={item.activity} onChange={e => { const n = [...portfolio]; n[i] = { ...n[i], activity: e.target.value }; setPortfolio(n) }} aria-label={`${label('activity')} ${i + 1}`} placeholder={label('activity')} className="h-9 text-sm" />
+                  <Input value={item.role || ''} onChange={e => { const n = [...portfolio]; n[i] = { ...n[i], role: e.target.value }; setPortfolio(n) }} aria-label={`${label('role')} ${i + 1}`} placeholder={label('role')} className="h-9 text-sm" />
                 </div>
-                <Button type="button" variant="ghost" size="icon" onClick={() => setPortfolio(portfolio.filter((_, j) => j !== i))} aria-label={`Remove activity ${i + 1}`} className="h-8 w-8 text-destructive hover:text-destructive/90 hover:bg-destructive/10">
+                <Button type="button" variant="ghost" size="icon" onClick={() => setPortfolio(portfolio.filter((_, j) => j !== i))} aria-label={`${t('account.actions.remove_activity')} ${i + 1}`} className="h-8 w-8 text-destructive hover:text-destructive/90 hover:bg-destructive/10">
                     <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
             ))}
             <Button type="button" variant="outline" size="sm" onClick={() => setPortfolio([...portfolio, { year: String(new Date().getFullYear()), activity: '', role: '' }])}>
-                <Plus className="w-4 h-4 mr-2" /> Add Activity
+                <Plus className="w-4 h-4 mr-2" /> {t('account.actions.add_activity')}
             </Button>
           </div>
         }
@@ -428,12 +418,12 @@ export default function ProfileEditor({
             ))}
           </div>
         ) : (
-          <p className="text-muted-foreground italic text-sm">No activities added.</p>
+          <p className="text-muted-foreground italic text-sm">{t('account.messages.no_activity')}</p>
         )}
       </EditableSection>
 
       {/* ── Interests ── */}
-      <EditableSection section="interests" title="Interests"
+      <EditableSection section="interests" title={t('account.sections.interests')}
         editForm={
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {interestOptions.map((opt) => (
@@ -464,7 +454,7 @@ export default function ProfileEditor({
               </Badge>
             ))
           ) : (
-            <span className="text-muted-foreground italic text-sm">No interests selected.</span>
+            <span className="text-muted-foreground italic text-sm">{t('account.messages.no_interest')}</span>
           )}
         </div>
       </EditableSection>

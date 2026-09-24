@@ -118,6 +118,7 @@ const SCHEMAS: Record<ImportEntity, ImportSchema> = {
       'registration_opens_at',
       'registration_closes_at',
       'participant_limit',
+      'registration_selection_mode',
       'status_override',
       'is_registration_closed',
       'owner',

@@ -66,15 +66,6 @@ describe('form-submissions access', () => {
 describe('registrations beforeChange guard', () => {
   const guard = (Registrations.hooks!.beforeChange as any[])[0]
 
-  it('pins a member create to their own id and applicant status', () => {
-    const data = guard({
-      req: { user: member },
-      operation: 'create',
-      data: { event: 5, user: 999, status: 'accepted', selected_by: 999, selected_at: 'now' },
-    })
-    expect(data).toEqual({ event: 5, user: 7, status: 'applicant' })
-  })
-
   it('strips status and ownership changes from a member update', () => {
     const data = guard({
       req: { user: member },
@@ -92,108 +83,6 @@ describe('registrations beforeChange guard', () => {
   it('leaves Local API calls (no req.user) untouched', () => {
     const input = { status: 'confirmed' }
     expect(guard({ req: {}, operation: 'update', data: input })).toEqual(input)
-  })
-})
-
-describe('registrations REST-bypass gate (create)', () => {
-  const gate = (Registrations.hooks!.beforeChange as any[])[1]
-
-  // Passes profile-completion and canInteractAsMember checks so each test
-  // below isolates the rule it claims to test.
-  const completeMember = {
-    id: 7,
-    roles: ['member'],
-    groups: [],
-    name_thai: { first_name: 'สม', last_name: 'ชาย' },
-    academic: { student_id: '123456' },
-  } as any
-
-  beforeEach(() => {
-    payloadMock.findByID.mockReset()
-    payloadMock.find.mockReset()
-  })
-
-  it('lets Local API calls (no req.user) through untouched', async () => {
-    const data = { event: 5 }
-    const result = await gate({ req: { payload: payloadMock }, operation: 'create', data })
-    expect(result).toBe(data)
-    expect(payloadMock.findByID).not.toHaveBeenCalled()
-  })
-
-  it('lets manage_events managers through untouched', async () => {
-    const data = { event: 5, user: 999 }
-    const result = await gate({ req: { user: manager, payload: payloadMock }, operation: 'create', data })
-    expect(result).toBe(data)
-    expect(payloadMock.findByID).not.toHaveBeenCalled()
-  })
-
-  it('rejects a create for a closed event', async () => {
-    payloadMock.findByID.mockResolvedValue({
-      id: 5,
-      registration_opens_at: null,
-      registration_closes_at: '2020-01-01T00:00:00.000Z', // long past
-      status_override: 'auto',
-    })
-    payloadMock.find.mockResolvedValue({ docs: [], totalDocs: 0 }) // no blocking forms
-
-    await expect(
-      gate({
-        req: { user: completeMember, payload: payloadMock },
-        operation: 'create',
-        data: { event: 5 },
-      }),
-    ).rejects.toThrow(/closed/i)
-  })
-
-  it('rejects a duplicate registration for the same event/user', async () => {
-    payloadMock.findByID.mockResolvedValue({
-      id: 5,
-      registration_opens_at: null,
-      registration_closes_at: null,
-      status_override: 'auto',
-    })
-    payloadMock.find
-      .mockResolvedValueOnce({ docs: [], totalDocs: 0 }) // no blocking forms
-      .mockResolvedValueOnce({ docs: [{ id: 1 }], totalDocs: 1 }) // existing registration
-
-    await expect(
-      gate({
-        req: { user: completeMember, payload: payloadMock },
-        operation: 'create',
-        data: { event: 5 },
-      }),
-    ).rejects.toThrow(/already applied/i)
-  })
-
-  it('allows a create when the event is open, no duplicate, and no blocking forms', async () => {
-    payloadMock.findByID.mockResolvedValue({
-      id: 5,
-      registration_opens_at: null,
-      registration_closes_at: null,
-      status_override: 'auto',
-    })
-    payloadMock.find
-      .mockResolvedValueOnce({ docs: [], totalDocs: 0 }) // no blocking forms
-      .mockResolvedValueOnce({ docs: [], totalDocs: 0 }) // no existing registration
-
-    const data = { event: 5 }
-    const result = await gate({
-      req: { user: completeMember, payload: payloadMock },
-      operation: 'create',
-      data,
-    })
-    expect(result).toBe(data)
-  })
-
-  it('does not run on update operations', async () => {
-    const data = { status: 'accepted' }
-    const result = await gate({
-      req: { user: completeMember, payload: payloadMock },
-      operation: 'update',
-      data,
-    })
-    expect(result).toBe(data)
-    expect(payloadMock.findByID).not.toHaveBeenCalled()
   })
 })
 
@@ -590,8 +479,9 @@ describe('events and registrations write access', () => {
     expect(Events.access!.delete!(as(anon))).toBe(false)
   })
 
-  it('lets members register but only managers delete registrations', () => {
-    expect(Registrations.access!.create!(as(member))).toBe(true)
+  it('routes member applications through the server action and limits direct writes to managers', () => {
+    expect(Registrations.access!.create!(as(member))).toBe(false)
+    expect(Registrations.access!.create!(as(manager))).toBe(true)
     expect(Registrations.access!.create!(as(visitor))).toBe(false)
     expect(Registrations.access!.read!(as(member))).toEqual({ user: { equals: 7 } })
     expect(Registrations.access!.update!(as(member))).toEqual({ user: { equals: 7 } })

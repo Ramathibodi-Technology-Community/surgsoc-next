@@ -19,7 +19,11 @@ const DEFAULT_MAPPINGS: FieldMapping[] = [
 
 export function getNestedValue(obj: any, path: string): any {
   if (!obj || !path) return undefined
-  return path.split('.').reduce((current, key) => current?.[key], obj)
+  const value = path.split('.').reduce((current, key) => current?.[key], obj)
+  if (value && typeof value === 'object' && 'id' in value) {
+    return value.label || value.label_th || value.slug || String(value.id)
+  }
+  return value
 }
 
 export function prefillFormData(
@@ -38,7 +42,21 @@ export function prefillFormData(
 
     const mapping = mappings.find(m => m.formFieldName === field.name)
     if (mapping) {
-      const value = getNestedValue(user, mapping.userFieldPath)
+      let value = getNestedValue(user, mapping.userFieldPath)
+      if (mapping.userFieldPath === 'academic.year' && value != null) {
+        if (field.blockType === 'number') {
+          // An unpopulated relationship is a bare tag id; its digits are not the year.
+          value = typeof user.academic?.year === 'object' ? String(value).match(/\d+/)?.[0] : undefined
+        } else if (field.blockType === 'select') {
+          const year = user.academic?.year
+          const candidates = typeof year === 'object'
+            ? [year.slug, year.label, year.label_th, String(year.id)]
+            : [String(year)]
+          value = field.options?.find((option: { label: string; value: string }) =>
+            candidates.includes(option.value) || candidates.includes(option.label)
+          )?.value
+        }
+      }
       if (value !== undefined && value !== null) {
         prefilled[field.name] = value
       }

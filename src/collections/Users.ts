@@ -9,6 +9,7 @@ import { hasPermission, isPrivilegedGroup, isPrivilegedUser, isSuperadmin } from
 import { syncUserGroups } from '../hooks/sync-user-groups'
 import { getMissingProfileFields, isProfileComplete } from '../libs/profile-completion'
 import { getSiteSettings } from '../libs/site-settings'
+import { isStudentEmail } from '../libs/auth/email-domain'
 
 const PRIVILEGED_ROLES = new Set(['admin', 'superadmin'])
 
@@ -147,6 +148,16 @@ export const Users: CollectionConfig = {
       async (args) => {
         const actor = args.req.user as User | null | undefined
 
+        if (!args.req.context?.isOAuthFlow) {
+          delete args.data.student_email_verified
+          if (
+            actor && !hasPermission(actor, 'manage_users') &&
+            args.originalDoc && args.data.email && args.data.email !== args.originalDoc.email
+          ) {
+            throw new Error('Email can only be changed through verified Google sign-in.')
+          }
+        }
+
         if (actor && !isSuperadmin(actor)) {
           const target = args.originalDoc as User | undefined
           const editingSelf = target && String(target.id) === String(actor.id)
@@ -191,19 +202,45 @@ export const Users: CollectionConfig = {
           }
         }
 
-        const incomingRoles = Array.isArray(args.data?.roles) ? args.data.roles : undefined
+        if (
+          actor && !hasPermission(actor, 'manage_users') && Array.isArray(args.data?.roles) &&
+          JSON.stringify(args.data.roles) !== JSON.stringify(args.originalDoc?.roles || [])
+        ) {
+          throw new Error('Only user managers can assign roles.')
+        }
+
+        const merged = {
+          ...(args.originalDoc || {}),
+          ...(args.data || {}),
+          academic: { ...(args.originalDoc?.academic || {}), ...(args.data?.academic || {}) },
+        } as Record<string, unknown>
+
         const existingRoles = Array.isArray(args.originalDoc?.roles) ? args.originalDoc.roles : []
+        // Promote only someone who already is, and stays, a visitor. Payload hands
+        // roles back on every update, so a manager demoting a member to visitor
+        // shows up as a role change and is left alone.
+        const isVisitor = (roles: unknown) => Array.isArray(roles) && roles.length === 1 && roles[0] === 'visitor'
+        if (
+          isVisitor(existingRoles) && isVisitor(args.data?.roles ?? existingRoles) &&
+          (args.req.context?.isOAuthFlow ? args.data.student_email_verified : args.originalDoc?.student_email_verified) === true &&
+          isStudentEmail(String(merged.email || '')) &&
+          getMissingProfileFields(merged).length === 0
+        ) {
+          args.data.roles = ['member']
+        }
+
+        const incomingRoles = Array.isArray(args.data?.roles) ? args.data.roles : undefined
         const effectiveRoles = incomingRoles ?? existingRoles
 
         const requiresCompleteProfile = effectiveRoles.some((role: string) => role !== 'visitor')
 
         if (requiresCompleteProfile) {
-          const merged = {
-            ...(args.originalDoc || {}),
-            ...(args.data || {}),
-          } as Record<string, unknown>
-
-          const missing = getMissingProfileFields(merged)
+          // Existing members may carry legacy gaps (e.g. old-format student IDs),
+          // so for them only block a save that blanks a field that was filled.
+          const alreadyMissing = existingRoles.some((role: string) => role !== 'visitor')
+            ? new Set(getMissingProfileFields((args.originalDoc || {}) as Record<string, unknown>))
+            : new Set<string>()
+          const missing = getMissingProfileFields(merged).filter((label) => !alreadyMissing.has(label))
           if (missing.length > 0) {
             throw new Error(`Profile is incomplete: ${missing.join(', ')}`)
           }
@@ -292,6 +329,16 @@ export const Users: CollectionConfig = {
         readOnly: true,
       },
       index: true,
+    },
+    {
+      name: 'student_email_verified',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: { hidden: true, readOnly: true },
+      access: {
+        create: () => false,
+        update: () => false,
+      },
     },
     {
         name: 'image_url',

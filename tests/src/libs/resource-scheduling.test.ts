@@ -1,5 +1,14 @@
-import { describe, expect, it } from 'vitest'
-import { ResourceScheduling } from '@/libs/resource-scheduling'
+import { describe, expect, it, test } from 'vitest'
+import { ResourceScheduling, registrationCutoff } from '@/libs/resource-scheduling'
+
+test('registration closes at the earlier of event end and explicit close', () => {
+  expect(registrationCutoff('2026-10-02T00:00:00Z', '2026-10-01T00:00:00Z'))
+    .toBe('2026-10-01T00:00:00Z')
+  expect(registrationCutoff('2026-10-01T00:00:00Z', '2026-10-02T00:00:00Z'))
+    .toBe('2026-10-01T00:00:00Z')
+  expect(ResourceScheduling.isOpen({ closes_at: '2020-01-01T00:00:00Z', status_override: 'open' }).isOpen)
+    .toBe(false)
+})
 
 /**
  * `getStatusMessage` is rendered verbatim on the event detail page, under the

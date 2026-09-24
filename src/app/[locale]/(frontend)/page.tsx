@@ -3,12 +3,12 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import { headers } from 'next/headers'
 import EventCard from '@/components/EventCard'
 import Record from '@/components/Record'
 import { mapPayloadEvent, getUserEventStatuses } from '@/libs/event'
 import { Button } from '@/components/ui/button'
 import { getHomeContent } from '@/libs/site-content'
+import { getCurrentUser } from '@/libs/auth/current-user'
 
 import { getDictionary } from '@/i18n/server'
 import { Locale } from '@/i18n/config'
@@ -31,7 +31,7 @@ export default async function Page({
   const homeContent = await getHomeContent()
   const hero = homeContent.hero
   const labels = homeContent.labels
-  const { user } = await payload.auth({ headers: await headers() })
+  const user = await getCurrentUser(payload)
 
   const now = new Date().toISOString()
 

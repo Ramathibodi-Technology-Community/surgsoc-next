@@ -65,4 +65,34 @@ describe('PayloadForm prefill', () => {
 
     expect(input.value).toBe('Bob') // must not be reverted to the prefilled 'Ann'
   })
+
+  it('renders a linked confirmation after submission', async () => {
+    const container = document.createElement('div')
+    document.body.appendChild(container)
+    const root = createRoot(container)
+    const confirmationMessage = {
+      root: {
+        type: 'root', version: 1, direction: 'ltr', format: '', indent: 0,
+        children: [{
+          type: 'paragraph', version: 1, direction: 'ltr', format: '', indent: 0, textFormat: 0, textStyle: '',
+          children: [{
+            type: 'link', version: 3, direction: 'ltr', format: '', indent: 0,
+            fields: { linkType: 'custom', url: 'https://example.com/details' },
+            children: [{ type: 'text', text: 'Event details', version: 1, detail: 0, format: 0, mode: 'normal', style: '' }],
+          }],
+        }],
+      },
+    }
+
+    await act(async () => {
+      root.render(React.createElement(PayloadForm, {
+        form: { fields: [], confirmationMessage } as any,
+        onSubmit: vi.fn(async () => {}),
+      }))
+    })
+    await act(async () => {
+      container.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+    })
+    expect(container.querySelector('a')?.getAttribute('href')).toBe('https://example.com/details')
+  })
 })

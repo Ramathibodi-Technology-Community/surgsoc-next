@@ -1,8 +1,8 @@
 import React from 'react'
 import { getPayload } from 'payload'
 import config from '@payload-config'
+import { getCurrentUser } from '@/libs/auth/current-user'
 import { notFound, redirect } from 'next/navigation'
-import { headers } from 'next/headers'
 import Link from 'next/link'
 import PayloadForm from '@/components/PayloadForm'
 import { submitEventApplication } from '../actions'
@@ -49,8 +49,7 @@ export default async function ApplyPage({ params }: { params: Promise<{ id: stri
   const payload = await getPayload({ config })
 
   // Fetch user early — needed for gate check
-  const headersList = await headers()
-  const { user } = await payload.auth({ headers: headersList })
+  const user = await getCurrentUser(payload)
 
   const event = await payload.findByID({
     collection: 'events',

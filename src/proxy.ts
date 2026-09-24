@@ -2,17 +2,34 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { defaultLocale, locales } from '@/i18n/config'
 
+// Remembers which locale a visitor is actually browsing in, so a locale-less
+// internal link (there are ~40 of them: `/events/4`, `/login`, …) sends a
+// `/th/...` visitor back to `/th/...` instead of always to `defaultLocale`.
+export const LOCALE_COOKIE = 'NEXT_LOCALE'
+
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
-  const hasLocale = locales.some((l) => pathname === `/${l}` || pathname.startsWith(`/${l}/`))
+  const matchedLocale = locales.find((l) => pathname === `/${l}` || pathname.startsWith(`/${l}/`))
 
-  if (!hasLocale) {
+  if (!matchedLocale) {
+    const cookieLocale = request.cookies.get(LOCALE_COOKIE)?.value
+    const locale = (locales as readonly string[]).includes(cookieLocale ?? '')
+      ? (cookieLocale as (typeof locales)[number])
+      : defaultLocale
     const url = request.nextUrl.clone()
-    url.pathname = `/${defaultLocale}${pathname}`
+    url.pathname = `/${locale}${pathname}`
     return NextResponse.redirect(url)
   }
 
-  return NextResponse.next()
+  const response = NextResponse.next()
+  // Only when it changes, so ordinary page loads don't all carry a Set-Cookie.
+  if (request.cookies.get(LOCALE_COOKIE)?.value === matchedLocale) return response
+  response.cookies.set(LOCALE_COOKIE, matchedLocale, {
+    path: '/',
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 24 * 365,
+  })
+  return response
 }
 
 export const config = {

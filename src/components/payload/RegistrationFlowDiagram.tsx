@@ -8,10 +8,11 @@ import React from 'react'
 */
 const TRANSITIONS: { from: string; to: string; when: string }[] = [
   { from: '—', to: 'applicant', when: 'User registers' },
+  { from: '—', to: 'accepted', when: 'Auto-accept enabled' },
+  { from: '—', to: 'confirmed', when: 'Auto-confirm enabled' },
   { from: 'applicant', to: 'accepted', when: 'Organizer selects' },
   { from: 'applicant', to: 'rejected', when: 'Organizer rejects' },
   { from: 'applicant', to: 'subscribed', when: 'Capacity full' },
-  { from: 'subscribed', to: 'accepted', when: 'Slot opens (auto-promote)' },
   { from: 'accepted', to: 'confirmed', when: 'User confirms (CTA)' },
   { from: 'accepted', to: 'declined', when: 'User submits LOA form (CTA)' },
   { from: 'confirmed', to: 'participant', when: 'Event ends' },

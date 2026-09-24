@@ -90,6 +90,19 @@ describe('submitEventApplication', () => {
     expect(payloadMock.db.commitTransaction).not.toHaveBeenCalled()
   })
 
+  it('explains a capacity failure after rolling back the submission', async () => {
+    payloadMock.create.mockResolvedValueOnce({ id: 1 }).mockRejectedValueOnce(
+      // Shape drizzle-orm throws: generic message, pg error on `cause`.
+      Object.assign(new Error('Failed query: insert into "registrations" ...'), {
+        cause: Object.assign(new Error('Event is full'), { code: '23514' }),
+      }),
+    )
+    const submitEventApplication = await importAction()
+
+    await expect(submitEventApplication('3', { a: 'b' })).rejects.toThrow('This event is full.')
+    expect(payloadMock.db.rollbackTransaction).toHaveBeenCalledWith('tx_1')
+  })
+
   it('refuses an event without its own registration form', async () => {
     payloadMock.findByID.mockResolvedValue({ id: 3, name: 'Event', subscription_form: null })
     const submitEventApplication = await importAction()

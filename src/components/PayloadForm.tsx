@@ -8,6 +8,7 @@ import { Button } from './ui/button'
 import { Loader2 } from 'lucide-react'
 import { prefillFormData } from '@/libs/forms/prefillUserData'
 import { getHiddenFields } from '@/libs/forms/conditionalLogic'
+import { RichText } from '@payloadcms/richtext-lexical/react'
 
 interface Props {
   form: FormType
@@ -60,14 +61,16 @@ export default function PayloadForm({ form, onSubmit, user }: Props) {
         states what is now on record; the exclamation adds nothing the check
         mark has not already carried.
       */
-      const confirmation =
-        form.confirmationMessage?.root?.children?.[0]?.children?.[0]?.text ||
-        'Your response is recorded.'
+      const confirmation = form.confirmationMessage
 
       return (
           <div className="rounded-[10px] border border-success/30 bg-success/10 p-6">
               <StatusMark status="complete" label="Submitted" className="mb-3" />
-              <p className="max-w-[52ch] leading-relaxed text-secondary-foreground">{confirmation}</p>
+              {confirmation?.root?.children?.length ? (
+                <RichText className="max-w-[52ch] leading-relaxed text-secondary-foreground" data={confirmation} />
+              ) : (
+                <p className="max-w-[52ch] leading-relaxed text-secondary-foreground">Your response is recorded.</p>
+              )}
               {allowMultiple && (
                 <button
                   type="button"

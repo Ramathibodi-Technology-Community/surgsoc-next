@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import { headers } from 'next/headers'
+import { getCurrentUser } from '@/libs/auth/current-user'
 import { submitFeedbackRequest } from './actions'
 import PageHeader from '@/components/PageHeader'
 import { Button } from '@/components/ui/button'
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 
 export default async function FeedbackPage() {
   const payload = await getPayload({ config })
-  const { user } = await payload.auth({ headers: await headers() })
+  const user = await getCurrentUser(payload)
 
   if (!user) {
     redirect('/login')

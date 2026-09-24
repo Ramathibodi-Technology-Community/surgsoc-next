@@ -35,6 +35,44 @@
     "full": "Full",
     "blocked": "Not Eligible",
     "complete_profile": "Complete your profile",
-    "open_required_form": "Open the required form"
+    "open_required_form": "Open the required form",
+    "sign_in": "Sign in to register"
+  },
+  "applicants": {
+    "back_to_event": "Back to the event",
+    "registrations_for": "Registrations",
+    "tabs": {
+      "all": "All",
+      "pending": "Pending",
+      "accepted": "Accepted",
+      "confirmed": "Confirmed",
+      "rejected": "Rejected"
+    },
+    "select_all": "Select All",
+    "deselect_all": "Deselect All",
+    "accept_count": "Accept ({count})",
+    "reject_count": "Reject ({count})",
+    "table": {
+      "name": "Name",
+      "email": "Email",
+      "student_id": "Student ID",
+      "applied_at": "Applied At",
+      "status": "Status"
+    },
+    "empty": "No applicants found in this category.",
+    "confirm_accept": "Are you sure you want to accept {count} applicants?",
+    "confirm_reject": "Are you sure you want to REJECT {count} applicants?",
+    "limit_exceeded": "Cannot accept: would exceed participant limit of {limit}",
+    "batch_failed": "Failed to update applicants. Please try again.",
+    "status": {
+      "subscribed": "Subscribed",
+      "applicant": "Pending",
+      "accepted": "Accepted",
+      "rejected": "Rejected",
+      "confirmed": "Confirmed",
+      "declined": "Declined",
+      "participant": "Participant",
+      "withdrawn": "Withdrawn"
+    }
   }
 }

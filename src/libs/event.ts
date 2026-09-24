@@ -1,4 +1,4 @@
-import { ResourceScheduling } from './resource-scheduling'
+import { ResourceScheduling, registrationCutoff } from './resource-scheduling'
 import { tagLabel, tagPath, tagRootLabel } from './tags'
 import type { Payload } from 'payload'
 import type { Event as PayloadEvent } from '@/payload-types'
@@ -91,7 +91,7 @@ export function deriveEventCta(
   now: Date = new Date(),
 ): EventCtaConfig | null {
   const eventDate =
-    event.date_begin || event.date_end || event.date || now.toISOString()
+    event.date_end || event.date_begin || event.date || now.toISOString()
   const parsedEventDate = new Date(eventDate)
   const isPast =
     event.eventPhase === 'ended' ||
@@ -102,18 +102,16 @@ export function deriveEventCta(
   const userStatus = event.user_status
   const scheduleStatus = ResourceScheduling.isOpen({
     opens_at: event.opens_at ?? event.registrationOpensAt,
-    closes_at: event.closes_at ?? event.registrationClosesAt,
+    closes_at: registrationCutoff(event.date_end, event.closes_at ?? event.registrationClosesAt),
     status_override: event.status_override,
   })
 
   // Tri-branch: explicit overrides win; otherwise AND the legacy `registrationOpen`
   // flag (from the `is_registration_closed` checkbox) with the time-based schedule.
   const registrationOpen =
-    event.status_override === 'open'
-      ? true
-      : event.status_override === 'closed'
-        ? false
-        : (event.registrationOpen ?? true) && scheduleStatus.isOpen
+    event.status_override !== 'closed' &&
+    (event.status_override === 'open' || (event.registrationOpen ?? true)) &&
+    scheduleStatus.isOpen
   const reflectionOpen = event.reflectionOpen ?? false
   const reflectionPending =
     userStatus === 'participant' &&
@@ -326,7 +324,7 @@ export const mapPayloadEvent = (doc: any, userStatus?: EventUserStatus): Event =
       const begin = doc.date_begin ? new Date(doc.date_begin) : null
       const end = doc.date_end ? new Date(doc.date_end) : null
       const now = new Date()
-      if (end && now > end) return 'ended'
+      if (end && now >= end) return 'ended'
       if (begin && now >= begin) return 'live'
       return 'upcoming'
     })() as EventPhase,

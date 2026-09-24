@@ -1,12 +1,13 @@
 
 import { CollectionConfig } from 'payload'
 import { NotificationService } from '../libs/notifications'
-import { canInteractAsMember, hasPermission } from '../libs/permissions'
-import { checkUserActionGate } from '../libs/user-action-gate'
+import { hasPermission } from '../libs/permissions'
 import type { User } from '../payload-types'
 
 export const Registrations: CollectionConfig = {
   slug: 'registrations',
+  // One registration per member per event; closes the find-then-create race.
+  indexes: [{ fields: ['event', 'user'], unique: true }],
   admin: {
     useAsTitle: 'id',
     group: 'Management',
@@ -16,58 +17,15 @@ export const Registrations: CollectionConfig = {
   },
   hooks: {
     beforeChange: [
-      // REST/API defence: an authenticated non-manager may only create their own
-      // application and may never move status or the selection audit fields.
-      // Local API calls (server actions) run with overrideAccess and no req.user,
-      // so the legitimate confirm/decline flows are untouched.
-      ({ req, data, operation }) => {
+      // Members may edit their own registration (e.g. LOA fields) but never its
+      // status, owner or selection audit. Creation is manage_events-only (access.create);
+      // members apply through submitEventApplication's Local API call.
+      ({ req, data }) => {
         if (!req.user || hasPermission(req.user as User, 'manage_events')) return data
-
         delete data.selected_by
         delete data.selected_at
-
-        if (operation === 'create') {
-          data.user = req.user.id
-          data.status = 'applicant'
-        } else {
-          delete data.user
-          delete data.status
-        }
-
-        return data
-      },
-      // REST/GraphQL defence: `submitEventApplication` runs `checkUserActionGate`
-      // (profile complete, no blocking forms, event window open) plus a duplicate
-      // check before creating a registration — but Payload auto-exposes this
-      // collection at /api/registrations and /api/graphql, so those rules must
-      // also live here or a direct POST bypasses all of them. Same skip
-      // condition as the guard above: managers and Local API callers (no
-      // req.user) are exempt so the admin panel and confirm/decline/auto-promote
-      // flows keep working.
-      async ({ req, data, operation }) => {
-        if (!req.user || hasPermission(req.user as User, 'manage_events')) return data
-        if (operation !== 'create') return data
-
-        const eventId = typeof data.event === 'object' && data.event !== null ? data.event.id : data.event
-        if (!eventId) throw new Error('An event is required to register.')
-
-        const event = await req.payload.findByID({ collection: 'events', id: eventId })
-        if (!event) throw new Error('Event not found.')
-
-        const gate = await checkUserActionGate(req.payload, req.user as User, {
-          resource: event as any,
-        })
-        if (!gate.allowed) throw new Error(gate.message)
-
-        const existing = await req.payload.find({
-          collection: 'registrations',
-          where: {
-            and: [{ event: { equals: eventId } }, { user: { equals: req.user.id } }],
-          },
-          limit: 1,
-        })
-        if (existing.totalDocs > 0) throw new Error('You have already applied to this event.')
-
+        delete data.user
+        delete data.status
         return data
       },
     ],
@@ -82,8 +40,8 @@ export const Registrations: CollectionConfig = {
           email for whatever status it carries — a backfill of last term's
           attendance would invite everyone to an event that already happened.
 
-          It gates the emails only. The form-assignment and auto-promote branches
-          below still run, because those are data the records genuinely need.
+          It gates the emails only. Form-assignment updates still run because
+          those are data the records genuinely need.
         */
         const notify = req.context?.skipNotifications !== true
 
@@ -160,38 +118,6 @@ export const Registrations: CollectionConfig = {
               }
             }
 
-            // 5. Auto-promote from waiting list
-            // If a user declines or withdraws, and auto-promote is enabled, select the next person
-            if (['declined', 'withdrawn'].includes(doc.status)) {
-                if (event.auto_promote) {
-                    // Find next person on waiting list (oldest first)
-                    // Status 'subscribed' maps to waiting list in our logic
-                    const waitingList = await payload.find({
-                        collection: 'registrations',
-                        where: {
-                            and: [
-                                { event: { equals: event.id } },
-                                { status: { equals: 'subscribed' } },
-                            ],
-                        },
-                        sort: 'createdAt',
-                        limit: 1,
-                    })
-
-                    if (waitingList.docs.length > 0) {
-                        const nextUserReg = waitingList.docs[0]
-                        await payload.update({
-                            collection: 'registrations',
-                            id: nextUserReg.id,
-                            data: { status: 'accepted' },
-                        })
-                        payload.logger.info(
-                            `[AutoPromote] Promoted registration ${nextUserReg.id} for event ${event.id} after user ${doc.user} declined/withdrew`
-                        )
-                    }
-                }
-            }
-
         } catch (error) {
             payload.logger.error(`[Notification] Error in afterChange hook for registration ${doc.id}: ${error}`)
         }
@@ -204,7 +130,7 @@ export const Registrations: CollectionConfig = {
        if (hasPermission(user as User, 'manage_events')) return true
        return { user: { equals: user.id } }
     },
-    create: ({ req: { user } }) => canInteractAsMember(user as User),
+    create: ({ req: { user } }) => hasPermission(user as User, 'manage_events'),
     update: ({ req: { user } }) => {
        if (!user) return false
        if (hasPermission(user as User, 'manage_events')) return true

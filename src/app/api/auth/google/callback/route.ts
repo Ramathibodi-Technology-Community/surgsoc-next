@@ -1,5 +1,6 @@
 import crypto from 'crypto'
-import { exchangeCodeForUser, validateEmailDomain } from '@/libs/auth/google'
+import { exchangeCodeForUser } from '@/libs/auth/google'
+import { validateEmailDomain } from '@/libs/auth/email-domain'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { getPayload } from 'payload'
@@ -98,17 +99,27 @@ export async function GET(request: Request) {
         })
         user = usersByEmail[0]
 
-        // Link google_id if found by email
-        if (user) {
-             await payload.update({
-                 collection: 'users',
-                 id: user.id,
-                 data: {
-                     google_id: userInfo.sub,
-                     image_url: userInfo.picture, // Update picture
-                 }
-             })
-        }
+    }
+
+    if (user) {
+        // Follow a changed Google email, unless another account already owns it
+        // (the unique index would otherwise turn this login into a 500).
+        const emailTaken = user.email !== userInfo.email && (await payload.count({
+            collection: 'users',
+            where: { email: { equals: userInfo.email } },
+        })).totalDocs > 0
+
+        user = await payload.update({
+            collection: 'users',
+            id: user.id,
+            data: {
+                ...(emailTaken ? {} : { email: userInfo.email }),
+                google_id: userInfo.sub,
+                image_url: userInfo.picture,
+                student_email_verified: true,
+            },
+            context: { isOAuthFlow: true },
+        })
     }
 
     // specific fallback logic for default logo
@@ -126,6 +137,7 @@ export async function GET(request: Request) {
                 email: userInfo.email,
                 password: crypto.randomBytes(32).toString('hex'),
                 google_id: userInfo.sub,
+                student_email_verified: true,
                 image_url: profilePicture,
                 roles: ['visitor'],
                 name_english: {

@@ -46,7 +46,7 @@ const profileSchema = z.object({
   */
   track: z.string().optional().default(''),
   year: z.string().optional().default(''),
-  student_id: z.string().max(20).optional().default(''),
+  student_id: z.string().max(20).refine(v => !v || /^\d{7}$/.test(v), 'Student ID must be exactly 7 digits').optional().default(''),
   interests: z.array(z.string()).optional().default([]),
   portfolio: z.array(z.object({
     year: z.string(),

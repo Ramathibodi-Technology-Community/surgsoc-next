@@ -77,6 +77,7 @@ export const Events: CollectionConfig = {
                   admin: {
                     date: {
                       pickerAppearance: 'dayAndTime',
+                      timeIntervals: 10,
                     },
                   },
                 },
@@ -86,6 +87,7 @@ export const Events: CollectionConfig = {
                   admin: {
                     date: {
                       pickerAppearance: 'dayAndTime',
+                      timeIntervals: 10,
                     },
                   },
                 },
@@ -148,12 +150,12 @@ export const Events: CollectionConfig = {
                 {
                   name: 'registration_opens_at',
                   type: 'date',
-                  admin: { date: { pickerAppearance: 'dayAndTime' } },
+                  admin: { date: { pickerAppearance: 'dayAndTime', timeIntervals: 10 } },
                 },
                 {
                   name: 'registration_closes_at',
                   type: 'date',
-                  admin: { date: { pickerAppearance: 'dayAndTime' } },
+                  admin: { date: { pickerAppearance: 'dayAndTime', timeIntervals: 10 } },
                 },
               ],
             },
@@ -198,6 +200,18 @@ export const Events: CollectionConfig = {
           label: 'Participants',
           fields: [
             {
+              name: 'registration_selection_mode',
+              type: 'select',
+              label: 'Registration Selection',
+              options: [
+                { label: 'Manual review', value: 'manual' },
+                { label: 'Automatically accept (attendee confirms)', value: 'accepted' },
+                { label: 'Automatically confirm', value: 'confirmed' },
+              ],
+              defaultValue: 'manual',
+              required: true,
+            },
+            {
               name: 'registrationFlowDiagram', // Visual Aid
               type: 'ui',
               admin: {
@@ -209,14 +223,6 @@ export const Events: CollectionConfig = {
             {
               type: 'row',
               fields: [
-                {
-                    name: 'auto_promote',
-                    type: 'checkbox',
-                    label: 'Auto-promote from Waiting List',
-                    admin: {
-                        description: 'Automatically promote waiting list users when a slot opens',
-                    }
-                },
                 {
                     name: 'max_waiting_list',
                     type: 'number',

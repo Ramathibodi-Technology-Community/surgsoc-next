@@ -217,6 +217,7 @@ export default buildConfig({
                         description: 'Automatically close form after this date and time (optional).',
                         date: {
                           pickerAppearance: 'dayAndTime',
+                          timeIntervals: 10,
                         },
                       },
                     },
@@ -361,6 +362,7 @@ export default buildConfig({
                 // Find assignment for this user and form
                 const assignments = await req.payload.find({
                   collection: 'form-assignments',
+                  req,
                   where: {
                     and: [
                       { user: { equals: userId } },
@@ -376,6 +378,7 @@ export default buildConfig({
                     req.payload.update({
                       collection: 'form-assignments',
                       id: assignment.id,
+                      req,
                       data: {
                         completed: true,
                       }
@@ -387,6 +390,7 @@ export default buildConfig({
                 try {
                   const eventsWithLoa = await req.payload.find({
                     collection: 'events',
+                    req,
                     where: { loa_form: { equals: formId } },
                     limit: 10,
                   })
@@ -394,6 +398,7 @@ export default buildConfig({
                   for (const event of eventsWithLoa.docs) {
                     const regs = await req.payload.find({
                       collection: 'registrations',
+                      req,
                       where: {
                         and: [
                           { event: { equals: event.id } },
@@ -406,6 +411,7 @@ export default buildConfig({
                       await req.payload.update({
                         collection: 'registrations',
                         id: reg.id,
+                        req,
                         data: { status: 'declined' },
                       })
                       req.payload.logger.info(`[LOA] Auto-declined registration ${reg.id} for user ${userId}`)
