@@ -72,6 +72,7 @@ export interface Config {
     groups: Group;
     registrations: Registration;
     'form-assignments': FormAssignment;
+    'academic-terms': AcademicTerm;
     attendings: Attending;
     'team-members': TeamMember;
     tags: Tag;
@@ -94,6 +95,7 @@ export interface Config {
     groups: GroupsSelect<false> | GroupsSelect<true>;
     registrations: RegistrationsSelect<false> | RegistrationsSelect<true>;
     'form-assignments': FormAssignmentsSelect<false> | FormAssignmentsSelect<true>;
+    'academic-terms': AcademicTermsSelect<false> | AcademicTermsSelect<true>;
     attendings: AttendingsSelect<false> | AttendingsSelect<true>;
     'team-members': TeamMembersSelect<false> | TeamMembersSelect<true>;
     tags: TagsSelect<false> | TagsSelect<true>;
@@ -384,6 +386,13 @@ export interface Event {
    */
   loa_form?: (number | null) | Form;
   reflection_form?: (number | null) | Form;
+  /**
+   * Defaults to event end when left blank. Set to now to release early.
+   */
+  reflection_release_at?: string | null;
+  reflection_deadline?: string | null;
+  reflection_released_early_at?: string | null;
+  reflection_released_early_by?: (number | null) | User;
   is_reflection_open?: boolean | null;
   owner?: (number | null) | User;
   coordinator?: (number | null) | User;
@@ -726,6 +735,16 @@ export interface Form {
         id?: string | null;
       }[]
     | null;
+  annual_survey_enabled?: boolean | null;
+  /**
+   * Defaults to the current term when you confirm activation below.
+   */
+  survey_academic_year?: (number | null) | AcademicTerm;
+  /**
+   * Optional. Leave blank to activate immediately.
+   */
+  survey_activation_at?: string | null;
+  survey_deadline?: string | null;
   /**
    * Toggle whether this form is currently accepting new responses.
    */
@@ -759,6 +778,19 @@ export interface Form {
     };
     [k: string]: unknown;
   } | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * System-managed — created automatically as each term begins. Read-only here.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "academic-terms".
+ */
+export interface AcademicTerm {
+  id: number;
+  label: string;
+  slug: string;
   updatedAt: string;
   createdAt: string;
 }
@@ -814,6 +846,12 @@ export interface FormAssignment {
    * If checked, the user cannot register for events until this form is completed.
    */
   blocks_registration?: boolean | null;
+  kind?: ('event_reflection' | 'annual_survey') | null;
+  source?: ('automatic_event' | 'annual_policy' | 'early_release' | 'manual_reconcile') | null;
+  active_at?: string | null;
+  cancelled_at?: string | null;
+  source_event?: (number | null) | Event;
+  survey_academic_year?: (number | null) | AcademicTerm;
   submission?: (number | null) | FormSubmission;
   updatedAt: string;
   createdAt: string;
@@ -882,7 +920,10 @@ export interface TeamMember {
    */
   user: number | User;
   position: string;
-  academic_year: string;
+  /**
+   * Defaults to the current term. Change only when logging a past team.
+   */
+  academic_year: number | AcademicTerm;
   /**
    * Uncheck to move to Hall of Fame
    */
@@ -952,6 +993,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'form-assignments';
         value: number | FormAssignment;
+      } | null)
+    | ({
+        relationTo: 'academic-terms';
+        value: number | AcademicTerm;
       } | null)
     | ({
         relationTo: 'attendings';
@@ -1121,6 +1166,10 @@ export interface EventsSelect<T extends boolean = true> {
   participant_detail?: T;
   loa_form?: T;
   reflection_form?: T;
+  reflection_release_at?: T;
+  reflection_deadline?: T;
+  reflection_released_early_at?: T;
+  reflection_released_early_by?: T;
   is_reflection_open?: T;
   owner?: T;
   coordinator?: T;
@@ -1171,7 +1220,23 @@ export interface FormAssignmentsSelect<T extends boolean = true> {
   deadline?: T;
   completed?: T;
   blocks_registration?: T;
+  kind?: T;
+  source?: T;
+  active_at?: T;
+  cancelled_at?: T;
+  source_event?: T;
+  survey_academic_year?: T;
   submission?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "academic-terms_select".
+ */
+export interface AcademicTermsSelect<T extends boolean = true> {
+  label?: T;
+  slug?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1573,6 +1638,10 @@ export interface FormsSelect<T extends boolean = true> {
         message?: T;
         id?: T;
       };
+  annual_survey_enabled?: T;
+  survey_academic_year?: T;
+  survey_activation_at?: T;
+  survey_deadline?: T;
   accept_responses?: T;
   response_deadline?: T;
   response_limit?: T;

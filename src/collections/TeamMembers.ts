@@ -1,5 +1,6 @@
 import { CollectionConfig } from 'payload'
 import { hasPermission } from '../libs/permissions'
+import { ensureAcademicTermTag } from '../libs/academic-term'
 import { User } from '@/payload-types'
 
 export const TeamMembers: CollectionConfig = {
@@ -13,6 +14,18 @@ export const TeamMembers: CollectionConfig = {
     create: ({ req: { user } }) => hasPermission(user as User, 'manage_content'),
     update: ({ req: { user } }) => hasPermission(user as User, 'manage_content'),
     delete: ({ req: { user } }) => hasPermission(user as User, 'manage_content'),
+  },
+  hooks: {
+    // Defaults a new member to the current term so nobody has to know
+    // "academic-terms" exists, let alone create this year's row by hand —
+    // it's the same auto-create AcademicTerms.ts locks humans out of.
+    beforeValidate: [async ({ data, operation, req }) => {
+      if (operation === 'create' && data && !data.academic_year) {
+        const term = await ensureAcademicTermTag(req.payload, new Date(), req)
+        data.academic_year = term.id
+      }
+      return data
+    }],
   },
   fields: [
     {
@@ -36,11 +49,12 @@ export const TeamMembers: CollectionConfig = {
     },
     {
       name: 'academic_year',
-      type: 'text',
+      type: 'relationship',
+      relationTo: 'academic-terms',
       required: true,
       label: 'Academic Year',
       admin: {
-        placeholder: 'e.g. 2025-2026',
+        description: 'Defaults to the current term. Change only when logging a past team.',
       },
     },
     {

@@ -25,9 +25,10 @@ import { StrikethroughFeatureClient as StrikethroughFeatureClient_e70f5e05f09f93
 import { UnderlineFeatureClient as UnderlineFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { BoldFeatureClient as BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { ItalicFeatureClient as ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
+import { ReleaseReflectionButton as ReleaseReflectionButton_1fb5c06f2e418d4be898799c039098a0 } from '@/components/payload/ReleaseReflectionButton'
 import { PermissionsField as PermissionsField_55f42d892e1623820d13c631e6ee30d7 } from '@/components/payload/PermissionsField'
 import { MembersCell as MembersCell_b0be49888b60fd38697f7be60b9416d0 } from '@/components/MembersCell'
-import { FormResponseAcceptanceTab as FormResponseAcceptanceTab_c6872d5abea692c454ccd262ada8144f } from '@/components/payload/FormResponseAcceptanceTab'
+import { AnnualSurveyAction as AnnualSurveyAction_acfb1b852ad3cfc96343886d5d3a2d83 } from '@/components/payload/AnnualSurveyAction'
 import { FormResponsesTab as FormResponsesTab_e52fd9185ff9fbf73be9abdb9f1b3a2b } from '@/components/payload/FormResponsesTab'
 import { AdminQuickLinks as AdminQuickLinks_b6ffa7f7555daa339e8e204027052807 } from '@/components/payload/AdminQuickLinks'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
@@ -61,9 +62,10 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#UnderlineFeatureClient": UnderlineFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#BoldFeatureClient": BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#ItalicFeatureClient": ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
+  "@/components/payload/ReleaseReflectionButton#ReleaseReflectionButton": ReleaseReflectionButton_1fb5c06f2e418d4be898799c039098a0,
   "@/components/payload/PermissionsField#PermissionsField": PermissionsField_55f42d892e1623820d13c631e6ee30d7,
   "@/components/MembersCell#MembersCell": MembersCell_b0be49888b60fd38697f7be60b9416d0,
-  "@/components/payload/FormResponseAcceptanceTab#FormResponseAcceptanceTab": FormResponseAcceptanceTab_c6872d5abea692c454ccd262ada8144f,
+  "@/components/payload/AnnualSurveyAction#AnnualSurveyAction": AnnualSurveyAction_acfb1b852ad3cfc96343886d5d3a2d83,
   "@/components/payload/FormResponsesTab#FormResponsesTab": FormResponsesTab_e52fd9185ff9fbf73be9abdb9f1b3a2b,
   "@/components/payload/AdminQuickLinks#AdminQuickLinks": AdminQuickLinks_b6ffa7f7555daa339e8e204027052807,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1

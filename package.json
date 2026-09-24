@@ -23,6 +23,8 @@
     "db:migrate:prod": "NODE_ENV=production pnpm exec payload migrate",
     "db:refresh": "tsx --import ./scripts/css-stub.mjs scripts/refresh-db.ts",
     "db:fresh": "pnpm run db:migrate && pnpm run db:seed",
+    "db:verify-assignment-seeds": "tsx --import ./scripts/css-stub.mjs scripts/verify-assignment-seeds.ts",
+    "db:check-duplicate-assignments": "tsx --import ./scripts/css-stub.mjs scripts/check-duplicate-assignments.ts",
     "seed": "pnpm run db:seed",
     "test": "vitest run",
     "test:watch": "vitest"

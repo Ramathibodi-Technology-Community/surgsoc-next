@@ -14,6 +14,7 @@ import { getDictionary } from '@/i18n/server'
 import { Locale } from '@/i18n/config'
 import { sampleWhere } from '@/libs/sample-data'
 import { getSiteSettings } from '@/libs/site-settings'
+import { assignmentState } from '@/libs/form-assignment-lifecycle'
 
 export async function generateMetadata(): Promise<Metadata> {
   const { hero } = await getHomeContent()
@@ -74,7 +75,7 @@ export default async function Page({
           sort: '-createdAt',
           limit: 5,
         })
-      ).docs
+      ).docs.filter((assignment: any) => ['pending', 'overdue'].includes(assignmentState(assignment)))
     : []
 
   const statuses = user
@@ -161,7 +162,7 @@ export default async function Page({
           </div>
           <div className="card-grid">
             {pendingAssignments.map((assignment: any) => {
-              const due = assignment.due_date ? new Date(assignment.due_date) : null
+              const due = assignment.deadline ? new Date(assignment.deadline) : null
               const overdue = due ? due.getTime() < Date.now() : false
               return (
                 <Record

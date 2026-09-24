@@ -3,6 +3,7 @@ import { CollectionConfig } from 'payload'
 import { NotificationService } from '../libs/notifications'
 import { hasPermission } from '../libs/permissions'
 import type { User } from '../payload-types'
+import { cancelDormantEventReflection, reconcileEventReflection } from '../libs/form-assignment-lifecycle'
 
 export const Registrations: CollectionConfig = {
   slug: 'registrations',
@@ -78,44 +79,11 @@ export const Registrations: CollectionConfig = {
                 payload.logger.info(`[Notification] Sent confirmation to ${user.email}`)
             }
 
-            // 4. Post-event lifecycle: assign feedback/reflection form to participants
-            if (doc.status === 'participant' && previousDoc?.status !== 'participant') {
-              const rawReflectionFormId =
-                typeof event.reflection_form === 'object' && event.reflection_form !== null
-                  ? event.reflection_form.id
-                  : event.reflection_form
-
-              const reflectionFormId =
-                rawReflectionFormId == null ? null : Number(rawReflectionFormId)
-
-              if (reflectionFormId != null && Number.isFinite(reflectionFormId)) {
-                const existingAssignment = await payload.find({
-                  collection: 'form-assignments',
-                  where: {
-                    and: [
-                      { user: { equals: user.id } },
-                      { form: { equals: reflectionFormId } },
-                    ],
-                  },
-                  limit: 1,
-                })
-
-                if (existingAssignment.totalDocs === 0) {
-                  await payload.create({
-                    collection: 'form-assignments',
-                    data: {
-                      user: user.id,
-                      form: reflectionFormId,
-                      completed: false,
-                      blocks_registration: false,
-                    },
-                  })
-
-                  payload.logger.info(
-                    `[FeedbackAssignment] Assigned reflection form ${reflectionFormId} to user ${user.id} for event ${event.id}`,
-                  )
-                }
-              }
+            // Reflection becomes a dormant task on confirmation, not attendance marking.
+            if (doc.status === 'confirmed') {
+              await reconcileEventReflection(payload, event, undefined, 'automatic_event', req)
+            } else if (previousDoc?.status === 'confirmed') {
+              await cancelDormantEventReflection(payload, event.id, user.id, req)
             }
 
         } catch (error) {

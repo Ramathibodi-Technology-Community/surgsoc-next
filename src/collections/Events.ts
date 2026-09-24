@@ -1,6 +1,7 @@
 
 import { CollectionConfig } from 'payload'
-import { hasPermission } from '../libs/permissions'
+import { canAssignForms, hasPermission } from '../libs/permissions'
+import { idOf, reconcileEventReflection } from '../libs/form-assignment-lifecycle'
 import { tagsOfKind } from '../libs/tags'
 import { User } from '@/payload-types'
 import { isSampleField } from '@/libs/sample-data'
@@ -35,6 +36,27 @@ export const Events: CollectionConfig = {
        if (hasPermission(user as User, 'manage_events')) return true
        return { owner: { equals: user.id } }
     },
+  },
+  hooks: {
+    beforeChange: [({ data, originalDoc, req }) => {
+      const fields = [
+        'reflection_form',
+        'reflection_release_at',
+        'reflection_deadline',
+        'reflection_released_early_at',
+        'reflection_released_early_by',
+      ]
+      const changesAssignment = fields.some((field) => Object.prototype.hasOwnProperty.call(data, field) && data[field] !== originalDoc?.[field])
+      if (changesAssignment && req.user && !canAssignForms(req.user as User)) {
+        throw new Error('Only VP, President, or superadmin can change reflection assignment settings.')
+      }
+      return data
+    }],
+    afterChange: [async ({ doc, req }) => {
+      if (idOf(doc.reflection_form) && doc.reflection_deadline) {
+        await reconcileEventReflection(req.payload, doc, req.user?.id, (req.context?.assignmentSource as 'early_release' | undefined) || 'manual_reconcile', req)
+      }
+    }],
   },
   fields: [
     {
@@ -280,6 +302,26 @@ export const Events: CollectionConfig = {
               name: 'reflection_form',
               type: 'relationship',
               relationTo: 'forms',
+            },
+            {
+              name: 'reflection_release_at',
+              type: 'date',
+              admin: {
+                date: { pickerAppearance: 'dayAndTime', timeIntervals: 10 },
+                description: 'Defaults to event end when left blank. Set to now to release early.',
+              },
+            },
+            {
+              name: 'reflection_deadline',
+              type: 'date',
+              admin: { date: { pickerAppearance: 'dayAndTime', timeIntervals: 10 } },
+            },
+            { name: 'reflection_released_early_at', type: 'date', admin: { readOnly: true } },
+            { name: 'reflection_released_early_by', type: 'relationship', relationTo: 'users', admin: { readOnly: true } },
+            {
+              name: 'release_reflection_now',
+              type: 'ui',
+              admin: { components: { Field: '@/components/payload/ReleaseReflectionButton#ReleaseReflectionButton' } },
             },
             {
               name: 'is_reflection_open',
