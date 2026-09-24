@@ -3,9 +3,8 @@ import { exchangeCodeForUser } from '@/libs/auth/google'
 import { validateEmailDomain } from '@/libs/auth/email-domain'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { getPayload } from 'payload'
+import { getPayload, jwtSign } from 'payload'
 import config from '@payload-config'
-import jwt from 'jsonwebtoken'
 import { getErrorMessage, safeRedirectPath } from '@/libs/utils'
 import { isProfileComplete } from '@/libs/profile-completion'
 
@@ -151,19 +150,19 @@ export async function GET(request: Request) {
         })
     }
 
-    // Generate JWT
+    // Generate JWT — must go through payload's own jwtSign (jose, HS256, with
+    // the authVersion protected header) since JWTAuthentication now rejects
+    // any token that doesn't carry it (payload 3.90 JWT hardening).
     const collectionConfig = payload.collections['users'].config
-    const token = jwt.sign(
-      {
+    const { token } = await jwtSign({
+      fieldsToSign: {
         email: user.email,
         id: user.id,
         collection: 'users',
       },
-      payload.secret,
-      {
-        expiresIn: collectionConfig.auth.tokenExpiration,
-      }
-    )
+      secret: payload.secret,
+      tokenExpiration: collectionConfig.auth.tokenExpiration,
+    })
 
     // Set Payload auth cookie
     cookieStore.set('payload-token', token, {

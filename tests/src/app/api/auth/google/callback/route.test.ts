@@ -21,10 +21,13 @@ function redirectError(url: string) {
 
 vi.mock('@/libs/auth/google', () => ({
   exchangeCodeForUser: exchangeCodeForUserMock,
+}))
+vi.mock('@/libs/auth/email-domain', () => ({
   validateEmailDomain: validateEmailDomainMock,
 }))
 vi.mock('payload', () => ({
   getPayload: getPayloadMock,
+  jwtSign: jwtSignMock,
 }))
 vi.mock('@payload-config', () => ({ default: {} }))
 vi.mock('next/headers', () => ({
@@ -34,9 +37,6 @@ vi.mock('next/navigation', () => ({
   redirect: vi.fn((url: string) => {
     throw redirectError(url)
   }),
-}))
-vi.mock('jsonwebtoken', () => ({
-  default: { sign: jwtSignMock },
 }))
 vi.mock('@/libs/profile-completion', () => ({
   isProfileComplete: isProfileCompleteMock,
@@ -143,7 +143,7 @@ describe('GET /api/auth/google/callback', () => {
     }
     getPayloadMock.mockResolvedValue(payloadMock)
 
-    jwtSignMock.mockReturnValue('signed-token')
+    jwtSignMock.mockResolvedValue({ token: 'signed-token' })
     isProfileCompleteMock.mockReturnValue(false)
 
     const { GET } = await import('@/app/api/auth/google/callback/route')
