@@ -466,7 +466,7 @@ describe('form-assignments access', () => {
     expect(FormAssignments.access!.create!(as(member))).toBe(false)
     expect(FormAssignments.access!.update!(as(member))).toBe(false)
     expect(FormAssignments.access!.delete!(as(member))).toBe(false)
-    expect(FormAssignments.access!.update!(as(formManager))).toBe(true)
+    expect(FormAssignments.access!.update!(as(formManager))).toBe(false)
   })
 })
 

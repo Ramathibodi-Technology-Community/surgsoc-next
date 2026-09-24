@@ -15,6 +15,8 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { getMissingProfileFields } from '@/libs/profile-completion'
 import { findTags } from '@/libs/tags'
+import { getBlockingForms } from '@/libs/form-blocking'
+import { assignmentState } from '@/libs/form-assignment-lifecycle'
 
 export const metadata: Metadata = {
   title: 'My Account | RASS',
@@ -59,6 +61,7 @@ export default async function AccountPage({
     interestOptions,
     trackOptions,
     yearOptions,
+    blockingAssignments,
   ] = await Promise.all([
     payload.find({
       collection: 'form-assignments',
@@ -82,9 +85,10 @@ export default async function AccountPage({
     findTags(payload, 'event_type'),
     findTags(payload, 'track'),
     findTags(payload, 'year'),
+    getBlockingForms(payload, user.id),
   ])
 
-  const assignments = assignmentsResult.docs
+  const assignments = assignmentsResult.docs.filter((assignment: any) => ['pending', 'overdue'].includes(assignmentState(assignment)))
   const registrations = registrationsResult.docs
   const taskCount = assignments.length + registrations.length
 
@@ -184,6 +188,29 @@ export default async function AccountPage({
           trackOptions={trackOptions}
           yearOptions={yearOptions}
         />
+      </section>
+
+      <section className="panel mb-10 p-4 sm:p-[26px]" aria-labelledby="registration-readiness">
+        <div className="rail">
+          <h2 id="registration-readiness" className="type-h2">Event registration readiness</h2>
+          <span className="rail-bar" />
+          {profileComplete && blockingAssignments.length === 0 && <span className="meta-mono">Ready</span>}
+        </div>
+        {profileComplete && blockingAssignments.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Your selected registration details are complete and no overdue forms are blocking you.</p>
+        ) : (
+          <ul className="mt-4 space-y-2 text-sm">
+            {missingProfileFields.map((field) => (
+              <li key={field}><Link className="text-accent hover:underline" href="/account?complete=true">Complete {field}</Link></li>
+            ))}
+            {blockingAssignments.map((assignment: any) => {
+              const form = assignment.form
+              const id = typeof form === 'object' ? form.id : form
+              const title = typeof form === 'object' ? form.title : `Form #${form}`
+              return <li key={assignment.id}><Link className="text-accent hover:underline" href={`/forms/${id}`}>Complete overdue form: {title}</Link></li>
+            })}
+          </ul>
+        )}
       </section>
 
       {/* ── What is still owed ───────────────────────────────────── */}

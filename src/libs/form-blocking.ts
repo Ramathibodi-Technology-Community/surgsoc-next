@@ -1,4 +1,5 @@
 import { Payload } from 'payload'
+import { isBlockingAssignment } from './form-assignment-lifecycle'
 
 /**
  * Incomplete form assignments that block the user from registering.
@@ -13,11 +14,12 @@ export async function getBlockingForms(payload: Payload, userId: string | number
       and: [
         { user: { equals: userId } },
         { completed: { equals: false } },
-        { blocks_registration: { equals: true } },
       ],
     },
     depth: 1,
   })
 
-  return assignments.docs
+  return assignments.docs.filter((assignment: any) =>
+    assignment.kind ? isBlockingAssignment(assignment) : assignment.blocks_registration === true && isBlockingAssignment(assignment),
+  )
 }

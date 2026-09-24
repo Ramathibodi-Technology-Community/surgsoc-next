@@ -49,6 +49,11 @@ export function isSuperadmin(user: User | null | undefined): boolean {
   return Boolean(user?.roles?.includes('superadmin') || hasGroup(user, 'superadmin'))
 }
 
+/** Assignment policy changes carry registration consequences; group capabilities are not enough. */
+export function canAssignForms(user: User | null | undefined): boolean {
+  return Boolean(user?.roles?.some((role) => ['vp', 'admin', 'superadmin'].includes(role)))
+}
+
 export function hasPermission(user: User | null | undefined, permission: Permission): boolean {
   if (!user) return false
 

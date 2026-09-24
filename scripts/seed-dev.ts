@@ -18,6 +18,7 @@
 import { getPayloadInstance, seedAdminEmail, seedPassword } from './shared.js'
 import type { Payload } from 'payload'
 import { upsertTag, tagIdsBySlug } from './seed-tags.js'
+import { currentAcademicTermLabel } from '../src/libs/academic-term.js'
 
 // Registration/assignment hooks fire real notification emails. A dev .env holds
 // a dummy Resend key, so every seeded status change would burn a failing HTTP
@@ -25,8 +26,9 @@ import { upsertTag, tagIdsBySlug } from './seed-tags.js'
 delete process.env.RESEND_API_KEY
 
 /** ms offsets from now — keeps every fixture in a predictable phase. */
+const seedNow = Date.now()
 const at = (days: number, hours = 0) =>
-  new Date(Date.now() + days * 86_400_000 + hours * 3_600_000).toISOString()
+  new Date(seedNow + days * 86_400_000 + hours * 3_600_000).toISOString()
 
 /** Minimal Lexical document — the runtime shape Payload's richText fields store. */
 const rich = (...paragraphs: string[]) => ({
@@ -95,6 +97,13 @@ export async function seedDevData(payloadInstance?: Payload) {
   // Slug → id for the vocabulary seed-db.ts laid down, so the fixtures below
   // read as slugs rather than as ids nobody can check by eye.
   const tag = await tagIdsBySlug(payload)
+
+  console.log('\n📚 Academic Terms...')
+  const currentTermLabel = currentAcademicTermLabel()
+  const [startYear] = currentTermLabel.split('-').map(Number)
+  const previousTermLabel = `${startYear - 1}-${startYear}`
+  const currentAcademicYear = await upsert(payload, 'academic-terms', { slug: { equals: currentTermLabel } }, { slug: currentTermLabel, label: currentTermLabel }, 'current academic term')
+  const previousAcademicYear = await upsert(payload, 'academic-terms', { slug: { equals: previousTermLabel } }, { slug: previousTermLabel, label: previousTermLabel }, 'previous academic term')
 
   // ── Locations ────────────────────────────────────
   // Rooms only. Both campuses are real vocabulary now and come from
@@ -490,6 +499,49 @@ export async function seedDevData(payloadInstance?: Payload) {
     fields: [{ blockType: 'text', name: 'answer', label: 'Answer' }],
   }
 
+  const annualSurveyNow = {
+    title: 'Annual Survey — immediate activation',
+    confirmationType: 'message',
+    confirmationMessage: rich('Thanks for completing the annual survey.'),
+    accept_responses: true,
+    annual_survey_enabled: true,
+    survey_academic_year: currentAcademicYear,
+    survey_deadline: at(14),
+    fields: [{ blockType: 'text', name: 'answer', label: 'Answer', required: true }],
+  }
+  const annualSurveyFuture = {
+    title: 'Annual Survey — future activation',
+    confirmationType: 'message',
+    confirmationMessage: rich('Thanks for completing the annual survey.'),
+    accept_responses: true,
+    annual_survey_enabled: true,
+    survey_academic_year: currentAcademicYear,
+    survey_activation_at: at(2),
+    survey_deadline: at(14),
+    fields: [{ blockType: 'text', name: 'answer', label: 'Answer', required: true }],
+  }
+  const annualSurveyPrevious = {
+    title: 'Annual Survey — previous year',
+    confirmationType: 'message',
+    confirmationMessage: rich('Thanks for completing the annual survey.'),
+    accept_responses: true,
+    annual_survey_enabled: true,
+    survey_academic_year: previousAcademicYear,
+    survey_deadline: at(-1),
+    fields: [{ blockType: 'text', name: 'answer', label: 'Answer', required: true }],
+  }
+  const annualSurveyOverdue = {
+    title: 'Annual Survey — overdue blocker',
+    confirmationType: 'message',
+    confirmationMessage: rich('Thanks for completing the annual survey.'),
+    accept_responses: false,
+    response_deadline: at(-1),
+    annual_survey_enabled: true,
+    survey_academic_year: currentAcademicYear,
+    survey_deadline: at(-1),
+    fields: [{ blockType: 'text', name: 'answer', label: 'Answer', required: true }],
+  }
+
   const formIds: Record<string, number> = {}
   for (const form of [
     applicationForm,
@@ -499,6 +551,10 @@ export async function seedDevData(payloadInstance?: Payload) {
     manuallyClosedForm,
     expiredForm,
     fullForm,
+    annualSurveyNow,
+    annualSurveyFuture,
+    annualSurveyPrevious,
+    annualSurveyOverdue,
   ]) {
     formIds[form.title] = await upsert(
       payload,
@@ -511,6 +567,29 @@ export async function seedDevData(payloadInstance?: Payload) {
   formIds['Participant Feedback & Registration'] = await idOf('forms', {
     title: { equals: 'Participant Feedback & Registration' },
   })
+
+  // `upsert` intentionally preserves hand-edited form fields; these policy
+  // settings are fixtures, so refresh them on every dev seed.
+  for (const survey of [annualSurveyNow, annualSurveyFuture, annualSurveyPrevious, annualSurveyOverdue]) {
+    await payload.update({
+      collection: 'forms', id: formIds[survey.title], overrideAccess: true,
+      data: {
+        annual_survey_enabled: true,
+        survey_academic_year: survey.survey_academic_year,
+        survey_activation_at: survey.survey_activation_at || null,
+        survey_deadline: survey.survey_deadline,
+      },
+    })
+  }
+
+  // Created only after the policies above: proves the user hook assigns every
+  // current-year survey exactly once to a new member, but not last year's one.
+  const lateMember = await upsert(payload, 'users', { email: { equals: 'late-member@test.com' } }, {
+    email: 'late-member@test.com', password: seedPassword(), roles: ['member'],
+    name_english: { first_name: 'Late', last_name: 'Member' },
+    name_thai: { first_name: 'สมาชิก', last_name: 'ใหม่' },
+    academic: { student_id: '6500999', year: tag['year-1'], track: tag['track-md'] },
+  }, 'late member after annual survey enablement')
 
   // ── Events ───────────────────────────────────────
   // One event per lifecycle state the UI branches on.
@@ -533,6 +612,8 @@ export async function seedDevData(payloadInstance?: Payload) {
       subscription_form: formIds['Workshop Application Form'],
       loa_form: formIds['Leave of Absence Request'],
       reflection_form: formIds['Post-Event Reflection'],
+      reflection_deadline: at(30),
+      auto_promote: false,
       max_waiting_list: 10,
       custom_acceptance_email: 'Bring your own loupes if you have them. Lunch is provided.',
       participant_detail: rich(
@@ -616,7 +697,44 @@ export async function seedDevData(payloadInstance?: Payload) {
       registration_closes_at: at(-20),
       status_override: 'auto',
       reflection_form: formIds['Post-Event Reflection'],
+      reflection_release_at: at(-14, 17),
+      reflection_deadline: at(-3),
       is_reflection_open: true,
+    },
+    {
+      name: 'Reflection Added Later (seed fixture)',
+      description: 'Starts without a reflection form; the seed adds it after confirmations to exercise reconciliation.',
+      event_type: tag['type-workshop-full'],
+      department: tag['dept-od'],
+      date_begin: at(-10),
+      date_end: at(-9),
+      is_visible: true,
+      status_override: 'auto',
+    },
+    {
+      name: 'No Reflection Form (seed fixture)',
+      description: 'Confirmed users here must never get an assignment.',
+      event_type: tag['type-workshop-full'],
+      department: tag['dept-od'],
+      date_begin: at(-2),
+      date_end: at(-1),
+      is_visible: true,
+      status_override: 'auto',
+    },
+    {
+      name: 'Early Reflection Release (seed fixture)',
+      description: 'Reflection is explicitly released before its future event end.',
+      event_type: tag['type-workshop-full'],
+      department: tag['dept-od'],
+      date_begin: at(10),
+      date_end: at(11),
+      reflection_form: formIds['Post-Event Reflection'],
+      reflection_release_at: at(-1),
+      reflection_deadline: at(5),
+      reflection_released_early_at: at(-1),
+      reflection_released_early_by: admin ?? superadmin,
+      is_visible: true,
+      status_override: 'auto',
     },
     {
       name: 'Unpublished Planning Event',
@@ -681,6 +799,19 @@ export async function seedDevData(payloadInstance?: Payload) {
     )
   }
 
+  // Reapply lifecycle settings on an idempotent seed. This matters after a
+  // down/up rehearsal: the event rows remain, while the lifecycle columns do not.
+  for (const event of events) {
+    const lifecycle = Object.fromEntries(
+      ['reflection_form', 'reflection_release_at', 'reflection_deadline', 'reflection_released_early_at', 'reflection_released_early_by']
+        .filter((field) => Object.prototype.hasOwnProperty.call(event, field))
+        .map((field) => [field, (event as any)[field]]),
+    )
+    if (Object.keys(lifecycle).length > 0) {
+      await payload.update({ collection: 'events', id: eventIds[event.name], data: lifecycle, overrideAccess: true })
+    }
+  }
+
   // ── Registrations ────────────────────────────────
   // Every status in the enum, spread so the logged-in superadmin sees a
   // different CTA on each event and staff see a populated applicants table.
@@ -689,6 +820,9 @@ export async function seedDevData(payloadInstance?: Payload) {
   const camp = eventIds['SurgSoc Annual Camp 2027']
   const symposium = eventIds['Trauma Symposium 2026']
   const orDay = eventIds['Operating Theatre Observation Day']
+  const lateReflection = eventIds['Reflection Added Later (seed fixture)']
+  const noReflection = eventIds['No Reflection Form (seed fixture)']
+  const earlyRelease = eventIds['Early Reflection Release (seed fixture)']
 
   const registrations = [
     // Workshop — the applicants table, one row per decision state.
@@ -715,7 +849,7 @@ export async function seedDevData(payloadInstance?: Payload) {
     { event: camp, user: users['member5@test.com'], status: 'subscribed' },
     { event: camp, user: users['member7@test.com'], status: 'subscribed' },
 
-    // Past symposium — 'participant' fires the hook that assigns the reflection form.
+    // Past symposium retains participant history but no longer creates reflection work.
     { event: symposium, user: superadmin, status: 'participant' },
     { event: symposium, user: member, status: 'participant' },
     { event: symposium, user: users['member2@test.com'], status: 'participant' },
@@ -724,6 +858,9 @@ export async function seedDevData(payloadInstance?: Payload) {
     // Live event.
     { event: orDay, user: users['member6@test.com'], status: 'confirmed', selected_by: staff, selected_at: at(-3) },
     { event: orDay, user: users['member7@test.com'], status: 'accepted', selected_by: staff, selected_at: at(-3) },
+    { event: lateReflection, user: users['member2@test.com'], status: 'confirmed', selected_by: staff, selected_at: at(-8) },
+    { event: noReflection, user: users['member3@test.com'], status: 'confirmed', selected_by: staff, selected_at: at(-2) },
+    { event: earlyRelease, user: users['member4@test.com'], status: 'confirmed', selected_by: staff, selected_at: at(-1) },
   ]
 
   // `submission` on a registration is a relationship to a real form-submissions
@@ -770,6 +907,13 @@ export async function seedDevData(payloadInstance?: Payload) {
     )
   }
 
+  // Configure the late fixture only after its confirmed registration exists.
+  // The event hook must reconcile that existing confirmation into an active row.
+  await payload.update({
+    collection: 'events', id: lateReflection, overrideAccess: true,
+    data: { reflection_form: formIds['Post-Event Reflection'], reflection_release_at: at(-9), reflection_deadline: at(3) },
+  })
+
   // ── Form submissions ─────────────────────────────
   console.log('\n📨 Form Submissions...')
   const submit = async (formId: number, userId: number, data: Record<string, unknown>) => {
@@ -797,7 +941,7 @@ export async function seedDevData(payloadInstance?: Payload) {
     console.log(`   ✅ submission form ${formId} / user ${userId}`)
   }
 
-  await submit(formIds['Post-Event Reflection'], member, {
+  await submit(formIds['Post-Event Reflection'], users['member2@test.com'], {
     overall_rating: 5,
     difficulty: 7,
     skills_gained: 'suturing,knots',
@@ -830,53 +974,6 @@ export async function seedDevData(payloadInstance?: Payload) {
     overrideAccess: true,
   })
   console.log('   ✅ response limit capped at 1')
-
-  // ── Form assignments ─────────────────────────────
-  // The reflection assignments were created by the registration hook; these add
-  // the deadline / blocking / completed variants.
-  console.log('\n📌 Form Assignments...')
-  const assignments = [
-    {
-      form: formIds['Participant Feedback & Registration'],
-      user: superadmin,
-      deadline: at(7),
-      completed: false,
-      blocks_registration: false,
-    },
-    {
-      // Blocks event registration until completed. Deliberately NOT on the main
-      // superadmin account, so the registration flow stays testable there.
-      form: formIds['Workshop Application Form'],
-      user: users['member2@test.com'],
-      deadline: at(3),
-      completed: false,
-      blocks_registration: true,
-    },
-    {
-      form: formIds['Closed Form (deadline passed)'],
-      user: users['member5@test.com'],
-      deadline: at(-3),
-      completed: false,
-      blocks_registration: false,
-    },
-    {
-      form: formIds['Post-Event Reflection'],
-      user: member,
-      deadline: at(-1),
-      completed: true,
-      blocks_registration: false,
-    },
-  ]
-  for (const a of assignments) {
-    if (!a.form || !a.user) continue
-    await upsert(
-      payload,
-      'form-assignments',
-      { and: [{ form: { equals: a.form } }, { user: { equals: a.user } }] },
-      { ...a, assigned_by: admin ?? superadmin },
-      `form ${a.form} → user ${a.user}${a.blocks_registration ? ' (blocking)' : ''}`,
-    )
-  }
 
   // ── Feature requests ─────────────────────────────
   console.log('\n🐞 Feature Requests / Bug Reports...')
