@@ -14,6 +14,19 @@ export const Events: CollectionConfig = {
     group: 'Management',
     components: {
       beforeListTable: ['@/components/payload/CollectionImportLink#CollectionImportLink'],
+      views: {
+        edit: {
+          applicants: {
+            path: '/applicants',
+            Component: '@/components/payload/EventApplicantsTab#EventApplicantsTab',
+            tab: {
+              label: 'Applicants',
+              href: '/applicants',
+              order: 200,
+            },
+          },
+        },
+      },
     },
   },
   access: {
@@ -232,15 +245,6 @@ export const Events: CollectionConfig = {
               ],
               defaultValue: 'manual',
               required: true,
-            },
-            {
-              name: 'eventApplicantsLink',
-              type: 'ui',
-              admin: {
-                  components: {
-                      Field: '@/components/payload/EventApplicantsLink#default',
-                  }
-              },
             },
             {
               name: 'registrationFlowDiagram', // Visual Aid

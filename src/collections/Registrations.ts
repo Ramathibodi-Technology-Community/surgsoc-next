@@ -12,7 +12,7 @@ export const Registrations: CollectionConfig = {
   admin: {
     useAsTitle: 'id',
     group: 'Management',
-    defaultColumns: ['event', 'user', 'status', 'selected_at'],
+    defaultColumns: ['id', 'event', 'user', 'status', 'selected_at'],
     components: {
       beforeListTable: ['@/components/payload/CollectionImportLink#CollectionImportLink'],
     },
