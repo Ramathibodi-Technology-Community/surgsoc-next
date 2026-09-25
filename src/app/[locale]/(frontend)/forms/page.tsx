@@ -8,6 +8,7 @@ import { Locale } from '@/i18n/config'
 import { Button } from '@/components/ui/button'
 import PageHeader from '@/components/PageHeader'
 import Record from '@/components/Record'
+import { assignmentState } from '@/libs/form-assignment-lifecycle'
 
 export const metadata: Metadata = {
   title: 'Forms | RASS',
@@ -52,7 +53,7 @@ export default async function FormsPage({
     }),
   ])
 
-  const pending = assignmentsResult.docs.filter((a: any) => !a.completed)
+  const pending = assignmentsResult.docs.filter((a: any) => ['pending', 'overdue'].includes(assignmentState(a)))
   const submissions = submissionsResult.docs
 
   const formatDate = (date: string) => new Date(date).toLocaleDateString(locale === 'th' ? 'th-TH' : 'en-GB')
@@ -92,23 +93,23 @@ export default async function FormsPage({
           <div className="card-grid">
             {pending.map((assignment: any) => {
               const form = formOf(assignment)
-              const due = assignment.due_date ? new Date(assignment.due_date) : null
+              const due = assignment.deadline ? new Date(assignment.deadline) : null
+              const year = assignment.survey_academic_year
+              const yearLabel = typeof year === 'object' && year !== null ? year.label : null
               const overdue = due ? due.getTime() < Date.now() : false
+              const deadlineLabel = due
+                ? `${overdue ? 'closed' : 'closes'} ${due.toLocaleDateString(
+                    locale === 'th' ? 'th-TH' : 'en-GB',
+                    { day: 'numeric', month: 'short' },
+                  )}`
+                : 'no closing date'
               return (
                 <Record
                   key={assignment.id}
                   href={`/forms/${form.id}`}
                   title={form.title}
                   tag={t.assigned_forms}
-                  meta={
-                    due
-                      ? /* Tense carries the state: `closes` versus `closed`. */
-                        `${overdue ? 'closed' : 'closes'} ${due.toLocaleDateString(
-                          locale === 'th' ? 'th-TH' : 'en-GB',
-                          { day: 'numeric', month: 'short' },
-                        )}`
-                      : 'no closing date'
-                  }
+                  meta={`${deadlineLabel}${yearLabel ? ` · ${yearLabel}` : ''}`}
                   status={overdue ? 'overdue' : due ? 'pending' : 'no-deadline'}
                 />
               )

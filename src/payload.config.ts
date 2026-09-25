@@ -12,6 +12,7 @@ import { Events } from './collections/Events'
 import { Groups } from './collections/Groups'
 import { Registrations } from './collections/Registrations'
 import { FormAssignments } from './collections/FormAssignments'
+import { AcademicTerms } from './collections/AcademicTerms'
 
 // Form Builder Custom Blocks
 import {
@@ -23,7 +24,8 @@ import {
 } from './blocks/form-fields'
 
 import { User } from './payload-types'
-import { hasPermission, formSubmissionAccess } from './libs/permissions'
+import { canAssignForms, hasPermission, formSubmissionAccess } from './libs/permissions'
+import { assignmentState, isBlockingAssignment, reconcileAnnualSurvey } from './libs/form-assignment-lifecycle'
 import { Attendings } from './collections/Attendings'
 import { Tags } from './collections/Tags'
 import { TeamMembers } from './collections/TeamMembers'
@@ -59,6 +61,7 @@ export default buildConfig({
     Groups,
     Registrations,
     FormAssignments,
+    AcademicTerms,
     Attendings,
     TeamMembers,
     Tags,
@@ -151,6 +154,19 @@ export default buildConfig({
             },
           },
         },
+        hooks: {
+          beforeChange: [({ data, originalDoc, req }) => {
+            const policyFields = ['annual_survey_enabled', 'survey_academic_year', 'survey_activation_at', 'survey_deadline']
+            const changesPolicy = policyFields.some((field) => Object.prototype.hasOwnProperty.call(data, field) && data[field] !== originalDoc?.[field])
+            if (changesPolicy && req.user && !canAssignForms(req.user as User)) {
+              throw new Error('Only VP, President, or superadmin can change annual survey assignment policy.')
+            }
+            return data
+          }],
+          afterChange: [async ({ doc, req }) => {
+            await reconcileAnnualSurvey(req.payload, doc, undefined, req.user?.id, req)
+          }],
+        },
         fields: ({ defaultFields }) => {
           // Separate fields into tabs for better UX
           // defaultFields: title, fields (blocks), submitButtonLabel, confirmationType,
@@ -195,6 +211,69 @@ export default buildConfig({
                     redirect,
                     emails,
                   ].filter(Boolean),
+                },
+                {
+                  label: 'Annual Survey Assignment',
+                  description: 'VP+ only. Each enabled form is assigned once to members in its Academic Year.',
+                  fields: [
+                    {
+                      name: 'annual_survey_enabled',
+                      type: 'checkbox',
+                      label: 'Activate as annual member survey',
+                      // Once active, only the Cancel button (which writes via
+                      // overrideAccess) may flip this back off — no edit path
+                      // for admins to fumble the toggle out from under a live
+                      // assignment run.
+                      access: { update: ({ doc }: any) => !doc?.annual_survey_enabled },
+                    },
+                    {
+                      name: 'survey_academic_year',
+                      type: 'relationship',
+                      relationTo: 'academic-terms',
+                      required: true,
+                      access: { update: ({ doc }: any) => !doc?.annual_survey_enabled },
+                      admin: {
+                        condition: (data: any) => Boolean(data?.annual_survey_enabled),
+                        description: 'Defaults to the current term when you confirm activation below.',
+                      },
+                      validate: (value: unknown, { siblingData }: any) => {
+                        if (!siblingData?.annual_survey_enabled) return true
+                        return value ? true : 'Required to activate.'
+                      },
+                    },
+                    {
+                      name: 'survey_activation_at',
+                      type: 'date',
+                      access: { update: ({ doc }: any) => !doc?.annual_survey_enabled },
+                      admin: {
+                        condition: (data: any) => Boolean(data?.annual_survey_enabled),
+                        date: { pickerAppearance: 'dayAndTime', timeIntervals: 10 },
+                        description: 'Optional. Leave blank to activate immediately.',
+                      },
+                    },
+                    {
+                      name: 'survey_deadline',
+                      type: 'date',
+                      required: true,
+                      access: { update: ({ doc }: any) => !doc?.annual_survey_enabled },
+                      admin: {
+                        condition: (data: any) => Boolean(data?.annual_survey_enabled),
+                        date: { pickerAppearance: 'dayAndTime', timeIntervals: 10 },
+                      },
+                      validate: (value: unknown, { siblingData }: any) => {
+                        if (!siblingData?.annual_survey_enabled) return true
+                        return value ? true : 'Set a deadline before activating.'
+                      },
+                    },
+                    {
+                      name: 'annual_survey_action',
+                      type: 'ui',
+                      admin: {
+                        condition: (data: any) => Boolean(data?.annual_survey_enabled),
+                        components: { Field: '@/components/payload/AnnualSurveyAction#AnnualSurveyAction' },
+                      },
+                    },
+                  ],
                 },
                 {
                   label: 'Response Acceptance',
@@ -248,15 +327,6 @@ export default buildConfig({
                       label: 'Closed Message',
                       admin: {
                         description: 'Message to show when the form is closed (either manually or past deadline).',
-                      },
-                    },
-                    {
-                      name: 'responseAcceptanceManager',
-                      type: 'ui' as const,
-                      admin: {
-                        components: {
-                          Field: '@/components/payload/FormResponseAcceptanceTab#FormResponseAcceptanceTab',
-                        },
                       },
                     },
                   ],
@@ -326,10 +396,20 @@ export default buildConfig({
                     data.single_submission_key = null
                   }
 
-                  if (form.accept_responses === false) {
+                  const assigned = await req.payload.find({
+                    collection: 'form-assignments',
+                    where: { and: [{ form: { equals: formId } }, { user: { equals: userId } }, { completed: { equals: false } }] },
+                    limit: 1, depth: 0,
+                  })
+                  if (assigned.docs.some((assignment: any) => assignmentState(assignment) === 'dormant')) {
+                    throw new Error('This assigned form is not available yet.')
+                  }
+                  const clearingOverdueAssignment = assigned.docs.some((assignment: any) => isBlockingAssignment(assignment))
+
+                  if (!clearingOverdueAssignment && form.accept_responses === false) {
                     throw new Error('This form is no longer accepting responses.')
                   }
-                  if (form.response_deadline && new Date() > new Date(form.response_deadline)) {
+                  if (!clearingOverdueAssignment && form.response_deadline && new Date() > new Date(form.response_deadline)) {
                     throw new Error('The deadline for this form has passed.')
                   }
 
@@ -343,7 +423,7 @@ export default buildConfig({
                       }
                     })
 
-                    if (submissionCount.totalDocs >= payloadForm.response_limit) {
+                    if (!clearingOverdueAssignment && submissionCount.totalDocs >= payloadForm.response_limit) {
                       throw new Error('This form has reached its maximum number of responses.')
                     }
                   }
@@ -359,7 +439,7 @@ export default buildConfig({
                 const userId = typeof doc.user === 'object' ? doc.user.id : doc.user
                 const formId = typeof doc.form === 'object' ? doc.form.id : doc.form
 
-                // Find assignment for this user and form
+                // Database uniqueness guarantees one assignment for this pair.
                 const assignments = await req.payload.find({
                   collection: 'form-assignments',
                   req,
@@ -372,18 +452,14 @@ export default buildConfig({
                   }
                 })
 
-                // Mark as completed
                 if (assignments.totalDocs > 0) {
-                  await Promise.all(assignments.docs.map(assignment =>
-                    req.payload.update({
-                      collection: 'form-assignments',
-                      id: assignment.id,
-                      req,
-                      data: {
-                        completed: true,
-                      }
-                    })
-                  ))
+                  await req.payload.update({
+                    collection: 'form-assignments',
+                    id: assignments.docs[0].id,
+                    data: { completed: true, submission: doc.id },
+                    overrideAccess: true,
+                    req,
+                  })
                 }
 
                 // PHASE 2E: If this form is an event's LOA form, auto-decline the user

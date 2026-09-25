@@ -1,15 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from '@/i18n/client'
+import { BATCHABLE_STATUSES, SEATED_STATUSES } from '@/libs/applicant-status'
 
 interface Applicant {
   id: string
   user: any
   status: string
   createdAt: string
-  submission?: any
+  submission?: { submissionData?: { field: string; value: unknown }[] | null } | string | number | null
 }
 
 interface ApplicantPoolManagerProps {
@@ -18,15 +19,13 @@ interface ApplicantPoolManagerProps {
   participantLimit: number
 }
 
-// Statuses that hold a seat; mirrors the DB capacity trigger.
-const SEATED = ['accepted', 'confirmed', 'participant']
-
 export default function ApplicantPoolManager({
   eventId,
   applicants,
   participantLimit
 }: ApplicantPoolManagerProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [filter, setFilter] = useState<'all' | 'applicant' | 'accepted' | 'confirmed' | 'rejected'>('all')
   const router = useRouter()
   const { t, locale } = useTranslation()
@@ -64,6 +63,13 @@ export default function ApplicantPoolManager({
     { key: 'rejected' as const, label: t('events.applicants.tabs.rejected'), count: String(rejectedCount) },
   ]
 
+  const toggleExpand = (id: string) => {
+    const next = new Set(expanded)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    setExpanded(next)
+  }
+
   const toggleSelect = (id: string) => {
     const newSelected = new Set(selected)
     if (newSelected.has(id)) {
@@ -75,7 +81,7 @@ export default function ApplicantPoolManager({
   }
 
   // Mirrors BATCHABLE_STATUSES in the batch route, which enforces it.
-  const selectable = filteredApplicants.filter(a => ['applicant', 'accepted', 'rejected', 'subscribed'].includes(a.status))
+  const selectable = filteredApplicants.filter(a => BATCHABLE_STATUSES.includes(a.status))
 
   const selectAll = () => {
     setSelected(new Set(selectable.map(a => a.id)))
@@ -87,7 +93,7 @@ export default function ApplicantPoolManager({
 
   const batchAccept = async () => {
     // Check participant limit
-    const seatsAfter = applicants.filter(a => SEATED.includes(a.status) || selected.has(a.id)).length
+    const seatsAfter = applicants.filter(a => SEATED_STATUSES.includes(a.status) || selected.has(a.id)).length
     if (participantLimit > 0 && seatsAfter > participantLimit) {
       alert(tf('events.applicants.limit_exceeded', { limit: participantLimit }))
       return
@@ -253,19 +259,25 @@ export default function ApplicantPoolManager({
               <th className="label-mono whitespace-nowrap border-b border-border-strong p-4 text-left text-muted-foreground">{t('events.applicants.table.student_id')}</th>
               <th className="label-mono whitespace-nowrap border-b border-border-strong p-4 text-left text-muted-foreground">{t('events.applicants.table.applied_at')}</th>
               <th className="label-mono whitespace-nowrap border-b border-border-strong p-4 text-left text-muted-foreground">{t('events.applicants.table.status')}</th>
+              <th className="w-12 border-b border-border-strong p-4" />
             </tr>
           </thead>
           <tbody>
             {filteredApplicants.length === 0 ? (
                 <tr>
-                    <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                    <td colSpan={7} className="p-8 text-center text-muted-foreground">
                         {t('events.applicants.empty')}
                     </td>
                 </tr>
             ) : (
-                filteredApplicants.map((applicant) => (
+                filteredApplicants.map((applicant) => {
+                  const submissionData = typeof applicant.submission === 'object'
+                    ? applicant.submission?.submissionData
+                    : undefined
+                  const isExpanded = expanded.has(applicant.id)
+                  return (
+                  <Fragment key={applicant.id}>
                   <tr
-                    key={applicant.id}
                     className="border-b border-border transition-colors hover:bg-card/60"
                   >
                     <td className="p-4">
@@ -298,7 +310,7 @@ export default function ApplicantPoolManager({
                     </td>
                     <td className="p-4">
                       <span className={`label-mono ${
-                        SEATED.includes(applicant.status)
+                        SEATED_STATUSES.includes(applicant.status)
                           ? 'text-success'
                           : applicant.status === 'rejected'
                             ? 'text-destructive'
@@ -307,8 +319,40 @@ export default function ApplicantPoolManager({
                         {t(`events.applicants.status.${applicant.status}`)}
                       </span>
                     </td>
+                    <td className="p-4">
+                      {applicant.submission && (
+                        <button
+                          type="button"
+                          onClick={() => toggleExpand(applicant.id)}
+                          aria-expanded={isExpanded}
+                          className="label-mono whitespace-nowrap text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:text-foreground"
+                        >
+                          {isExpanded ? t('events.applicants.hide_answers') : t('events.applicants.view_answers')}
+                        </button>
+                      )}
+                    </td>
                   </tr>
-                ))
+                  {isExpanded && (
+                    <tr className="border-b border-border bg-card/40">
+                      <td colSpan={7} className="p-4">
+                        {submissionData && submissionData.length > 0 ? (
+                          <dl className="grid grid-cols-1 gap-x-8 gap-y-2 md:grid-cols-2">
+                            {submissionData.map(({ field, value }) => (
+                              <div key={field}>
+                                <dt className="label-mono text-muted-foreground">{field}</dt>
+                                <dd className="text-sm">{String(value ?? '—')}</dd>
+                              </div>
+                            ))}
+                          </dl>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">{t('events.applicants.no_answers')}</p>
+                        )}
+                      </td>
+                    </tr>
+                  )}
+                  </Fragment>
+                  )
+                })
             )}
           </tbody>
         </table>

@@ -59,6 +59,9 @@
       "applied_at": "Applied At",
       "status": "Status"
     },
+    "view_answers": "View answers",
+    "hide_answers": "Hide answers",
+    "no_answers": "No form answers on record for this applicant.",
     "empty": "No applicants found in this category.",
     "confirm_accept": "Are you sure you want to accept {count} applicants?",
     "confirm_reject": "Are you sure you want to REJECT {count} applicants?",

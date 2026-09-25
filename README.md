@@ -66,4 +66,4 @@ This repository includes `vercel.json` configured to:
 
 ## Data Import Guide
 
-- See `docs/data-import-how-to.md` for step-by-step admin import instructions, per-type schemas, and CSV examples.
+- See `private/data-import-how-to.md` (gitignored, local-only) for step-by-step admin import instructions, per-type schemas, and CSV examples.

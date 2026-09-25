@@ -1,6 +1,5 @@
 import { CollectionConfig } from 'payload'
-import { NotificationService } from '../libs/notifications'
-import { hasPermission } from '../libs/permissions'
+import { canAssignForms, hasPermission } from '../libs/permissions'
 import type { User } from '../payload-types'
 
 export const FormAssignments: CollectionConfig = {
@@ -15,48 +14,17 @@ export const FormAssignments: CollectionConfig = {
        if (hasPermission(user as User, 'manage_forms')) return true
        return { user: { equals: user.id } }
     },
-    create: ({ req: { user } }) => {
-        if (!user) return false
-        return hasPermission(user as User, 'manage_forms')
-    },
-    update: ({ req: { user } }) => {
-       if (!user) return false
-       return hasPermission(user as User, 'manage_forms')
-    },
-    delete: ({ req: { user } }) => {
-       if (!user) return false
-       return hasPermission(user as User, 'manage_forms')
-    },
+    create: ({ req: { user } }) => canAssignForms(user as User),
+    update: () => false,
+    delete: () => false,
   },
   hooks: {
-      afterChange: [
-          async ({ doc, operation, req: { payload } }) => {
-              // Send email on creation
-              if (operation === 'create') {
-                  try {
-                       const form = typeof doc.form === 'string'
-                        ? await payload.findByID({ collection: 'forms', id: doc.form })
-                        : doc.form
-
-                       const user = typeof doc.user === 'string'
-                        ? await payload.findByID({ collection: 'users', id: doc.user })
-                        : doc.user
-
-                       if (form && user) {
-                           await NotificationService.sendFormAssignment({
-                               form,
-                               user,
-                               deadline: doc.deadline,
-                               // message: doc.custom_message // If we add this field
-                           })
-                           payload.logger.info(`[Notification] Sent form assignment to ${user.email}`)
-                       }
-                  } catch (error) {
-                       payload.logger.error(`[Notification] Failed to send form assignment email: ${error}`)
-                  }
-              }
-          }
-      ]
+    beforeChange: [({ data, operation }) => {
+      if (operation === 'create' && (!data.deadline || !data.kind || !data.source)) {
+        throw new Error('New form assignments require a deadline, kind, and source.')
+      }
+      return data
+    }],
   },
   fields: [
     {
@@ -99,6 +67,20 @@ export const FormAssignments: CollectionConfig = {
           description: 'If checked, the user cannot register for events until this form is completed.',
       }
     },
+    {
+      name: 'kind',
+      type: 'select',
+      options: ['event_reflection', 'annual_survey'],
+    },
+    {
+      name: 'source',
+      type: 'select',
+      options: ['automatic_event', 'annual_policy', 'early_release', 'manual_reconcile'],
+    },
+    { name: 'active_at', type: 'date', admin: { date: { pickerAppearance: 'dayAndTime', timeIntervals: 10 } } },
+    { name: 'cancelled_at', type: 'date', admin: { readOnly: true } },
+    { name: 'source_event', type: 'relationship', relationTo: 'events', admin: { readOnly: true } },
+    { name: 'survey_academic_year', type: 'relationship', relationTo: 'academic-terms', admin: { readOnly: true } },
     {
         name: 'submission',
         type: 'relationship',

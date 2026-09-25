@@ -10,6 +10,7 @@ import { syncUserGroups } from '../hooks/sync-user-groups'
 import { getMissingProfileFields, isProfileComplete } from '../libs/profile-completion'
 import { getSiteSettings } from '../libs/site-settings'
 import { isStudentEmail } from '../libs/auth/email-domain'
+import { reconcileAnnualSurveysForUser } from '../libs/form-assignment-lifecycle'
 
 const PRIVILEGED_ROLES = new Set(['admin', 'superadmin'])
 
@@ -250,6 +251,15 @@ export const Users: CollectionConfig = {
         return syncUserGroups(args)
       },
     ],
+    afterChange: [async ({ doc, previousDoc, operation, req }) => {
+      const rolesChanged = operation === 'create' || JSON.stringify(previousDoc?.roles) !== JSON.stringify(doc.roles)
+      if (!rolesChanged) return
+      try {
+        await reconcileAnnualSurveysForUser(req.payload, doc, req)
+      } catch (error) {
+        req.payload.logger.error(`[Users] Annual survey reconciliation failed for user ${doc.id}: ${error}`)
+      }
+    }],
     beforeDelete: [
       async ({ id, req }) => {
         const actor = req.user as User | null | undefined

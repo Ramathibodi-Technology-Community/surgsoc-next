@@ -401,12 +401,24 @@ export async function seedDatabase(payloadInstance?: Payload) {
       continue
     }
 
+    const existingTerm = await payload.find({
+      collection: 'academic-terms',
+      where: { slug: { equals: tm.academic_year } },
+      limit: 1,
+      overrideAccess: true,
+    })
+    const academicYearId = existingTerm.docs[0]?.id ?? (await payload.create({
+      collection: 'academic-terms',
+      data: { slug: tm.academic_year, label: tm.academic_year },
+      overrideAccess: true,
+    })).id
+
     const existing = await payload.find({
       collection: 'team-members',
       where: {
         and: [
           { user: { equals: userId } },
-          { academic_year: { equals: tm.academic_year } },
+          { academic_year: { equals: academicYearId } },
         ],
       },
       limit: 1,
@@ -420,7 +432,7 @@ export async function seedDatabase(payloadInstance?: Payload) {
         data: {
           user: userId,
           position: tm.position,
-          academic_year: tm.academic_year,
+          academic_year: academicYearId,
           is_current: tm.is_current,
           sort_order: tm.sort_order,
         },
