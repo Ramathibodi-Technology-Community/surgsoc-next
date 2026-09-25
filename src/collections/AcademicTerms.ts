@@ -20,7 +20,7 @@ export const AcademicTerms: CollectionConfig = {
   labels: { singular: 'Academic Term', plural: 'Academic Terms' },
   admin: {
     useAsTitle: 'label',
-    group: 'Forms',
+    group: 'Utilities',
     description: 'System-managed — created automatically as each term begins. Read-only here.',
   },
   access: {
