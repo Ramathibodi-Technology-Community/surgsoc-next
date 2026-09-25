@@ -3,6 +3,7 @@
 import { Fragment, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from '@/i18n/client'
+import { BATCHABLE_STATUSES, SEATED_STATUSES } from '@/libs/applicant-status'
 
 interface Applicant {
   id: string
@@ -17,9 +18,6 @@ interface ApplicantPoolManagerProps {
   applicants: Applicant[]
   participantLimit: number
 }
-
-// Statuses that hold a seat; mirrors the DB capacity trigger.
-const SEATED = ['accepted', 'confirmed', 'participant']
 
 export default function ApplicantPoolManager({
   eventId,
@@ -83,7 +81,7 @@ export default function ApplicantPoolManager({
   }
 
   // Mirrors BATCHABLE_STATUSES in the batch route, which enforces it.
-  const selectable = filteredApplicants.filter(a => ['applicant', 'accepted', 'rejected', 'subscribed'].includes(a.status))
+  const selectable = filteredApplicants.filter(a => BATCHABLE_STATUSES.includes(a.status))
 
   const selectAll = () => {
     setSelected(new Set(selectable.map(a => a.id)))
@@ -95,7 +93,7 @@ export default function ApplicantPoolManager({
 
   const batchAccept = async () => {
     // Check participant limit
-    const seatsAfter = applicants.filter(a => SEATED.includes(a.status) || selected.has(a.id)).length
+    const seatsAfter = applicants.filter(a => SEATED_STATUSES.includes(a.status) || selected.has(a.id)).length
     if (participantLimit > 0 && seatsAfter > participantLimit) {
       alert(tf('events.applicants.limit_exceeded', { limit: participantLimit }))
       return
@@ -312,7 +310,7 @@ export default function ApplicantPoolManager({
                     </td>
                     <td className="p-4">
                       <span className={`label-mono ${
-                        SEATED.includes(applicant.status)
+                        SEATED_STATUSES.includes(applicant.status)
                           ? 'text-success'
                           : applicant.status === 'rejected'
                             ? 'text-destructive'

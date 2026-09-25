@@ -1,7 +1,10 @@
 'use client'
 
-import React, { Fragment, useEffect, useMemo, useState } from 'react'
-import { useConfig, useDocumentInfo } from '@payloadcms/ui'
+import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import { useAuth, useConfig, useDocumentInfo } from '@payloadcms/ui'
+import { BATCHABLE_STATUSES, SEATED_STATUSES } from '@/libs/applicant-status'
+import { hasPermission } from '@/libs/permissions'
+import type { User } from '@/payload-types'
 import styles from './EventApplicantsTab.module.css'
 
 type Applicant = {
@@ -11,11 +14,6 @@ type Applicant = {
   createdAt: string
   submission?: { submissionData?: { field: string; value: unknown }[] | null } | string | number | null
 }
-
-// Mirrors SEATED in ApplicantPoolManager (the frontend equivalent of this
-// tab) and the DB capacity trigger.
-const SEATED = ['accepted', 'confirmed', 'participant']
-const BATCHABLE = ['applicant', 'accepted', 'rejected', 'subscribed']
 
 const STATUS_LABEL: Record<string, string> = {
   subscribed: 'Subscribed',
@@ -32,6 +30,11 @@ export const EventApplicantsTab: React.FC = () => {
   const { id } = useDocumentInfo()
   const { config } = useConfig()
   const { routes } = config
+  const { user } = useAuth<User>()
+  // Registrations' read access silently scopes non-manage_events callers to
+  // their own row (HTTP 200, filtered docs), so the fetch response itself
+  // can't distinguish "no permission" from "no applicants" — check directly.
+  const restricted = !hasPermission(user, 'manage_events')
 
   const [applicants, setApplicants] = useState<Applicant[]>([])
   const [participantLimit, setParticipantLimit] = useState(0)
@@ -41,12 +44,14 @@ export const EventApplicantsTab: React.FC = () => {
   const [filter, setFilter] = useState<'all' | 'subscribed' | 'applicant' | 'accepted' | 'confirmed' | 'rejected' | 'declined' | 'participant' | 'withdrawn'>('all')
 
   const eventId = id && id !== 'create' ? String(id) : null
+  const requestedEventId = useRef<string | null>(null)
 
   const load = async () => {
     if (!eventId) {
       setLoading(false)
       return
     }
+    requestedEventId.current = eventId
     try {
       const [eventRes, registrationsRes] = await Promise.all([
         fetch(`${routes.api}/events/${eventId}?depth=0`, { credentials: 'include' }),
@@ -54,6 +59,10 @@ export const EventApplicantsTab: React.FC = () => {
       ])
       const event = await eventRes.json()
       const registrations = await registrationsRes.json()
+
+      // A stale response from an event the admin already navigated away from
+      // must not overwrite the currently displayed event's data.
+      if (requestedEventId.current !== eventId) return
 
       setParticipantLimit(typeof event.participant_limit === 'number' ? event.participant_limit : 0)
       setApplicants(
@@ -68,7 +77,7 @@ export const EventApplicantsTab: React.FC = () => {
     } catch (e) {
       console.error('Failed to load applicants', e)
     } finally {
-      setLoading(false)
+      if (requestedEventId.current === eventId) setLoading(false)
     }
   }
 
@@ -81,18 +90,27 @@ export const EventApplicantsTab: React.FC = () => {
     [applicants, filter],
   )
 
-  const selectable = filteredApplicants.filter((a) => BATCHABLE.includes(a.status))
+  const selectable = filteredApplicants.filter((a) => BATCHABLE_STATUSES.includes(a.status))
+
+  const statusCounts = useMemo(
+    () =>
+      applicants.reduce<Record<string, number>>((counts, a) => {
+        counts[a.status] = (counts[a.status] ?? 0) + 1
+        return counts
+      }, {}),
+    [applicants],
+  )
 
   const TABS = [
     { key: 'all' as const, label: 'All', count: applicants.length },
-    { key: 'subscribed' as const, label: 'Subscribed', count: applicants.filter((a) => a.status === 'subscribed').length },
-    { key: 'applicant' as const, label: 'Pending', count: applicants.filter((a) => a.status === 'applicant').length },
-    { key: 'accepted' as const, label: 'Accepted', count: applicants.filter((a) => a.status === 'accepted').length },
-    { key: 'confirmed' as const, label: 'Confirmed', count: applicants.filter((a) => a.status === 'confirmed').length },
-    { key: 'participant' as const, label: 'Participant', count: applicants.filter((a) => a.status === 'participant').length },
-    { key: 'rejected' as const, label: 'Rejected', count: applicants.filter((a) => a.status === 'rejected').length },
-    { key: 'declined' as const, label: 'Declined', count: applicants.filter((a) => a.status === 'declined').length },
-    { key: 'withdrawn' as const, label: 'Withdrawn', count: applicants.filter((a) => a.status === 'withdrawn').length },
+    { key: 'subscribed' as const, label: 'Subscribed', count: statusCounts.subscribed ?? 0 },
+    { key: 'applicant' as const, label: 'Pending', count: statusCounts.applicant ?? 0 },
+    { key: 'accepted' as const, label: 'Accepted', count: statusCounts.accepted ?? 0 },
+    { key: 'confirmed' as const, label: 'Confirmed', count: statusCounts.confirmed ?? 0 },
+    { key: 'participant' as const, label: 'Participant', count: statusCounts.participant ?? 0 },
+    { key: 'rejected' as const, label: 'Rejected', count: statusCounts.rejected ?? 0 },
+    { key: 'declined' as const, label: 'Declined', count: statusCounts.declined ?? 0 },
+    { key: 'withdrawn' as const, label: 'Withdrawn', count: statusCounts.withdrawn ?? 0 },
   ]
 
   const toggleSelect = (rowId: string) => {
@@ -114,7 +132,7 @@ export const EventApplicantsTab: React.FC = () => {
 
   const runBatch = async (action: 'accept' | 'reject') => {
     if (action === 'accept') {
-      const seatsAfter = applicants.filter((a) => SEATED.includes(a.status) || selected.has(a.id)).length
+      const seatsAfter = applicants.filter((a) => SEATED_STATUSES.includes(a.status) || selected.has(a.id)).length
       if (participantLimit > 0 && seatsAfter > participantLimit) {
         alert(`Cannot accept: would exceed participant limit of ${participantLimit}`)
         return
@@ -194,7 +212,11 @@ export const EventApplicantsTab: React.FC = () => {
           <tbody>
             {filteredApplicants.length === 0 ? (
               <tr>
-                <td colSpan={7} className={styles.emptyState}>No applicants found in this category.</td>
+                <td colSpan={7} className={styles.emptyState}>
+                  {restricted
+                    ? "You don't have permission to view this event's applicants."
+                    : 'No applicants found in this category.'}
+                </td>
               </tr>
             ) : (
               filteredApplicants.map((applicant) => {
@@ -203,7 +225,7 @@ export const EventApplicantsTab: React.FC = () => {
                   ? applicant.submission?.submissionData
                   : undefined
                 const isExpanded = expanded.has(applicant.id)
-                const badgeClass = SEATED.includes(applicant.status)
+                const badgeClass = SEATED_STATUSES.includes(applicant.status)
                   ? styles.badgeSuccess
                   : applicant.status === 'rejected'
                     ? styles.badgeDanger
@@ -213,7 +235,7 @@ export const EventApplicantsTab: React.FC = () => {
                   <Fragment key={applicant.id}>
                     <tr>
                       <td>
-                        {selectable.includes(applicant) && (
+                        {BATCHABLE_STATUSES.includes(applicant.status) && (
                           <input
                             type="checkbox"
                             checked={selected.has(applicant.id)}
