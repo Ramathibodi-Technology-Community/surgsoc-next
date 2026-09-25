@@ -234,6 +234,15 @@ export const Events: CollectionConfig = {
               required: true,
             },
             {
+              name: 'eventApplicantsLink',
+              type: 'ui',
+              admin: {
+                  components: {
+                      Field: '@/components/payload/EventApplicantsLink#default',
+                  }
+              },
+            },
+            {
               name: 'registrationFlowDiagram', // Visual Aid
               type: 'ui',
               admin: {

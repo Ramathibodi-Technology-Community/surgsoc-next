@@ -1,6 +1,7 @@
 import { BulkAssignLink as BulkAssignLink_5f13731fa706dccda436ea15c05f3ce4 } from '@/components/payload/BulkAssignLink'
 import { CollectionImportLink as CollectionImportLink_62083966e95c56ac561ed9fb9180d208 } from '@/components/payload/CollectionImportLink'
 import { JsonView as JsonView_887c92fba6b1d3dd4f15e1deb142bdb6 } from '@/components/payload/JsonView'
+import { default as default_c85ae0f209903a6bd40c9d95032c5438 } from '@/components/payload/EventApplicantsLink'
 import { default as default_8f4d398cc0d3ce91b24ce146f6bbaffe } from '@/components/payload/RegistrationFlowDiagram'
 import { RscEntryLexicalCell as RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { RscEntryLexicalField as RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
@@ -38,6 +39,7 @@ export const importMap = {
   "@/components/payload/BulkAssignLink#BulkAssignLink": BulkAssignLink_5f13731fa706dccda436ea15c05f3ce4,
   "@/components/payload/CollectionImportLink#CollectionImportLink": CollectionImportLink_62083966e95c56ac561ed9fb9180d208,
   "@/components/payload/JsonView#JsonView": JsonView_887c92fba6b1d3dd4f15e1deb142bdb6,
+  "@/components/payload/EventApplicantsLink#default": default_c85ae0f209903a6bd40c9d95032c5438,
   "@/components/payload/RegistrationFlowDiagram#default": default_8f4d398cc0d3ce91b24ce146f6bbaffe,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalCell": RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalField": RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e,
