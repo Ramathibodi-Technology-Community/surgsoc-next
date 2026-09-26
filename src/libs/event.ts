@@ -461,11 +461,14 @@ export function eventWhen(
   const sameDay =
     !end || Number.isNaN(end.getTime()) || start.toDateString() === end.toDateString()
 
+  const timeZone = 'Asia/Bangkok'
+
   const day = (d: Date, withWeekday: boolean) =>
     d.toLocaleDateString(locale, {
       ...(withWeekday ? { weekday: 'short' as const } : {}),
       day: 'numeric',
       month: 'short',
+      timeZone,
     })
 
   if (!sameDay && end) {
@@ -476,6 +479,7 @@ export function eventWhen(
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
+    timeZone,
   })
   return { date: day(start, true), time: time === '00:00' ? 'all day' : time }
 }
