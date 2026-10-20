@@ -26,7 +26,7 @@ export const HomeContent: GlobalConfig = {
           type: 'text',
           admin: {
             description: 'Small line above the title.',
-            placeholder: 'e.g. Est. 2014 \u00b7 Faculty of Medicine, Mahidol University',
+            placeholder: 'e.g. Since 2024 \u00b7 Faculty of Medicine Ramathibodi Hospital, Mahidol University',
           },
         },
         {
