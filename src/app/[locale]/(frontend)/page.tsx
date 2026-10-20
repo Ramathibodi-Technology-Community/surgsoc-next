@@ -208,7 +208,7 @@ export default async function Page({
               />
             </div>
             <div className={index % 2 === 1 ? 'md:order-1' : ''}>
-              <h3 className="type-story mb-3.5">{section.heading}</h3>
+              <h2 className="type-story mb-3.5">{section.heading}</h2>
               <p className="max-w-[52ch] whitespace-pre-line text-base leading-[1.7] text-muted-foreground text-pretty">
                 {section.body}
               </p>

@@ -53,12 +53,18 @@ export default async function RootLayout({
     <html lang={locale} className="scroll-smooth" data-scroll-behavior="smooth">
       <body className={`flex flex-col min-h-screen bg-background text-foreground ${sans.variable} font-sans antialiased`}>
         <I18nProvider locale={locale} dictionary={dictionary}>
+          <a
+            href="#main"
+            className="sr-only focus-visible:not-sr-only focus-visible:fixed focus-visible:left-4 focus-visible:top-3 focus-visible:z-[100] focus-visible:rounded-md focus-visible:bg-primary focus-visible:px-3.5 focus-visible:py-2 focus-visible:text-sm focus-visible:font-medium focus-visible:text-primary-foreground"
+          >
+            {dictionary.nav.skip_to_content}
+          </a>
           <Header />
           {/*
             One column for the whole site: 1100px with a 28px gutter, 44px above
             the content and 80px below. Pages set no outer padding of their own.
           */}
-          <main className="flex-grow w-full max-w-[var(--container-page)] mx-auto px-4 pt-8 pb-16 sm:px-7 sm:pt-11 sm:pb-20">
+          <main id="main" tabIndex={-1} className="focus:outline-none flex-grow w-full max-w-[var(--container-page)] mx-auto px-4 pt-8 pb-16 sm:px-7 sm:pt-11 sm:pb-20">
             {children}
           </main>
           <Footer />
