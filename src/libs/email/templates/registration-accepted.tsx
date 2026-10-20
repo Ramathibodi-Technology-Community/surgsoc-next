@@ -9,6 +9,8 @@ interface RegistrationAcceptedEmailProps {
   location: string;
   confirmUrl: string;
   declineUrl: string;
+  message?: string | null;
+  requiresLoa?: boolean;
 }
 
 export const RegistrationAcceptedEmail: React.FC<RegistrationAcceptedEmailProps> = ({
@@ -18,6 +20,8 @@ export const RegistrationAcceptedEmail: React.FC<RegistrationAcceptedEmailProps>
   location,
   confirmUrl,
   declineUrl,
+  message,
+  requiresLoa,
 }) => {
   return (
     <BaseTemplate previewText={`You've been accepted to ${eventName}!`}>
@@ -29,6 +33,7 @@ export const RegistrationAcceptedEmail: React.FC<RegistrationAcceptedEmailProps>
         We are pleased to inform you that your registration for <strong>{eventName}</strong> has been accepted.
       </Text>
 
+      {message && <Text style={{ ...text, whiteSpace: 'pre-wrap' }}>{message}</Text>}
       <Section style={details}>
         <Text style={detailText}>📅 <strong>Date:</strong> {eventDate}</Text>
         <Text style={detailText}>📍 <strong>Location:</strong> {location}</Text>
@@ -39,14 +44,14 @@ export const RegistrationAcceptedEmail: React.FC<RegistrationAcceptedEmailProps>
       </Text>
 
       <Section style={btnContainer}>
-        <Button style={{...button, backgroundColor: '#007bff'}} href={confirmUrl}>
+        <Button style={{...button, backgroundColor: '#237f70'}} href={confirmUrl}>
           Confirm Attendance
         </Button>
       </Section>
 
       <Section style={btnContainer}>
-        <Button style={{...button, backgroundColor: '#dc3545', marginTop: '10px'}} href={declineUrl}>
-          Decline (Submit Leave of Absence)
+        <Button style={{...button, backgroundColor: 'transparent', color: '#b4232a', border: '1px solid #b4232a', marginTop: '10px'}} href={declineUrl}>
+          {requiresLoa ? 'Decline (Submit Leave of Absence)' : 'Decline'}
         </Button>
       </Section>
     </BaseTemplate>
@@ -68,7 +73,7 @@ const text = {
 };
 
 const details = {
-  backgroundColor: '#f4f4f4',
+  backgroundColor: '#f3f5f8',
   borderRadius: '4px',
   padding: '16px',
   margin: '20px 0',

@@ -38,7 +38,7 @@ export const FormAssignedEmail: React.FC<FormAssignedEmailProps> = ({
       </Section>
 
       <Section style={btnContainer}>
-        <Button style={{...button, backgroundColor: '#007bff'}} href={formUrl}>
+        <Button style={{...button, backgroundColor: '#237f70'}} href={formUrl}>
           Complete Form Now
         </Button>
       </Section>
@@ -64,7 +64,7 @@ const text = {
 };
 
 const details = {
-  backgroundColor: '#eff6ff',
+  backgroundColor: '#eef5f3',
   borderRadius: '4px',
   padding: '16px',
   margin: '20px 0',

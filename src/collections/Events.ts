@@ -1,5 +1,7 @@
+import { publicEventWhere } from '../libs/event-workflow'
+import { validateEvent, preventEventDeletion } from '../libs/event-validation'
 
-import { CollectionConfig } from 'payload'
+import { CollectionConfig, Where } from 'payload'
 import { canAssignForms, hasPermission } from '../libs/permissions'
 import { idOf, reconcileEventReflection } from '../libs/form-assignment-lifecycle'
 import { tagsOfKind } from '../libs/tags'
@@ -32,7 +34,7 @@ export const Events: CollectionConfig = {
   access: {
     read: ({ req: { user } }) => {
       if (user && hasPermission(user as User, 'manage_events')) return true
-      return { is_visible: { equals: true } }
+      return publicEventWhere
     },
     create: ({ req: { user } }) => {
       if (!user) return false
@@ -42,16 +44,17 @@ export const Events: CollectionConfig = {
        if (!user) return false
        if (hasPermission(user as User, 'manage_events')) return true
        // Event owners can update their own events
-       return { owner: { equals: user.id } }
+       return { or: [{ owner: { equals: user.id } }, { 'parent_event.owner': { equals: user.id } }] } as Where
     },
     delete: ({ req: { user } }) => {
        if (!user) return false
        if (hasPermission(user as User, 'manage_events')) return true
-       return { owner: { equals: user.id } }
+       return { or: [{ owner: { equals: user.id } }, { 'parent_event.owner': { equals: user.id } }] } as Where
     },
   },
   hooks: {
-    beforeChange: [({ data, originalDoc, req }) => {
+    beforeDelete: [preventEventDeletion],
+    beforeChange: [validateEvent, ({ data, originalDoc, req }) => {
       const fields = [
         'reflection_form',
         'reflection_release_at',
@@ -79,6 +82,8 @@ export const Events: CollectionConfig = {
         {
           label: 'Basic Info',
           fields: [
+            { name: 'event_structure', type: 'select', required: true, defaultValue: 'standalone', options: ['standalone', 'multi_day', 'day'] },
+            { name: 'parent_event', type: 'relationship', relationTo: 'events', index: true, filterOptions: { event_structure: { equals: 'multi_day' } }, admin: { condition: data => data.event_structure === 'day' } },
             {
               name: 'name',
               type: 'text',
@@ -90,7 +95,9 @@ export const Events: CollectionConfig = {
               relationTo: 'tags',
               label: 'Event Type',
               filterOptions: () => tagsOfKind('event_type'),
-              required: true,
+              // Hidden drafts may omit the type; it is required once the event is visible.
+              validate: (value: unknown, { data }: { data: Partial<{ is_visible: boolean }> }) =>
+                value || !data?.is_visible ? true : 'Event Type is required before publishing.',
               admin: {
                 description: 'Managed under Utilities → Tags. Adding a type is a row, not a deploy.',
               },
@@ -179,6 +186,7 @@ export const Events: CollectionConfig = {
               relationTo: 'forms',
               required: false,
             },
+            { name: 'applicationPreview', type: 'ui', admin: { components: { Field: '@/components/payload/EventFormPreview#EventFormPreview' } } },
             {
               type: 'row',
               fields: [
@@ -328,6 +336,16 @@ export const Events: CollectionConfig = {
               name: 'reflection_deadline',
               type: 'date',
               admin: { date: { pickerAppearance: 'dayAndTime', timeIntervals: 10 } },
+            },
+            {
+              name: 'gallery_links',
+              type: 'array',
+              labels: { singular: 'Photo link', plural: 'Photo links' },
+              admin: { description: 'Links to photo albums from the event. Shown on the event page after it ends.' },
+              fields: [
+                { name: 'title', type: 'text', required: true },
+                { name: 'url', type: 'text', required: true },
+              ],
             },
             { name: 'reflection_released_early_at', type: 'date', admin: { readOnly: true } },
             { name: 'reflection_released_early_by', type: 'relationship', relationTo: 'users', admin: { readOnly: true } },

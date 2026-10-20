@@ -69,7 +69,7 @@ export function tagOrder(ref: TagRef): number {
  * what Locations need. Deeper chains render from the deepest populated level
  * down — pass a higher `depth` to the query if you start nesting three levels.
  */
-export function tagPath(ref: TagRef, locale?: string): string {
+export function tagPath(ref: TagRef, locale?: string, venueFirst = false): string {
   const parts: string[] = []
   let current = tagDoc(ref)
   const seen = new Set<string | number>()
@@ -81,7 +81,7 @@ export function tagPath(ref: TagRef, locale?: string): string {
     current = tagDoc(current.parent)
   }
 
-  return parts.join(', ')
+  return (venueFirst ? parts.reverse() : parts).join(', ')
 }
 
 /** The outermost ancestor's label — a location's campus. */

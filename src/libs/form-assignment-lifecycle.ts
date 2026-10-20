@@ -71,7 +71,7 @@ export async function ensureFormAssignments(payload: Payload, input: EnsureInput
   let created = 0
   let alreadyExisting = 0
   let failed = 0
-  await mapWithConcurrency(users, 10, async (user) => {
+  await mapWithConcurrency(users, input.req?.transactionID ? 1 : 10, async (user) => {
     const old = byUser.get(String(user))
     if (old) {
       alreadyExisting++
@@ -107,6 +107,7 @@ export async function ensureFormAssignments(payload: Payload, input: EnsureInput
       })
       created++
     } catch (error) {
+      if (input.req?.transactionID) throw error
       const raced = await payload.find({
         collection: 'form-assignments',
         where: { and: [{ form: { equals: input.form } }, { user: { equals: user } }] },
@@ -127,7 +128,7 @@ export async function reconcileEventReflection(payload: Payload, event: any, ass
   if (!form || !event.reflection_deadline) return { created: 0, existing: 0, failed: 0 }
   const confirmed = await payload.find({
     collection: 'registrations',
-    where: { and: [{ event: { equals: event.id } }, { status: { equals: 'confirmed' } }] },
+    where: { and: [event.event_structure === 'multi_day' ? { 'event.parent_event': { equals: event.id } } : { event: { equals: event.id } }, { status: { equals: 'confirmed' } }] },
     limit: 0, depth: 0, overrideAccess: true, req,
   })
   return ensureFormAssignments(payload, {
@@ -148,10 +149,10 @@ export async function cancelDormantEventReflection(payload: Payload, eventId: Id
     ] },
     limit: 0, depth: 0, overrideAccess: true, req,
   })
-  await Promise.all(assignments.docs.map((assignment: any) => payload.update({
+  for (const assignment of assignments.docs as any[]) await payload.update({
     collection: 'form-assignments', id: assignment.id, overrideAccess: true, req,
     data: { cancelled_at: new Date().toISOString() },
-  })))
+  })
 }
 
 // Soft-cancels every non-completed annual_survey assignment for this form's
@@ -166,10 +167,10 @@ export async function cancelAnnualSurvey(payload: Payload, formId: Id, req?: any
     ] },
     limit: 0, depth: 0, overrideAccess: true, req,
   })
-  await Promise.all(assignments.docs.map((assignment: any) => payload.update({
+  for (const assignment of assignments.docs as any[]) await payload.update({
     collection: 'form-assignments', id: assignment.id, overrideAccess: true, req,
     data: { cancelled_at: new Date().toISOString() },
-  })))
+  })
   return { cancelled: assignments.docs.length }
 }
 
