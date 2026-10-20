@@ -5,7 +5,12 @@ import { describe, expect, it } from 'vitest'
 const localesDir = path.resolve(__dirname, '../../../src/i18n/locales')
 
 function leafKeys(value: unknown, prefix = ''): string[] {
-  if (value === null || typeof value !== 'object' || Array.isArray(value)) return [prefix]
+  if (Array.isArray(value)) {
+    return value.length === 0
+      ? [prefix]
+      : value.flatMap((child, index) => leafKeys(child, `${prefix}.${index}`))
+  }
+  if (value === null || typeof value !== 'object') return [prefix]
   return Object.entries(value).flatMap(([key, child]) =>
     leafKeys(child, prefix ? `${prefix}.${key}` : key),
   )
