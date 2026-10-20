@@ -21,7 +21,7 @@ export const validateEvent: CollectionBeforeChangeHook = async ({ data, original
   if ((event.event_structure === 'day') !== !!parentId) throw new Error('Only day events have a parent, and every day needs one.')
   if (parentId) {
     if (String(parentId) === String(originalDoc?.id)) throw new Error('An event cannot be its own parent.')
-    await lockEvent(req.payload, parentId, req)
+    if (await req.transactionID) await lockEvent(req.payload, parentId, req)
     const parent = await req.payload.findByID({ collection: 'events', id: parentId, depth: 0, req })
     if (parent.event_structure !== 'multi_day' || begin < Date.parse(parent.date_begin) || end > Date.parse(parent.date_end || parent.date_begin)) throw new Error('Days must fall within a multi-day parent event.')
   }
