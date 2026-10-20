@@ -51,7 +51,7 @@ export function ConfirmSwitch({
   const copy = checked ? off : on
   return (
     <>
-      <Switch {...props} checked={checked} onCheckedChange={() => setOpen(true)} />
+      <Switch {...props} disabled={props.disabled || pending} checked={checked} onCheckedChange={() => setOpen(true)} />
       <ConfirmDialog
         open={open}
         onOpenChange={setOpen}
