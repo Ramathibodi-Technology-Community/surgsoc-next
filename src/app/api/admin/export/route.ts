@@ -7,20 +7,7 @@ import { findTags } from '@/libs/tags'
 import { hasPermission, isUserRole } from '@/libs/permissions'
 import type { User } from '@/payload-types'
 
-/**
- * Escape a value for safe CSV inclusion.
- *
- * Prevents CSV formula injection (CWE-1236) by prefixing cells that start with
- * `= + - @ \t \r` with a single quote, and escapes embedded quotes.
- * See https://owasp.org/www-community/attacks/CSV_Injection
- */
-function csvCell(value: unknown): string {
-  const str = value == null ? '' : String(value)
-  const needsQuoting = /[,"\n\r]/.test(str)
-  const formulaLeading = /^[=+\-@\t\r]/.test(str)
-  const escaped = formulaLeading ? `'${str}` : str
-  return needsQuoting ? `"${escaped.replace(/"/g, '""')}"` : escaped
-}
+import { csvCell } from '@/libs/csv'
 
 export async function POST(req: NextRequest) {
   const payload = await getPayload({ config })

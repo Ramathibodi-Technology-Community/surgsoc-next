@@ -9,13 +9,14 @@ export default function LogoWithFallback() {
   return (
     <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary">
       {imageError ? (
-        <span className="text-[10px] font-bold text-primary-foreground">RASS</span>
+        <span className="text-xs font-bold text-primary-foreground">RASS</span>
       ) : (
         <Image
-          src="/assets/logo_surgsoc.jpg"
+          src="/assets/logo_surgsoc.png"
           alt="RASS"
           width={36}
           height={36}
+          priority
           className="h-9 w-9 object-cover"
           onError={() => setImageError(true)}
         />

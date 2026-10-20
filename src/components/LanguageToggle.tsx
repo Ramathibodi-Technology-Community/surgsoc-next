@@ -26,14 +26,14 @@ export function LanguageToggle({ className }: { className?: string }) {
     locale === defaultLocale ? pathWithoutLocale : `/${locale}${pathWithoutLocale === '/' ? '' : pathWithoutLocale}`
 
   return (
-    <div className={cn('flex overflow-hidden rounded-[10px] border border-border-strong', className)}>
+    <div className={cn('flex overflow-hidden rounded-md border border-border-strong', className)}>
       {locales.map((locale) => (
         <Link
           key={locale}
           href={urlFor(locale)}
           aria-current={locale === current ? 'true' : undefined}
           className={cn(
-            'text-[11px] font-semibold leading-none px-2.5 py-2 transition-colors',
+            'text-xs font-semibold leading-none px-2.5 py-2 transition-colors',
             locale === current
               ? 'bg-secondary text-foreground'
               : 'text-muted-foreground hover:text-foreground',

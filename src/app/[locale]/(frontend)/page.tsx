@@ -1,3 +1,4 @@
+import { eventListPeriod, topLevelEventWhere } from '@/libs/event-workflow'
 import React from 'react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
@@ -47,20 +48,20 @@ export default async function Page({
   const [upcoming, past, memberCount, sessionCount, advisorCount] = await Promise.all([
     payload.find({
       collection: 'events',
-      where: { is_visible: { equals: true }, date_begin: { greater_than_equal: now }, ...notSample },
+      where: { is_visible: { equals: true }, ...eventListPeriod(now), ...topLevelEventWhere, ...notSample },
       sort: 'date_begin',
       limit: 6,
       depth: 2,
     }),
     payload.find({
       collection: 'events',
-      where: { is_visible: { equals: true }, date_begin: { less_than: now }, ...notSample },
+      where: { is_visible: { equals: true }, ...eventListPeriod(now, true), ...topLevelEventWhere, ...notSample },
       sort: '-date_begin',
       limit: 3,
       depth: 2,
     }),
     payload.count({ collection: 'users', where: notSample }),
-    payload.count({ collection: 'events', where: { is_visible: { equals: true }, ...notSample } }),
+    payload.count({ collection: 'events', where: { is_visible: { equals: true }, ...topLevelEventWhere, ...notSample } }),
     payload.count({ collection: 'attendings', where: notSample }),
   ])
 
@@ -95,19 +96,18 @@ export default async function Page({
         Hero and stat band share one bordered panel: the numbers are evidence for
         the claim above them, so a gap between the two would read as two sections.
       */}
-      <section className="panel mb-[52px] rounded-[10px] sm:overflow-visible overflow-hidden">
+      <section className="panel mb-wide rounded-md sm:overflow-visible overflow-hidden">
         <div className="flex flex-wrap items-center">
           <div className="min-w-0 flex-[1_1_420px] px-6 py-10 sm:px-11 sm:pb-13 sm:pt-15">
-            <p className="eyebrow mb-[22px]">{hero.eyebrow}</p>
             <h1 className="type-display mb-2.5 max-w-[20ch]">{hero.heading}</h1>
             <p className="font-display mb-6 text-[clamp(1.3rem,2.2vw,1.7rem)] leading-[1.35] text-secondary-foreground">
               {hero.subheading}
             </p>
-            <p className="type-lead mb-[34px] max-w-[46ch] whitespace-pre-line">{hero.lead}</p>
+            <p className="type-lead mb-std max-w-[46ch] whitespace-pre-line">{hero.lead}</p>
             {/* First button solid, the rest outlined — the hero has one primary action. */}
             <div className="flex flex-wrap gap-3">
               {hero.ctas.map((cta, index) => (
-                <Button key={cta.href + cta.label} asChild size="lg" variant={index === 0 ? 'default' : 'outline'}>
+                <Button key={cta.href + cta.label} asChild variant={index === 0 ? 'default' : 'outline'}>
                   <Link href={cta.href}>{cta.label}</Link>
                 </Button>
               ))}
@@ -120,7 +120,7 @@ export default async function Page({
             being clipped flush with it.
           */}
           <div className="flex w-full min-w-0 flex-[0_1_400px] justify-end px-6 pb-10 sm:min-w-[260px] sm:px-0 sm:pb-0 sm:pt-7">
-            <div className="placeholder-hatch relative z-[2] flex aspect-[4/3] w-full items-end overflow-hidden rounded-[10px] border border-border-strong p-4 shadow-[var(--shadow-lifted)] sm:-mr-6 sm:-mt-6 sm:translate-y-5">
+            <div className="placeholder-hatch relative z-[2] flex aspect-[4/3] w-full items-end overflow-hidden rounded-md border border-border-strong p-4 shadow-[var(--shadow-lifted)] sm:-mr-6 sm:-mt-6 sm:translate-y-5">
               {/*
                 This is the LCP element on the busiest page of the site, and it
                 was the one image with no loading strategy at all. fetchPriority
@@ -141,20 +141,20 @@ export default async function Page({
             <dd className="font-display text-[clamp(2.8rem,5vw,3.8rem)] font-semibold leading-[0.95] tabular-nums">
               {memberCount.totalDocs}
             </dd>
-            <dt className="label-mono mt-2.5 text-accent">{labels.memberStat}</dt>
+            <dt className="type-caption mt-2.5 text-accent">{labels.memberStat}</dt>
           </div>
           <span className="min-w-0 flex-1" />
           {secondaryStats.map((stat, index) => (
             <div key={index}>
               <dd className="font-display text-[26px] font-semibold leading-none tabular-nums">{stat.value}</dd>
-              <dt className="mt-1.5 text-[13px] leading-normal text-muted-foreground">{stat.label}</dt>
+              <dt className="mt-1.5 text-meta leading-normal text-muted-foreground">{stat.label}</dt>
             </div>
           ))}
         </dl>
       </section>
 
       {pendingAssignments.length > 0 && (
-        <section className="mb-[52px]">
+        <section className="mb-wide">
           <div className="rail">
             <h2 className="type-h2">{labels.pendingHeading}</h2>
             <span className="rail-bar" />
@@ -190,14 +190,14 @@ export default async function Page({
         Story sections alternate sides. The order utilities flip the columns on
         odd rows without a second markup branch.
       */}
-      <section className="mb-[52px]">
+      <section className="mb-wide">
         {homeContent.sections.map((section, index) => (
           <article
             key={`${section.heading}-${index}`}
             className="grid grid-cols-[repeat(auto-fit,minmax(min(280px,100%),1fr))] items-center gap-10 border-t border-border py-9 last:border-b"
           >
             <div
-              className={`placeholder-hatch relative aspect-[4/3] overflow-hidden rounded-[10px] border border-border ${
+              className={`placeholder-hatch relative aspect-[4/3] overflow-hidden rounded-md border border-border ${
                 index % 2 === 1 ? 'md:order-2' : ''
               }`}
             >
@@ -208,12 +208,6 @@ export default async function Page({
               />
             </div>
             <div className={index % 2 === 1 ? 'md:order-1' : ''}>
-              {/* The kicker is author-supplied and says something; the `01 ·`
-                  that used to prefix it did not — these sections are not steps
-                  and reading them in order is not required. */}
-              {section.kicker && (
-                <p className="label-mono mb-3.5 text-muted-foreground">{section.kicker}</p>
-              )}
               <h3 className="type-story mb-3.5">{section.heading}</h3>
               <p className="max-w-[52ch] whitespace-pre-line text-base leading-[1.7] text-muted-foreground text-pretty">
                 {section.body}
@@ -226,18 +220,18 @@ export default async function Page({
       <div className="rail">
         <h2 className="type-h2">{labels.upcomingHeading}</h2>
         <span className="rail-bar" />
-        <Link href="/events" className="text-[13px] font-medium text-accent hover:underline">
+        <Link href="/events" className="text-meta font-medium text-accent hover:underline">
           {t.see_more}
         </Link>
       </div>
       {upcomingEvents.length > 0 ? (
-        <div className="card-grid mb-[52px]">
+        <div className="card-grid mb-wide">
           {upcomingEvents.map((event) => (
             <EventCard key={event.id} event={event} imageDisplay={siteSettings.eventCardImageDisplay} />
           ))}
         </div>
       ) : (
-        <div className="empty-note mb-[52px]">
+        <div className="empty-note mb-wide">
           <p className="font-medium text-secondary-foreground">{t.no_upcoming}</p>
         </div>
       )}
@@ -251,11 +245,11 @@ export default async function Page({
           <div className="rail">
             <h2 className="type-h2">{labels.pastHeading}</h2>
             <span className="rail-bar" />
-            <Link href="/events" className="text-[13px] font-medium text-accent hover:underline">
+            <Link href="/events" className="text-meta font-medium text-accent hover:underline">
               {labels.pastLink}
             </Link>
           </div>
-          <div className="card-grid mb-[52px]">
+          <div className="card-grid mb-wide">
             {past.docs.map((doc) => {
               const event = mapPayloadEvent(doc)
               return (

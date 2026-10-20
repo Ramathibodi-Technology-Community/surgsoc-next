@@ -46,7 +46,7 @@ export async function submitForm(formId: string | number, data: Record<string, u
           form: typeof formId === 'string' ? parseInt(formId) : formId,
           submissionData: Object.entries(data).map(([field, value]) => ({
             field,
-            value: String(value),
+            value: Array.isArray(value) ? JSON.stringify(value) : String(value ?? ''),
           })),
           user: user.id,
         },

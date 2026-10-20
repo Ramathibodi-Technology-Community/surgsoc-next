@@ -16,7 +16,7 @@ export default function MobileMenu({ enableI18n = false }: { enableI18n?: boolea
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger
         aria-label="Open menu"
-        className="flex cursor-pointer flex-col gap-1 rounded-[10px] border border-border-strong p-2.5 md:hidden"
+        className="flex cursor-pointer flex-col gap-1 rounded-md border border-border-strong p-2.5 lg:hidden"
       >
         <span className="h-[1.5px] w-4 bg-secondary-foreground" />
         <span className="h-[1.5px] w-4 bg-secondary-foreground" />
@@ -30,7 +30,7 @@ export default function MobileMenu({ enableI18n = false }: { enableI18n?: boolea
         className="w-[300px] gap-0 border-border bg-surface p-0"
       >
         <div className="flex h-[60px] items-center justify-between gap-3 border-b border-border-strong px-4">
-          <SheetTitle className="label-mono text-muted-foreground">Menu</SheetTitle>
+          <SheetTitle className="type-caption text-muted-foreground">Menu</SheetTitle>
         </div>
         <nav className="flex flex-col">
           {navLinks.map((link) => {
@@ -61,7 +61,7 @@ export default function MobileMenu({ enableI18n = false }: { enableI18n?: boolea
         */}
         {enableI18n && (
           <div className="mt-auto flex items-center justify-between gap-3 border-t border-border px-4 py-[18px] sm:hidden">
-            <span className="label-mono text-muted-foreground">Language</span>
+            <span className="type-caption text-muted-foreground">Language</span>
             <LanguageToggle />
           </div>
         )}

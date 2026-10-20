@@ -63,7 +63,7 @@ export default function EventCard({
   const fit = imageDisplay === 'crop-to-fit' ? 'object-cover' : 'object-contain'
 
   return (
-    <article className={cn('event-card', className)} {...props}>
+    <article className={cn('event-card', className)} data-group={event.structure === 'multi_day' ? '' : undefined} {...props}>
       <div className={cn('placeholder-hatch event-poster', expand && 'event-poster--expand')}>
         {event.posterUri && isOptimizedPosterUrl(event.posterUri) ? (
           expand ? (
@@ -110,14 +110,14 @@ export default function EventCard({
 
       <div className="event-foot">
         {showPrimary ? (
-          <Button asChild size="sm" variant={cta.kind === 'register' ? 'default' : 'outline'}>
+          <Button asChild variant={cta.kind === 'register' ? 'default' : 'outline'}>
             <Link href={cta.href ?? `/events/${event.id}`}>{label(cta.label)}</Link>
           </Button>
         ) : null}
         <span className="flex-1" />
         <Link
           href={`/events/${event.id}`}
-          className="px-1.5 text-[13px] font-medium text-accent hover:underline"
+          className="px-1.5 text-meta font-medium text-accent hover:underline"
         >
           See more
         </Link>

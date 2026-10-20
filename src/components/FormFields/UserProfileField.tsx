@@ -1,9 +1,8 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import React, { useId } from 'react'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
-import { getNestedValue } from '@/libs/forms/prefillUserData'
 
 interface UserProfileFieldProps {
   label: string
@@ -25,21 +24,12 @@ export default function UserProfileField({
   required,
   user,
 }: UserProfileFieldProps) {
-  // Auto-fill from user profile on mount / when user changes
-  useEffect(() => {
-    if (user && profileField) {
-      const profileValue = getNestedValue(user, profileField)
-      if (profileValue !== undefined && profileValue !== null) {
-        onChange(String(profileValue))
-      }
-    }
-   
-  }, [user, profileField])
+  const inputId = useId()
 
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <Label>
+        <Label htmlFor={inputId}>
           {label} {required && <span className="text-destructive">*</span>}
         </Label>
         {readOnly && (
@@ -49,6 +39,7 @@ export default function UserProfileField({
         )}
       </div>
       <Input
+        id={inputId}
         type="text"
         value={value || ''}
         onChange={(e) => !readOnly && onChange(e.target.value)}

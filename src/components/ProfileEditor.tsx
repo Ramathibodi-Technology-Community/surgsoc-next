@@ -1,5 +1,6 @@
 'use client'
 
+import { DatePicker } from '@/components/ui/date-time-picker'
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateProfile } from '@/app/[locale]/(frontend)/account/actions'
@@ -14,6 +15,9 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Loader2, Plus, Trash2 } from 'lucide-react'
 import { cn } from '@/libs/utils'
+
+const SOCIAL_PLATFORMS = ['Instagram', 'Facebook', 'LINE', 'X', 'LinkedIn', 'TikTok', 'YouTube', 'GitHub']
+const SOCIAL_OTHER = '__other'
 
 // ─── Editable Section Wrapper ───────────────────────────────────────
 /**
@@ -32,6 +36,16 @@ import { cn } from '@/libs/utils'
  * it, quiet. They are not a pair to choose between. "Cancel" is banned as a
  * label site-wide — here it would also read as cancelling a registration.
  */
+function DobField({ label, defaultValue }: { label: string; defaultValue: string }) {
+  const [dob, setDob] = useState(defaultValue)
+  return (
+    <div className="space-y-1">
+      <Label htmlFor="dob" className="text-xs text-muted-foreground">{label}</Label>
+      <DatePicker id="dob" name="dob" value={dob} onChange={setDob} />
+    </div>
+  )
+}
+
 function EditableSection({
   section,
   title,
@@ -83,7 +97,7 @@ function EditableSection({
           <button
             type="button"
             onClick={() => setEditing(true)}
-            className="rounded-md text-[13px] font-medium text-accent transition-colors hover:text-accent/80 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="rounded-md text-meta font-medium text-accent transition-colors hover:text-accent/80 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
           >
             {t('account.actions.edit')}
           </button>
@@ -107,13 +121,10 @@ function EditableSection({
           seven fields, and a Save button above them is a long way from the last
           thing you typed. Separated by space — a card footer takes no hairline.
         */}
-        {/* 34px, the card-footer size — and the floor, because it is already the
-            smallest a thumb can reliably hit. `size="sm"` alone is 32. */}
         <div className="mt-5 flex flex-wrap items-center gap-3">
           <Button
             type="submit"
-            size="sm"
-            className="h-[34px] px-4"
+            className="px-4"
             disabled={saving}
             aria-busy={saving}
           >
@@ -126,7 +137,7 @@ function EditableSection({
               setEditing(false)
               setError(null)
             }}
-            className="inline-flex h-[34px] items-center rounded-md px-3 text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="inline-flex h-[34px] items-center rounded-md px-3 text-meta font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
           >
             {t('account.actions.discard')}
           </button>
@@ -137,7 +148,7 @@ function EditableSection({
             would not say which one it meant.
           */}
           {error && (
-            <p role="alert" aria-live="assertive" className="text-[13px] font-medium text-destructive">
+            <p role="alert" aria-live="assertive" className="text-meta font-medium text-destructive">
               {error}
             </p>
           )}
@@ -241,7 +252,7 @@ export default function ProfileEditor({
             <Field label={label('last_name_english')} name="last_name_english" defaultValue={user.name_english?.last_name} />
             <Field label={label('nickname_thai')} name="nickname_thai" defaultValue={user.name_thai?.nickname} />
             <Field label={label('nickname_english')} name="nickname_english" defaultValue={user.name_english?.nickname} />
-            <Field label={label('dob')} name="dob" type="date" defaultValue={user.dob ? new Date(user.dob).toISOString().split('T')[0] : ''} />
+            <DobField label={label('dob')} defaultValue={user.dob ? new Date(user.dob).toISOString().split('T')[0] : ''} />
           </div>
         }
       >
@@ -299,7 +310,7 @@ export default function ProfileEditor({
       <EditableSection
         section="contact"
         title={t('account.sections.contact')}
-        serialize={(fd) => fd.set('social_media_json', JSON.stringify(socialMedia))}
+        serialize={(fd) => fd.set('social_media_json', JSON.stringify(socialMedia.map(item => ({ ...item, platform: String(item.platform ?? '').trim() }))))}
         editForm={
           <div className="space-y-6">
             {/* Contact fields */}
@@ -315,13 +326,26 @@ export default function ProfileEditor({
               <Label className="text-xs text-muted-foreground">{label('social_media')}</Label>
               {socialMedia.map((item, i) => (
                 <div key={i} className="flex gap-2 items-center bg-muted/20 p-3 rounded-lg border">
-                  <Input
-                    value={item.platform}
-                    onChange={e => { const n = [...socialMedia]; n[i] = { ...n[i], platform: e.target.value }; setSocialMedia(n) }}
-                    aria-label={`${label('platform')} ${i + 1}`}
-                    placeholder={label('platform')}
-                    className="flex-1 h-8 text-sm"
-                  />
+                  {/* Common platforms are a pick; anything else is typed. A stored platform outside the list reads as "Other". */}
+                  <Select
+                    value={SOCIAL_PLATFORMS.includes(item.platform) ? item.platform : item.platform ? SOCIAL_OTHER : ''}
+                    onValueChange={value => { const n = [...socialMedia]; n[i] = { ...n[i], platform: value === SOCIAL_OTHER ? ' ' : value }; setSocialMedia(n) }}
+                  >
+                    <SelectTrigger aria-label={`${label('platform')} ${i + 1}`} className="h-8 w-36 shrink-0 text-sm"><SelectValue placeholder={label('platform')} /></SelectTrigger>
+                    <SelectContent>
+                      {SOCIAL_PLATFORMS.map(name => <SelectItem key={name} value={name}>{name}</SelectItem>)}
+                      <SelectItem value={SOCIAL_OTHER}>{label('platform_other')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {item.platform && !SOCIAL_PLATFORMS.includes(item.platform) && (
+                    <Input
+                      value={item.platform.trim() === '' ? '' : item.platform}
+                      onChange={e => { const n = [...socialMedia]; n[i] = { ...n[i], platform: e.target.value || ' ' }; setSocialMedia(n) }}
+                      aria-label={`${label('platform_other')} ${i + 1}`}
+                      placeholder={label('platform_other')}
+                      className="w-28 shrink-0 h-8 text-sm"
+                    />
+                  )}
                   <Input
                     value={item.handle}
                     onChange={e => { const n = [...socialMedia]; n[i] = { ...n[i], handle: e.target.value }; setSocialMedia(n) }}
@@ -334,7 +358,7 @@ export default function ProfileEditor({
                   </Button>
                 </div>
               ))}
-              <Button type="button" variant="outline" size="sm" onClick={() => setSocialMedia([...socialMedia, { platform: '', handle: '' }])}>
+              <Button type="button" variant="outline" onClick={() => setSocialMedia([...socialMedia, { platform: '', handle: '' }])}>
                 <Plus className="w-4 h-4 mr-2" /> {t('account.actions.add_account')}
               </Button>
             </div>
@@ -399,7 +423,7 @@ export default function ProfileEditor({
                 </Button>
               </div>
             ))}
-            <Button type="button" variant="outline" size="sm" onClick={() => setPortfolio([...portfolio, { year: String(new Date().getFullYear()), activity: '', role: '' }])}>
+            <Button type="button" variant="outline" onClick={() => setPortfolio([...portfolio, { year: String(new Date().getFullYear()), activity: '', role: '' }])}>
                 <Plus className="w-4 h-4 mr-2" /> {t('account.actions.add_activity')}
             </Button>
           </div>

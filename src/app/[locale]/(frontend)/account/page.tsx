@@ -134,14 +134,14 @@ export default async function AccountPage({
               pushing the roles and the link off the card. */}
           <div className="min-w-0 flex-1 basis-[180px]">
             <p className="font-display text-xl font-semibold leading-[1.3]">{fullName}</p>
-            <p className="meta-mono [overflow-wrap:anywhere]">{user.email}</p>
+            <p className="type-figure [overflow-wrap:anywhere]">{user.email}</p>
           </div>
 
           <div className="flex flex-wrap gap-2.5">
             {user.roles?.map((role) => (
               <span
                 key={role}
-                className="label-mono rounded-full border border-border-strong px-3 py-[7px] capitalize text-muted-foreground"
+                className="type-caption rounded-full border border-border-strong px-3 py-[7px] capitalize text-muted-foreground"
               >
                 {role}
               </span>
@@ -152,7 +152,7 @@ export default async function AccountPage({
               one colour that means "this cannot be undone". */}
           <Link
             href="/admin/logout"
-            className="text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+            className="text-meta font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
             Log out
           </Link>
@@ -162,13 +162,13 @@ export default async function AccountPage({
           /* Separated by space, inside the same block — it is a status about
              the person named directly above it, not a page-level notice, and
              lifting it out would make it read as one. */
-          <div className="mt-[22px] flex flex-wrap items-start gap-3.5">
+          <div className="mt-std flex flex-wrap items-start gap-3.5">
             <StatusDot status="pending" className="mt-1" />
             <div className="min-w-0 flex-1 basis-[200px]">
-              <p className="text-[15px] font-medium leading-snug text-warning">
+              <p className="text-body font-medium leading-snug text-warning">
                 Complete your profile to unlock event registration
               </p>
-              <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+              <p className="mt-1 text-meta leading-relaxed text-muted-foreground">
                 Missing: {missingProfileFields.join(', ')}
               </p>
             </div>
@@ -194,7 +194,7 @@ export default async function AccountPage({
         <div className="rail">
           <h2 id="registration-readiness" className="type-h2">Event registration readiness</h2>
           <span className="rail-bar" />
-          {profileComplete && blockingAssignments.length === 0 && <span className="meta-mono">Ready</span>}
+          {profileComplete && blockingAssignments.length === 0 && <span className="type-figure">Ready</span>}
         </div>
         {profileComplete && blockingAssignments.length === 0 ? (
           <p className="text-sm text-muted-foreground">Your selected registration details are complete and no overdue forms are blocking you.</p>
@@ -226,7 +226,7 @@ export default async function AccountPage({
              absent and what changes it. Never a slogan, never an illustration. */
           <div className="empty-note">
             <p className="font-medium text-secondary-foreground">{t.no_tasks}</p>
-            <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">{t.tasks_hint}</p>
+            <p className="mt-1 text-meta leading-relaxed text-muted-foreground">{t.tasks_hint}</p>
           </div>
         ) : (
           <>
@@ -264,7 +264,7 @@ export default async function AccountPage({
               })}
             </div>
 
-            <p className="mt-4 text-[13px] leading-relaxed text-muted-foreground">{t.tasks_hint}</p>
+            <p className="mt-4 text-meta leading-relaxed text-muted-foreground">{t.tasks_hint}</p>
           </>
         )}
       </section>
@@ -274,13 +274,13 @@ export default async function AccountPage({
         <div className="rail">
           <h2 className="type-h2">{t.attended_title}</h2>
           <span className="rail-bar" />
-          <span className="meta-mono">{attended.length}</span>
+          <span className="type-figure">{attended.length}</span>
         </div>
 
         {attended.length === 0 ? (
           <div className="empty-note">
             <p className="font-medium text-secondary-foreground">{t.no_attended}</p>
-            <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+            <p className="mt-1 text-meta leading-relaxed text-muted-foreground">
               {t.attended_hint}
             </p>
           </div>

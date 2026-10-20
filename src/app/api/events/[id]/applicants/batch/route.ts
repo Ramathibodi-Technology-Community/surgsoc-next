@@ -1,115 +1,48 @@
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { headers } from 'next/headers'
-import { hasPermission } from '@/libs/permissions'
-import type { User } from '@/payload-types'
+import { canManageEvent, inEventTransaction, lockEvent } from '@/libs/event-workflow'
+import { idOf } from '@/libs/form-assignment-lifecycle'
+import { BATCHABLE_STATUSES } from '@/libs/applicant-status'
+import { mutationErrorMessage } from '@/libs/utils'
 
-const BATCHABLE_STATUSES = new Set(['applicant', 'accepted', 'rejected', 'subscribed'])
-
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-
   const payload = await getPayload({ config })
-  const headersList = await headers()
-  const { user } = await payload.auth({ headers: headersList })
-
-  if (!user) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  const { user } = await payload.auth({ headers: await headers() })
+  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  let body: any
+  try { body = await request.json() } catch { return Response.json({ error: 'Invalid JSON' }, { status: 400 }) }
+  if (!body || typeof body !== 'object') return Response.json({ error: 'Invalid request body' }, { status: 400 })
+  const { action, registrationIds, rejectionReason = '' } = body
+  if (!Array.isArray(registrationIds) || !registrationIds.length || registrationIds.length > 1000 || new Set(registrationIds.map(String)).size !== registrationIds.length) return Response.json({ error: 'registrationIds must be a non-empty unique array' }, { status: 400 })
+  if (!['accept', 'reject', 'wait', 'remove'].includes(action) || typeof rejectionReason !== 'string' || rejectionReason.length > 2000) return Response.json({ error: 'Invalid action or rejection reason' }, { status: 400 })
+  const event = await payload.findByID({ collection: 'events', id, depth: 2 }).catch(() => null)
+  if (!event) return Response.json({ error: 'Event not found' }, { status: 404 })
+  if (!canManageEvent(user, event)) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  try {
+    return await inEventTransaction(payload, async req => {
+      const parentId = idOf(event.parent_event)
+      if (parentId) await lockEvent(payload, parentId, req)
+      await lockEvent(payload, id, req)
+      const current = await payload.findByID({ collection: 'events', id, depth: 2, req })
+      if (!canManageEvent(user, current)) return Response.json({ error: 'Forbidden' }, { status: 403 })
+      const { docs } = await payload.find({ collection: 'registrations', where: { and: [{ id: { in: registrationIds } }, { event: { equals: id } }] }, limit: registrationIds.length, depth: 2, req })
+      const found = new Set(docs.map(row => String(row.id)))
+      const mismatchedIds = registrationIds.filter((row: unknown) => !found.has(String(row)))
+      if (mismatchedIds.length) return Response.json({ error: 'One or more registrations do not belong to this event', mismatchedIds }, { status: 400 })
+      const lockedIds = docs.filter(row => action === 'remove' ? !['applicant', 'subscribed', 'accepted', 'confirmed'].includes(row.status || '') : !BATCHABLE_STATUSES.includes(row.status || '')).map(row => row.id)
+      if (lockedIds.length) return Response.json({ error: 'One or more registrations can no longer be changed', lockedIds }, { status: 400 })
+      if (action === 'accept' && docs.some(row => !row.submission)) return Response.json({ error: 'Missing canonical application response; resolve linkage before acceptance.' }, { status: 400 })
+      for (const row of docs) await payload.update({ collection: 'registrations', id: row.id, data: {
+        status: action === 'accept' ? 'accepted' : action === 'reject' ? 'rejected' : action === 'wait' ? 'subscribed' : ['accepted', 'confirmed'].includes(row.status || '') ? 'declined' : 'withdrawn',
+        selected_at: new Date().toISOString(), selected_by: user.id,
+        ...(action === 'reject' ? { rejection_reason: rejectionReason.trim() || null } : {}),
+      }, req })
+      return Response.json({ success: true, updated: docs.length, updatedIds: docs.map(row => row.id), failedIds: [] })
+    })
+  } catch (error) {
+    payload.logger.error({ err: error, msg: 'Applicant update failed' })
+    return Response.json({ success: false, error: mutationErrorMessage(error, 'Could not update registrations.'), updated: 0 }, { status: 409 })
   }
-
-  const { action, registrationIds } = await request.json()
-
-  if (!Array.isArray(registrationIds) || registrationIds.length === 0) {
-    return Response.json({ error: 'registrationIds must be a non-empty array' }, { status: 400 })
-  }
-
-  if (action !== 'accept' && action !== 'reject') {
-    return Response.json({ error: 'Invalid action' }, { status: 400 })
-  }
-
-  // Verify user has permission to manage this event
-  const event = await payload.findByID({
-    collection: 'events',
-    id,
-  })
-
-  const ownerId = typeof event.owner === 'object' ? event.owner?.id : event.owner
-  const isAuthorized =
-    ownerId === user.id ||
-    hasPermission(user as User, 'manage_events')
-
-  if (!isAuthorized) {
-    return Response.json({ error: 'Forbidden' }, { status: 403 })
-  }
-
-  // Scope registrations to THIS event — reject the batch if any ID belongs elsewhere
-  const { docs: scopedRegistrations } = await payload.find({
-    collection: 'registrations',
-    where: {
-      and: [
-        { id: { in: registrationIds } },
-        { event: { equals: id } },
-      ],
-    },
-    limit: registrationIds.length,
-    depth: 0,
-  })
-
-  const scopedIds = new Set(scopedRegistrations.map((r) => String(r.id)))
-  const mismatchedIds = registrationIds.filter((r) => !scopedIds.has(String(r)))
-  if (mismatchedIds.length > 0) {
-    return Response.json(
-      {
-        error: 'One or more registrations do not belong to this event',
-        mismatchedIds,
-      },
-      { status: 400 },
-    )
-  }
-
-  // Only pre-attendance decisions are batchable; declined/withdrawn/confirmed/
-  // participant are the attendee's (or the event's) to change, not the organizer's.
-  const locked = scopedRegistrations.filter((r) => !BATCHABLE_STATUSES.has(String(r.status)))
-  if (locked.length > 0) {
-    return Response.json(
-      {
-        error: 'One or more registrations can no longer be accepted or rejected',
-        lockedIds: locked.map((r) => r.id),
-      },
-      { status: 400 },
-    )
-  }
-
-  // Batch update registrations (loop to ensure per-doc afterChange hooks fire)
-  const newStatus = action === 'accept' ? 'accepted' : 'rejected'
-  const updatedIds: Array<string | number> = []
-  const failedIds: Array<{ id: string | number; error: string }> = []
-
-  for (const regId of scopedRegistrations.map((r) => r.id)) {
-    try {
-      await payload.update({
-        collection: 'registrations',
-        id: regId,
-        data: {
-          status: newStatus,
-          selected_at: new Date(),
-          selected_by: user.id,
-        } as any,
-      })
-      updatedIds.push(regId)
-    } catch (e) {
-      payload.logger.error(`Failed to update registration ${regId}: ${(e as Error).message}`)
-      failedIds.push({ id: regId, error: (e as Error).message })
-    }
-  }
-
-  return Response.json({
-    success: failedIds.length === 0,
-    updated: updatedIds.length,
-    updatedIds,
-    failedIds,
-  })
 }

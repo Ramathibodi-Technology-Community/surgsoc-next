@@ -47,6 +47,7 @@
     "year": "Year",
     "phone": "Phone Number",
     "line_id": "LINE ID",
+    "platform_other": "Other",
     "platform": "Platform",
     "handle": "Handle / URL",
     "activity": "Activity Name",

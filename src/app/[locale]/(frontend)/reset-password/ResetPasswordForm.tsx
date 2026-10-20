@@ -52,7 +52,7 @@ export default function ResetPasswordForm({ token }: { token?: string }) {
           <div
             role="alert"
             aria-live="assertive"
-            className="mb-3.5 flex items-center gap-2 rounded-[10px] border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+            className="mb-3.5 flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
           >
             <AlertCircle className="h-4 w-4 flex-shrink-0" />
             {errorMessage(error)}
@@ -64,7 +64,7 @@ export default function ResetPasswordForm({ token }: { token?: string }) {
             <input type="hidden" name="token" value={token} />
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="password" className="text-[13px] text-secondary-foreground">
+              <Label htmlFor="password" className="text-meta text-secondary-foreground">
                 {t('auth.new_password')}
               </Label>
               <Input
@@ -78,7 +78,7 @@ export default function ResetPasswordForm({ token }: { token?: string }) {
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="confirmPassword" className="text-[13px] text-secondary-foreground">
+              <Label htmlFor="confirmPassword" className="text-meta text-secondary-foreground">
                 {t('auth.confirm_password')}
               </Label>
               <Input
@@ -94,8 +94,7 @@ export default function ResetPasswordForm({ token }: { token?: string }) {
             <Button
               type="submit"
               variant="outline"
-              size="lg"
-              className="h-auto w-full py-[15px] text-[15px]"
+              className="w-full"
               disabled={isLoading}
               aria-busy={isLoading}
             >

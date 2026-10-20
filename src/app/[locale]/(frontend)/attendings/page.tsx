@@ -142,7 +142,7 @@ export default async function AttendingsPage({
       {attendings.length === 0 ? (
         <div className="empty-note">
           <p className="font-medium text-secondary-foreground">{t.no_attendings}</p>
-          <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+          <p className="mt-1 text-meta leading-relaxed text-muted-foreground">
             {t.admin_dashboard}
           </p>
         </div>
@@ -162,7 +162,7 @@ export default async function AttendingsPage({
               <div className="rail">
                 <h2 className="type-h2">{heading}</h2>
                 <span className="rail-bar" />
-                <span className="meta-mono">{members.length}</span>
+                <span className="type-figure">{members.length}</span>
               </div>
 
               {/*

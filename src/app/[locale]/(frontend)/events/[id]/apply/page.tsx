@@ -4,9 +4,15 @@ import config from '@payload-config'
 import { getCurrentUser } from '@/libs/auth/current-user'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
-import PayloadForm from '@/components/PayloadForm'
-import { submitEventApplication } from '../actions'
+import EventApplicationForm from '@/components/EventApplicationForm'
+import { eventDays, visibleEvent } from '@/libs/event-workflow'
+import { getDictionary } from '@/i18n/server'
+import type { Locale } from '@/i18n/config'
 import { checkUserActionGate } from '@/libs/user-action-gate'
+import GroupApplicationForm, { type ApplySession } from '@/components/GroupApplicationForm'
+import { sessionRegistration } from '@/libs/event-application'
+import { idOf } from '@/libs/form-assignment-lifecycle'
+import { formatStamp } from '@/libs/utils'
 
 /**
  * The three ways registration can be unavailable, in one shape.
@@ -36,7 +42,7 @@ function Unavailable({
       <p className="type-lead mb-7 max-w-[54ch]">{reason}</p>
       <Link
         href={`/events/${eventId}`}
-        className="text-[15px] font-medium text-accent transition-colors hover:text-accent/80"
+        className="text-body font-medium text-accent transition-colors hover:text-accent/80"
       >
         Back to the event
       </Link>
@@ -44,25 +50,37 @@ function Unavailable({
   )
 }
 
-export default async function ApplyPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
+export default async function ApplyPage({ params, searchParams }: { params: Promise<{ id: string; locale: Locale }>; searchParams: Promise<{ session?: string }> }) {
+  const { id, locale } = await params
+  const { session: sessionParam } = await searchParams
+  const t = (await getDictionary(locale)).events
   const payload = await getPayload({ config })
 
   // Fetch user early — needed for gate check
   const user = await getCurrentUser(payload)
 
-  const event = await payload.findByID({
-    collection: 'events',
-    id: id,
-  })
-
-  if (!event) {
-    notFound()
+  const event = await visibleEvent(payload, id, user)
+  if (!event) notFound()
+  if (event.parent_event) redirect(`/events/${typeof event.parent_event === 'object' ? event.parent_event.id : event.parent_event}/apply`)
+  const isGroup = event.event_structure === 'multi_day'
+  const mine = await payload.find({ collection: 'registrations', where: { and: [isGroup ? { 'event.parent_event': { equals: event.id } } : { event: { equals: event.id } }, { user: { equals: user?.id ?? 0 } }] }, depth: 0, pagination: false })
+  if (mine.totalDocs && !isGroup) redirect(`/events/${id}`)
+  const takenIds = new Set(mine.docs.filter(row => !['withdrawn', 'declined'].includes(row.status || '')).map(row => String(idOf(row.event))))
+  // A group is gated per session, so only the member's eligibility is checked here; the sessions below carry their own windows.
+  const sessionList: ApplySession[] = []
+  if (isGroup) {
+    for (const day of await eventDays(payload, event.id)) {
+      if (Date.parse(day.date_begin) <= Date.now() || takenIds.has(String(day.id)) || !sessionRegistration(day, event).isOpen) continue
+      const extraId = idOf(day.subscription_form)
+      const form = extraId ? await payload.findByID({ collection: 'forms', id: extraId, depth: 0 }).catch(() => null) : null
+      sessionList.push({ id: day.id, name: day.name, when: formatStamp(day.date_begin, locale), form })
+    }
+    if (!sessionList.length) redirect(`/events/${id}`)
   }
 
   // Unified gate — auth, profile, form blocking, scheduling
   const gate = await checkUserActionGate(payload, user, {
-    resource: event,
+    resource: isGroup ? undefined : event,
   })
 
   if (!gate.allowed) {
@@ -113,18 +131,20 @@ export default async function ApplyPage({ params }: { params: Promise<{ id: stri
     <div className="max-w-[680px]">
       <Link
         href={`/events/${event.id}`}
-        className="text-[13px] text-muted-foreground transition-colors hover:text-foreground"
+        className="text-meta text-muted-foreground transition-colors hover:text-foreground"
       >
         ← Back to the event
       </Link>
 
       <h1 className="type-h1 mb-3 mt-6 max-w-[24ch]">{event.name}</h1>
-      <p className="type-lead mb-[34px] max-w-[56ch]">
-        Register for this session by filling in the form below.
+      <p className="type-lead mb-std max-w-[56ch]">
+        {t.application_intro}
       </p>
 
       <div className="panel p-5 sm:p-[30px]">
-        <PayloadForm form={form as any} onSubmit={submitEventApplication.bind(null, event.id)} user={user} />
+        {isGroup
+          ? <GroupApplicationForm eventId={event.id} common={mine.totalDocs ? null : form} sessions={sessionList} user={user} preselect={sessionParam && sessionList.some(x => String(x.id) === sessionParam) ? [Number(sessionParam)] : []} />
+          : <EventApplicationForm eventId={event.id} form={form} user={user} />}
       </div>
     </div>
   )

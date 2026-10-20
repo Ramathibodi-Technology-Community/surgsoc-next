@@ -25,18 +25,18 @@ export default async function Footer() {
       <div className="mx-auto flex max-w-[var(--container-page)] flex-wrap items-start justify-between gap-6 px-4 py-[30px] sm:px-7">
         <div className="flex flex-col gap-1.5">
           <span className="font-display text-[17px] font-bold leading-none">{shortName}</span>
-          <span className="text-[13px] leading-relaxed text-muted-foreground">
+          <span className="text-meta leading-relaxed text-muted-foreground">
             © {new Date().getFullYear()} {siteName}
           </span>
         </div>
         <div className="flex flex-wrap gap-7">
-          <Link href="/feedback" className="text-[13px] leading-none text-secondary-foreground hover:text-accent">
+          <Link href="/feedback" className="text-meta leading-none text-secondary-foreground hover:text-accent">
             Feedback
           </Link>
-          <Link href="/terms" className="text-[13px] leading-none text-secondary-foreground hover:text-accent">
+          <Link href="/terms" className="text-meta leading-none text-secondary-foreground hover:text-accent">
             Terms
           </Link>
-          <Link href="/privacy" className="text-[13px] leading-none text-secondary-foreground hover:text-accent">
+          <Link href="/privacy" className="text-meta leading-none text-secondary-foreground hover:text-accent">
             Privacy
           </Link>
         </div>
