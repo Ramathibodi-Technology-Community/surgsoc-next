@@ -2,6 +2,7 @@ import React from 'react'
 import '../../globals.css'
 import Header from '../../../components/Header'
 import Footer from '../../../components/Footer'
+import type { Viewport } from 'next'
 import { Anuphan } from 'next/font/google'
 import { Locale, locales } from '@/i18n/config'
 import { getDictionary } from '@/i18n/server'
@@ -21,6 +22,9 @@ const sans = Anuphan({
   variable: '--font-sans-family',
   display: 'swap',
 })
+// Dark-only site: tint the mobile browser chrome to match --background (base-0).
+export const viewport: Viewport = { themeColor: '#1b1e22' }
+
 export async function generateMetadata() {
   const { siteName, metaDescription } = await getSiteSettings()
   return { title: siteName, description: metaDescription }

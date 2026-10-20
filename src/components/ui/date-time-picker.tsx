@@ -21,8 +21,10 @@ const todayLocal = () => toLocalInput(new Date().toISOString()).slice(0, 10)
   Date/time are read and written through toLocalInput/fromLocalInput, so the
   fixed +07:00 Bangkok offset behaves exactly as it did with datetime-local.
 */
-export function DateTimePicker({ id, value, onChange, required }: {
+export function DateTimePicker({ id, value, onChange, required, label }: {
   id?: string
+  /** Names the time field for assistive tech, so two pickers on one form (begins, ends) differ. */
+  label?: string
   value: unknown
   onChange: (iso: string | null) => void
   required?: boolean
@@ -63,7 +65,7 @@ export function DateTimePicker({ id, value, onChange, required }: {
           />
         </PopoverContent>
       </Popover>
-      <TimeField required={required} value={time} onChange={(t) => onChange(fromLocalInput(`${day || todayLocal()}T${t}`))} />
+      <TimeField required={required} label={label} value={time} onChange={(t) => onChange(fromLocalInput(`${day || todayLocal()}T${t}`))} />
       {!required && day && (
         <Button type="button" variant="ghost" size="icon" className="h-11" aria-label="Clear" onClick={() => onChange(null)}>
           <X />
@@ -77,8 +79,9 @@ const HOURS = Array.from({ length: 24 }, (_, i) => i)
 const MINUTES = Array.from({ length: 12 }, (_, i) => i * 5)
 
 /* Typed HH:MM (24-hour); the popover is two columns, minutes in steps of 5. Typing covers any minute. */
-function TimeField({ value, onChange, disabled, required }: {
+function TimeField({ value, onChange, disabled, required, label }: {
   value: string
+  label?: string
   onChange: (hhmm: string) => void
   disabled?: boolean
   required?: boolean
@@ -96,7 +99,7 @@ function TimeField({ value, onChange, disabled, required }: {
     <Popover open={open && !disabled} onOpenChange={setOpen}>
       <PopoverAnchor asChild>
         <Input
-          aria-label="Time, 24-hour"
+          aria-label={label ? `${label}, time (24-hour)` : "Time, 24-hour"}
           className="w-[7.5rem] flex-none text-center tabular-nums"
           inputMode="numeric"
           maxLength={5}
