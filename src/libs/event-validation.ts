@@ -26,7 +26,7 @@ export const validateEvent: CollectionBeforeChangeHook = async ({ data, original
     if (parent.event_structure !== 'multi_day' || begin < Date.parse(parent.date_begin) || end > Date.parse(parent.date_end || parent.date_begin)) throw new Error('Days must fall within a multi-day parent event.')
   }
   if (operation === 'update') {
-    await lockEvent(req.payload, originalDoc.id, req)
+    if (await req.transactionID) await lockEvent(req.payload, originalDoc.id, req)
     const structural = (event.event_structure || 'standalone') !== (originalDoc.event_structure || 'standalone') || String(parentId) !== String(idOf(originalDoc.parent_event))
     if (structural) {
       const registrations = await req.payload.count({ collection: 'registrations', where: { or: [{ event: { equals: originalDoc.id } }, { 'event.parent_event': { equals: originalDoc.id } }] }, req })
