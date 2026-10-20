@@ -50,6 +50,8 @@
   --color-base-9: oklch(99.4% 0.006 84.6);
   --color-primary-1: oklch(54.0% 0.087 179.5);
   --color-primary-2: oklch(71.3% 0.116 179.1);
+  /* Logo purple, sRGB #823993. Token only: the UI stays teal. */
+  --color-brand-purple: oklch(48.0% 0.155 319.7);
 
   /* ShadCN mappings */
   --color-background: var(--background);
@@ -98,9 +100,9 @@
   --radius-xl: 0.625rem;
 
   /*
-    Two faces, two jobs. Noto Serif Thai carries every heading and covers Latin
-    and Thai in one family, so headings need no script fallback. Plex Sans Thai
-    runs the interface, captions and numerals included.
+    One family, every role: Anuphan covers Thai and Latin together, and hierarchy
+    comes from size and weight. `--font-display` is kept as a name so the display
+    roles read as display, but it resolves to the same family.
 
     There is deliberately no mono face. It used to carry the labels, in caps
     with 0.15em tracking — and that combination, not the typeface, is the tell.
@@ -110,10 +112,20 @@
     Registered here only so the `font-display` utility exists. Its usable value
     comes from the body declaration below — see the note there.
   */
-  --font-display: var(--font-display-family), ui-serif, Georgia, serif;
+  --font-display: var(--font-sans-family), ui-sans-serif, system-ui, sans-serif;
 
   /* Page gutter matches the design's 1100px column. */
   --container-page: 1100px;
+
+  /* Spacing steps — design.md § Spacing. A value between them is drift; pick a step. */
+  --spacing-tight: 14px;
+  --spacing-std: 26px;
+  --spacing-wide: 44px;
+  --spacing-block: 64px;
+
+  /* Reading sizes below the heading roles — design.md § Typography. */
+  --text-body: 1rem;
+  --text-meta: 0.875rem;
 
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
@@ -154,6 +166,7 @@
   --muted-foreground: var(--color-base-6);
 
   --accent: var(--color-primary-2);
+  --brand-purple: var(--color-brand-purple);
   --accent-foreground: oklch(18.7% 0.009 224.0);
 
   /* Menu-row and ghost-button fill. See the note in @theme above. */
@@ -174,11 +187,11 @@
     `success` was green, one hue-step from the teal accent, so Open and Complete
     read as the same family. Blue at hue 258 sits 79° away and carries a
     different meaning: teal is the brand and means "you can act here", blue
-    means "this is settled and on record". The token keeps its old name so
-    existing callers keep working.
+    means "this is settled and on record". `--info` is the canonical name;
+    `--success` stays as a deprecated alias for one release.
   */
-  --success: oklch(71.3% 0.13 258);
-  --info: var(--success);
+  --info: oklch(71.3% 0.13 258);
+  --success: var(--info); /* deprecated alias; use --info */
   --warning: oklch(71.3% 0.13 75);
 
   /* Two weights: hairline between rows, stronger under section headings. */
@@ -228,7 +241,8 @@
       variable and computes to invalid. This declaration shadows it for every
       descendant; without it each heading silently falls back to the sans stack.
     */
-    --font-display: var(--font-display-family), ui-serif, Georgia, serif;
+    --font-sans: var(--font-sans-family), ui-sans-serif, system-ui, sans-serif;
+    --font-display: var(--font-sans-family), ui-sans-serif, system-ui, sans-serif;
   }
 
   ::selection {
@@ -270,7 +284,7 @@
     font-family: var(--font-display);
     font-size: clamp(2.2rem, 4.4vw, 3.2rem);
     font-weight: 600;
-    line-height: 1.06;
+    line-height: 1.3;
     letter-spacing: -0.022em;
     text-wrap: balance;
   }
@@ -280,7 +294,7 @@
     font-family: var(--font-display);
     font-size: clamp(2rem, 3.8vw, 2.8rem);
     font-weight: 600;
-    line-height: 1.08;
+    line-height: 1.3;
     letter-spacing: -0.022em;
     text-wrap: balance;
   }
@@ -290,7 +304,7 @@
     font-family: var(--font-display);
     font-size: clamp(1.375rem, 2vw, 1.625rem);
     font-weight: 600;
-    line-height: 1.18;
+    line-height: 1.3;
     letter-spacing: -0.018em;
   }
 
@@ -299,7 +313,7 @@
     font-family: var(--font-display);
     font-size: clamp(1.6rem, 2.8vw, 2.1rem);
     font-weight: 600;
-    line-height: 1.16;
+    line-height: 1.3;
     letter-spacing: -0.018em;
   }
 
@@ -308,40 +322,49 @@
     font-family: var(--font-display);
     font-size: 1.25rem;
     font-weight: 600;
-    line-height: 1.28;
+    line-height: 1.3;
   }
+
+  /*
+    Thai stacks tone and vowel marks above and below the line, so tight tracking
+    that suits Latin display type crushes them. Reset it, and lift the 12px
+    caption roles one step because Thai reads about a pixel smaller.
+  */
+  :lang(th) .type-display,
+  :lang(th) .type-h1,
+  :lang(th) .type-story,
+  :lang(th) .type-h2 {
+    letter-spacing: 0;
+  }
+  :lang(th) .type-caption,
+  :lang(th) .type-figure {
+    font-size: 0.8125rem;
+  }
+
+  /* One leading for both scripts: 1.3 clears Thai vowel and tone marks, so en and th share the same rhythm. */
 
   /* Standfirst under a display or h1. Sans, never the display face. */
   .type-lead {
-    font-size: clamp(1rem, 1.3vw, 1.0625rem);
-    line-height: 1.7;
+    font-size: clamp(1.0625rem, 1.5vw, 1.125rem);
+    line-height: 1.65;
     color: var(--muted-foreground);
     text-wrap: pretty;
   }
 
   /*
-    Caption roles.
+    Caption roles: `.type-caption` (field caption, status word) and
+    `.type-figure` (dates, counts, IDs).
 
     These were monospace, uppercase and letter-spaced. That combination is the
     most reliable generated-interface tell there is, and swapping the typeface
     does not fix it — the caps and the tracking are the tell. Weight, size and
     colour carry the hierarchy now, and the mono family is gone from the project
     entirely. Sentence case, zero tracking, everywhere.
-
-    The names are kept so the diff stays readable; `-mono` now means "caption",
-    which is a lie worth fixing on the next pass through these files.
   */
 
-  /* Kicker above a title. Rare — only where it carries real content. */
-  .eyebrow {
-    font-size: 0.8125rem;
-    font-weight: 500;
-    line-height: 1.4;
-    color: var(--accent);
-  }
 
   /* Field caption, table header, status word. Inherits its colour. */
-  .label-mono {
+  .type-caption {
     font-size: 0.75rem;
     font-weight: 500;
     line-height: 1.3;
@@ -349,7 +372,7 @@
   }
 
   /* Dates, counts, IDs. Tabular so columns line up. */
-  .meta-mono {
+  .type-figure {
     font-size: 0.75rem;
     font-weight: 400;
     line-height: 1.4;
@@ -385,6 +408,76 @@
     are `--card`) read as raised. Building a section card on `--card` instead
     would put the same fill on both and lose the nesting entirely.
   */
+  /*
+    Editor groups. A fieldset is the one-box-one-form unit (design.md § Infobox):
+    the legend is floated to full width so it renders as the box's title rather
+    than sitting on the border, and space — not a rule — separates it from the
+    fields below.
+  */
+  .form-section {
+    display: block;
+    min-width: 0;
+    margin: 0;
+    padding: 24px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+  }
+  .form-section > legend {
+    float: left;
+    width: 100%;
+    margin: 0 0 18px;
+    padding: 0;
+  }
+  .form-section > legend ~ :first-of-type {
+    clear: both;
+  }
+  .form-section > :not(legend) + :not(legend) {
+    margin-top: 16px;
+  }
+  .form-label {
+    display: grid;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-base-7);
+  }
+  .form-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+  }
+  .form-check input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary);
+  }
+
+  /*
+    Staff tables. Header is quiet sentence-case text, rows are separated by a
+    hairline (space first, then a line) and the whole table lives in a .panel
+    so it scrolls sideways inside its box instead of widening the page.
+  */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    text-align: left;
+    font-variant-numeric: tabular-nums;
+  }
+  .data-table th {
+    padding: 12px 16px;
+    font-weight: 500;
+    color: var(--muted-foreground);
+    white-space: nowrap;
+  }
+  .data-table td {
+    padding: 14px 16px;
+    vertical-align: top;
+    border-top: 1px solid var(--border);
+  }
+
   .panel {
     border: 1px solid var(--border);
     border-radius: var(--radius);
@@ -545,7 +638,7 @@
   .pill-count {
     display: inline-flex;
     align-self: center;
-    font-size: 0.6875rem;
+    font-size: 0.75rem;
     font-weight: 600;
     line-height: 1;
     font-variant-numeric: tabular-nums;
@@ -574,9 +667,8 @@
      ───────────────────────────────────────────────────────────── */
 
   /*
-    Status marker. Five shapes in one 12px box so labels align down a column —
-    the circle is a mask like the rest rather than a rounded div, because a
-    border-radius box and a mask do not centre identically.
+    Status marker. A 14px lucide icon (stroke 1.6) and a word, so labels align
+    down a column. StatusMark.tsx owns the icon per status.
 
     Shape carries the KIND of state, colour carries urgency. That keeps the set
     readable in greyscale and for anyone who cannot separate teal from green.
@@ -590,39 +682,10 @@
     line-height: 1.2;
     white-space: nowrap;
   }
-  .mark::before {
-    content: "";
+  .mark > svg {
     flex: none;
-    width: 12px;
-    height: 12px;
-    background: currentColor;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: center;
-    mask-position: center;
-    -webkit-mask-size: contain;
-    mask-size: contain;
-  }
-  .mark-circle::before {
-    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Ccircle cx='7' cy='7' r='4.1' fill='%23000'/%3E%3C/svg%3E");
-    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Ccircle cx='7' cy='7' r='4.1' fill='%23000'/%3E%3C/svg%3E");
-  }
-  .mark-play::before {
-    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M4.6 3.3 L10.4 7 L4.6 10.7 Z' fill='%23000' stroke='%23000' stroke-width='2.6' stroke-linejoin='round'/%3E%3C/svg%3E");
-    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M4.6 3.3 L10.4 7 L4.6 10.7 Z' fill='%23000' stroke='%23000' stroke-width='2.6' stroke-linejoin='round'/%3E%3C/svg%3E");
-  }
-  .mark-check::before {
-    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M3 7.4 L5.8 10.2 L11 4.2' fill='none' stroke='%23000' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M3 7.4 L5.8 10.2 L11 4.2' fill='none' stroke='%23000' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  }
-  .mark-cross::before {
-    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M4.2 4.2 L9.8 9.8 M9.8 4.2 L4.2 9.8' stroke='%23000' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E");
-    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M4.2 4.2 L9.8 9.8 M9.8 4.2 L4.2 9.8' stroke='%23000' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E");
-  }
-  /* Inert. A dot reads as actionable, so states with nothing to do get a rule. */
-  .mark-rule::before {
-    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M3.2 7 L10.8 7' stroke='%23000' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E");
-    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M3.2 7 L10.8 7' stroke='%23000' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E");
+    width: 14px;
+    height: 14px;
   }
 
   /*
@@ -752,6 +815,13 @@
     overflow: hidden;
     height: 100%;
   }
+  /* Event group: two cards peek out beneath, so a group reads as several sessions. */
+  .event-card[data-group] {
+    margin-bottom: 14px;
+    box-shadow:
+      0 5px 0 -2px var(--card), 0 6px 0 -2px var(--border),
+      0 10px 0 -4px var(--card), 0 11px 0 -4px var(--border);
+  }
   .event-poster {
     aspect-ratio: 21 / 10;
     position: relative;
@@ -805,7 +875,7 @@
     margin-left: auto;
     flex: none;
     align-self: flex-start;
-    font-size: 0.6875rem;
+    font-size: 0.75rem;
     font-weight: 600;
     color: var(--muted-foreground);
     border: 1px solid var(--border-strong);
