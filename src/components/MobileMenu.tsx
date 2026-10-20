@@ -16,7 +16,7 @@ export default function MobileMenu({ enableI18n = false }: { enableI18n?: boolea
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger
         aria-label="Open menu"
-        className="flex cursor-pointer flex-col gap-1 rounded-md border border-border-strong p-2.5 lg:hidden"
+        className="flex cursor-pointer flex-col gap-1 rounded-md border border-border-strong p-2.5 pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:items-center pointer-coarse:justify-center lg:hidden"
       >
         <span className="h-[1.5px] w-4 bg-secondary-foreground" />
         <span className="h-[1.5px] w-4 bg-secondary-foreground" />

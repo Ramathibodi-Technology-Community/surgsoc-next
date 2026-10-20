@@ -31,6 +31,26 @@
 */
 @custom-variant dark (&);
 
+/*
+  Hit area: grows the tappable box of a small inline link without moving anything.
+  A coarse pointer gets 44px of height, a mouse 24px (WCAG 2.2 AA minimum).
+  See design.md § Touch targets.
+*/
+@utility hit-area {
+  position: relative;
+  &::before {
+    content: "";
+    position: absolute;
+    inset-inline: -4px;
+    inset-block: calc(-1 * max(0px, (24px - 100%) / 2));
+  }
+  @media (pointer: coarse) {
+    &::before {
+      inset-block: calc(-1 * max(0px, (44px - 100%) / 2));
+    }
+  }
+}
+
 @theme {
   /*
     Neutral ramp. base-0 is the page, base-1 the raised surface (header, footer,

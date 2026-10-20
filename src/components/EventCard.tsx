@@ -117,7 +117,7 @@ export default function EventCard({
         <span className="flex-1" />
         <Link
           href={`/events/${event.id}`}
-          className="px-1.5 text-meta font-medium text-accent hover:underline"
+          className="hit-area px-1.5 text-meta font-medium text-accent hover:underline"
         >
           See more
         </Link>

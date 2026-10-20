@@ -220,7 +220,7 @@ export default async function Page({
       <div className="rail">
         <h2 className="type-h2">{labels.upcomingHeading}</h2>
         <span className="rail-bar" />
-        <Link href="/events" className="text-meta font-medium text-accent hover:underline">
+        <Link href="/events" className="hit-area text-meta font-medium text-accent hover:underline">
           {t.see_more}
         </Link>
       </div>
@@ -245,7 +245,7 @@ export default async function Page({
           <div className="rail">
             <h2 className="type-h2">{labels.pastHeading}</h2>
             <span className="rail-bar" />
-            <Link href="/events" className="text-meta font-medium text-accent hover:underline">
+            <Link href="/events" className="hit-area text-meta font-medium text-accent hover:underline">
               {labels.pastLink}
             </Link>
           </div>

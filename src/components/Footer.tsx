@@ -30,13 +30,13 @@ export default async function Footer() {
           </span>
         </div>
         <div className="flex flex-wrap gap-7">
-          <Link href="/feedback" className="text-meta leading-none text-secondary-foreground hover:text-accent">
+          <Link href="/feedback" className="hit-area text-meta leading-none text-secondary-foreground hover:text-accent">
             Feedback
           </Link>
-          <Link href="/terms" className="text-meta leading-none text-secondary-foreground hover:text-accent">
+          <Link href="/terms" className="hit-area text-meta leading-none text-secondary-foreground hover:text-accent">
             Terms
           </Link>
-          <Link href="/privacy" className="text-meta leading-none text-secondary-foreground hover:text-accent">
+          <Link href="/privacy" className="hit-area text-meta leading-none text-secondary-foreground hover:text-accent">
             Privacy
           </Link>
         </div>

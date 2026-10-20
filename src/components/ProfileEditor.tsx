@@ -137,7 +137,7 @@ function EditableSection({
               setEditing(false)
               setError(null)
             }}
-            className="inline-flex h-[34px] items-center rounded-md px-3 text-meta font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="inline-flex h-[34px] pointer-coarse:h-11 items-center rounded-md px-3 text-meta font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
           >
             {t('account.actions.discard')}
           </button>

@@ -157,7 +157,7 @@ export default function SectionSheet({ eventId, title, description, fields, valu
   return (
     <Sheet open={open} onOpenChange={toggle}>
       <SheetTrigger asChild>
-        <Button variant="outline" className="h-[34px] shrink-0 gap-1.5 px-3" aria-label={`${t('events.staff.edit')}: ${title}`}><Pencil aria-hidden="true" />{t('events.staff.edit')}</Button>
+        <Button variant="outline" className="h-[34px] pointer-coarse:h-11 shrink-0 gap-1.5 px-3" aria-label={`${t('events.staff.edit')}: ${title}`}><Pencil aria-hidden="true" />{t('events.staff.edit')}</Button>
       </SheetTrigger>
       <SheetContent className="w-full gap-0 sm:max-w-lg">
         <form onSubmit={save} className="flex h-full flex-col">

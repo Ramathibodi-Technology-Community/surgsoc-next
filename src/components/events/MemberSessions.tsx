@@ -52,7 +52,7 @@ export default function MemberSessions({ eventId, sessions, t, locale }: { event
               {(status === 'accepted' || status === 'confirmed') && <SessionButton dayId={day.id} kind="leave" label={t.session.leave} title={t.session.leave_title.replace('{name}', day.name)} keep={t.session.keep} />}
               {status === 'subscribed' && <SessionButton dayId={day.id} kind="withdraw" label={t.session.leave_waitlist} title={t.session.leave_waitlist} keep={t.session.keep} />}
               {status === 'applicant' && <SessionButton dayId={day.id} kind="withdraw" label={t.withdraw} title={t.session.withdraw_title.replace('{name}', day.name)} keep={t.session.keep} />}
-              {!held && open && <Link className="inline-flex h-[34px] items-center rounded-md border border-border px-3 text-meta font-medium hover:border-accent" href={`/events/${eventId}/apply?session=${day.id}`}>{t.session.add}</Link>}
+              {!held && open && <Link className="inline-flex h-[34px] pointer-coarse:h-11 items-center rounded-md border border-border px-3 text-meta font-medium hover:border-accent" href={`/events/${eventId}/apply?session=${day.id}`}>{t.session.add}</Link>}
               {!held && !open && <span className="text-meta text-muted-foreground">{opensAt && Date.parse(opensAt) > Date.now() ? t.session.opens.replace('{date}', formatStamp(opensAt, locale)) : t.session.closed}</span>}
             </div>
           </article>

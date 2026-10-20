@@ -57,7 +57,7 @@ export default async function HeaderAuth() {
     // top of the screen. This menu needs no focus trap or scroll lock, so
     // non-modal avoids the conflict entirely.
     <DropdownMenu modal={false}>
-      <DropdownMenuTrigger className="flex cursor-pointer items-center gap-2.5 rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
+      <DropdownMenuTrigger className="hit-area flex cursor-pointer items-center gap-2.5 rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
         <span className="hidden text-meta leading-none text-secondary-foreground sm:inline">
           {displayName}
         </span>

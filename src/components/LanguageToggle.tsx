@@ -33,7 +33,7 @@ export function LanguageToggle({ className }: { className?: string }) {
           href={urlFor(locale)}
           aria-current={locale === current ? 'true' : undefined}
           className={cn(
-            'text-xs font-semibold leading-none px-2.5 py-2 transition-colors',
+            'text-xs font-semibold leading-none px-2.5 py-2 pointer-coarse:py-4 transition-colors',
             locale === current
               ? 'bg-secondary text-foreground'
               : 'text-muted-foreground hover:text-foreground',

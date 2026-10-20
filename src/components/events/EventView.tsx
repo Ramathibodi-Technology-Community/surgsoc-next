@@ -57,7 +57,7 @@ export default function EventView({ event, locale, t, imageDisplay, sessions, is
   return (
     <>
       {!bare && (
-        <Link href={event.parentId ? `/events/${event.parentId}` : '/events'} className="text-meta text-muted-foreground hover:text-foreground">
+        <Link href={event.parentId ? `/events/${event.parentId}` : '/events'} className="hit-area text-meta text-muted-foreground hover:text-foreground">
           ← {event.parentId ? t.parent_event : t.back_to_events}
         </Link>
       )}

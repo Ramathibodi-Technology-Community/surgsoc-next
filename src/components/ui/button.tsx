@@ -22,9 +22,9 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
-        // design.md § Actions: one size. 34px is the standard and the floor; there is no larger standing size.
-        default: "h-[34px] px-4 has-[>svg]:px-3",
-        icon: "size-[34px]",
+        // design.md § Actions: one size. 34px with a mouse, 44px under a coarse pointer (touch); there is no other standing size.
+        default: "h-[34px] pointer-coarse:h-11 px-4 has-[>svg]:px-3",
+        icon: "size-[34px] pointer-coarse:size-11",
       },
     },
     defaultVariants: {

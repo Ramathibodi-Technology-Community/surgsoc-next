@@ -29,7 +29,7 @@ export default function StaffShell({ event, t, tab, counts, showReflections, sho
   ]
   return (
     <>
-      <Link href="/events" className="text-meta text-muted-foreground hover:text-foreground">← {t.back_to_events}</Link>
+      <Link href="/events" className="hit-area text-meta text-muted-foreground hover:text-foreground">← {t.back_to_events}</Link>
       <div className="mt-5 mb-6 flex flex-wrap items-end gap-x-6 gap-y-4">
         <div className="min-w-0 flex-1">
           <h1 className="type-h1">{event.name}</h1>
