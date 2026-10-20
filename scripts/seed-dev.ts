@@ -15,6 +15,7 @@
  * Runs automatically as part of `pnpm run db:seed` / `db:refresh`.
  */
 
+import { SEATED_STATUSES } from '../src/libs/applicant-status'
 import { getPayloadInstance, seedAdminEmail, seedPassword } from './shared.js'
 import type { Payload } from 'payload'
 import { upsertTag, tagIdsBySlug } from './seed-tags.js'
@@ -65,6 +66,7 @@ async function upsert(
   where: Record<string, unknown>,
   data: Record<string, unknown>,
   label: string,
+  context?: Record<string, unknown>,
 ) {
   const existing = await payload.find({ collection, where, limit: 1, overrideAccess: true, depth: 0 })
   if (existing.totalDocs > 0) {
@@ -75,6 +77,7 @@ async function upsert(
     collection,
     data: SAMPLE_FLAGGED.has(collection) ? { ...data, is_sample: true } : data,
     overrideAccess: true,
+    ...(context ? { context } : {}),
   })
   console.log(`   ✅ ${label}`)
   return doc.id
@@ -345,6 +348,8 @@ export async function seedDevData(payloadInstance?: Payload) {
 
   const applicationForm = {
     title: 'Workshop Application Form',
+    // The same form is every fixture event's application form, so one member applies to several events.
+    publish: { allow_multiple_submissions: true },
     submitButtonLabel: 'Submit Application',
     confirmationType: 'message',
     confirmationMessage: rich('Application received. You will hear from us before the selection deadline.'),
@@ -542,11 +547,14 @@ export async function seedDevData(payloadInstance?: Payload) {
     fields: [{ blockType: 'text', name: 'answer', label: 'Answer', required: true }],
   }
 
+  // Each event owns its reflection form (event-validation rejects sharing), so fixtures get copies.
+  const reflectionCopies = ['past', 'early', 'late'].map(key => ({ ...reflectionForm, title: `Post-Event Reflection (${key})` }))
   const formIds: Record<string, number> = {}
   for (const form of [
     applicationForm,
     loaForm,
     reflectionForm,
+    ...reflectionCopies,
     redirectForm,
     manuallyClosedForm,
     expiredForm,
@@ -653,6 +661,7 @@ export async function seedDevData(payloadInstance?: Payload) {
     },
     {
       name: 'SurgSoc Annual Camp 2027',
+      subscription_form: formIds['Workshop Application Form'],
       description: 'Three-day residential camp. Places are full — join the waiting list.',
       event_type: tag['type-event'],
       department: tag['dept-ia'],
@@ -670,6 +679,7 @@ export async function seedDevData(payloadInstance?: Payload) {
     },
     {
       name: 'Operating Theatre Observation Day',
+      subscription_form: formIds['Workshop Application Form'],
       description: 'Happening right now — the event is in its live window.',
       event_type: tag['type-workshop-observe'],
       department: tag['dept-ea'],
@@ -685,6 +695,7 @@ export async function seedDevData(payloadInstance?: Payload) {
     },
     {
       name: 'Trauma Symposium 2026',
+      subscription_form: formIds['Workshop Application Form'],
       description: 'Completed event with the reflection form open to participants.',
       event_type: tag['type-conference'],
       department: tag['dept-ia'],
@@ -696,13 +707,14 @@ export async function seedDevData(payloadInstance?: Payload) {
       registration_opens_at: at(-60),
       registration_closes_at: at(-20),
       status_override: 'auto',
-      reflection_form: formIds['Post-Event Reflection'],
+      reflection_form: formIds['Post-Event Reflection (past)'],
       reflection_release_at: at(-14, 17),
       reflection_deadline: at(-3),
       is_reflection_open: true,
     },
     {
       name: 'Reflection Added Later (seed fixture)',
+      subscription_form: formIds['Workshop Application Form'],
       description: 'Starts without a reflection form; the seed adds it after confirmations to exercise reconciliation.',
       event_type: tag['type-workshop-full'],
       department: tag['dept-od'],
@@ -713,6 +725,7 @@ export async function seedDevData(payloadInstance?: Payload) {
     },
     {
       name: 'No Reflection Form (seed fixture)',
+      subscription_form: formIds['Workshop Application Form'],
       description: 'Confirmed users here must never get an assignment.',
       event_type: tag['type-workshop-full'],
       department: tag['dept-od'],
@@ -723,12 +736,13 @@ export async function seedDevData(payloadInstance?: Payload) {
     },
     {
       name: 'Early Reflection Release (seed fixture)',
+      subscription_form: formIds['Workshop Application Form'],
       description: 'Reflection is explicitly released before its future event end.',
       event_type: tag['type-workshop-full'],
       department: tag['dept-od'],
       date_begin: at(10),
       date_end: at(11),
-      reflection_form: formIds['Post-Event Reflection'],
+      reflection_form: formIds['Post-Event Reflection (early)'],
       reflection_release_at: at(-1),
       reflection_deadline: at(5),
       reflection_released_early_at: at(-1),
@@ -868,6 +882,8 @@ export async function seedDevData(payloadInstance?: Payload) {
   // application form, so that's the only event these fixtures attach one to.
   const applicationAnswers = {
     student_id: '650XXXX',
+    contact_email: 'applicant@test.com',
+    year_of_study: 4,
     shirt_size: 'm',
     prior_experience: 'no',
     motivation: 'Seeded application answer — shown in the applicants detail view.',
@@ -876,28 +892,32 @@ export async function seedDevData(payloadInstance?: Payload) {
 
   for (const reg of registrations) {
     if (!reg.event || !reg.user) continue
-    const submission =
-      reg.event === workshop && formIds['Workshop Application Form']
-        ? await upsert(
-            payload,
-            'form-submissions',
-            {
-              and: [
-                { form: { equals: formIds['Workshop Application Form'] } },
-                { user: { equals: reg.user } },
-              ],
-            },
-            {
-              form: formIds['Workshop Application Form'],
-              user: reg.user,
-              submissionData: Object.entries(applicationAnswers).map(([field, value]) => ({
-                field,
-                value: String(value),
-              })),
-            },
-            `application answer / user ${reg.user}`,
-          )
-        : undefined
+    // Seated registrations need a canonical application: a submission to the event's own application form.
+    const needsApplication = reg.event === workshop || SEATED_STATUSES.includes(reg.status)
+    const submission = needsApplication
+      ? await upsert(
+          payload,
+          'form-submissions',
+          {
+            and: [
+              { form: { equals: formIds['Workshop Application Form'] } },
+              { user: { equals: reg.user } },
+              { application_event: { equals: reg.event } },
+            ],
+          },
+          {
+            form: formIds['Workshop Application Form'],
+            user: reg.user,
+            application_event: reg.event,
+            submissionData: Object.entries(applicationAnswers).map(([field, value]) => ({
+              field,
+              value: String(value),
+            })),
+          },
+          `application answer / user ${reg.user} / event ${reg.event}`,
+          { eventApplication: true },
+        )
+      : undefined
     await upsert(
       payload,
       'registrations',
@@ -907,11 +927,63 @@ export async function seedDevData(payloadInstance?: Payload) {
     )
   }
 
+  // ── Event groups ─────────────────────────────────
+  // The group asks the common questions once; each session has its own window, seats, extra questions and reflection.
+  console.log('\n🗂️  Event groups (common + per-session forms)...')
+  const groupForms: Record<string, number> = {}
+  for (const form of [
+    { title: 'Suturing experience (session questions)', confirmationType: 'message', confirmationMessage: rich('Thanks.'), accept_responses: true, fields: [{ blockType: 'text', name: 'sutured_before', label: 'Have you sutured before?', required: true }, { blockType: 'textarea', name: 'goal', label: 'What do you want from this session?' }] },
+    { ...reflectionForm, title: 'Post-Event Reflection (group, common)' },
+    { ...reflectionForm, title: 'Post-Event Reflection (Day 1, extra)', fields: [{ blockType: 'textarea', name: 'reflection', label: 'What will you practise?', required: true }] },
+    { ...reflectionForm, title: 'Post-Event Reflection (past group)' },
+    // A form takes one response per member, so each group asks its own copy of the application.
+    { ...applicationForm, title: 'Group application (common questions)' },
+    { ...applicationForm, title: 'Group application (past series)' },
+  ] as any[]) groupForms[form.title] = await upsert(payload, 'forms', { title: { equals: form.title } }, form, form.title)
+
+  const owner = admin ?? superadmin
+  const group = (data: Record<string, unknown> & { name: string }) => upsert(payload, 'events', { name: { equals: data.name } }, { owner, coordinator: staff ?? admin, groups: [], status_override: 'auto', event_type: tag['type-workshop-full'], department: tag['dept-od'], location: cnmiLab, ...data }, data.name)
+  const weekend = await group({
+    name: 'Surgical Skills Weekend (event group)',
+    description: 'Three sessions, pick any. One set of common questions, then each session may ask a little more.',
+    event_structure: 'multi_day', is_visible: true, date_begin: at(29), date_end: at(33), image_url: '/assets/beta.jpg',
+    subscription_form: groupForms['Group application (common questions)'],
+    reflection_form: groupForms['Post-Event Reflection (group, common)'], reflection_deadline: at(40),
+    gallery_links: [{ title: 'Day 1 photos', url: 'https://photos.example.com/surgsoc/weekend-day-1' }, { title: 'Group photo', url: 'https://photos.example.com/surgsoc/weekend-group' }],
+    participant_detail: rich('Parking is free at the north gate. Each session has its own room and LINE group.'),
+  })
+  const session = (data: Record<string, unknown> & { name: string }) => group({ event_structure: 'day', parent_event: weekend, is_visible: true, ...data })
+  const day1 = await session({ name: 'Day 1 · Suturing', date_begin: at(30, 8), date_end: at(30, 16), participant_limit: 2, max_waiting_list: 5, registration_selection_mode: 'manual', subscription_form: groupForms['Suturing experience (session questions)'], registration_opens_at: at(-3), registration_closes_at: at(25), custom_acceptance_email: 'Meet at the skills lab by 08:15. Scrubs required.', participant_detail: rich('Meet at the skills lab, 3rd floor, by 08:15.', 'LINE group: line.me/…/day1'), reflection_form: groupForms['Post-Event Reflection (Day 1, extra)'], reflection_deadline: at(36) })
+  const day2 = await session({ name: 'Day 2 · Wound closure', date_begin: at(31, 8), date_end: at(31, 16), participant_limit: 1, max_waiting_list: 3, registration_selection_mode: 'confirmed', participant_detail: rich('Room 405, 08:30.') })
+  const day3 = await session({ name: 'Day 3 · Flaps', date_begin: at(32, 13), date_end: at(32, 17), registration_selection_mode: 'manual', registration_opens_at: at(5), registration_closes_at: at(28) })
+  // A draft group with no sessions yet: the stepped setup starts here.
+  await group({ name: 'Winter Skills Series (draft group)', event_structure: 'multi_day', is_visible: false, date_begin: at(70, 9), description: 'Draft. Open it to continue the setup: Basics, Sessions, Review.' })
+  // A finished group: photo links and a participant.
+  const spring = await group({ name: 'Spring Anatomy Series (past group)', event_structure: 'multi_day', is_visible: true, date_begin: at(-21), date_end: at(-18), subscription_form: groupForms['Group application (past series)'], reflection_form: groupForms['Post-Event Reflection (past group)'], reflection_release_at: at(-19, 16), reflection_deadline: at(-5), gallery_links: [{ title: 'Spring series album', url: 'https://photos.example.com/surgsoc/spring' }] })
+  const springDay = await group({ name: 'Spring Day 1 · Dissection', event_structure: 'day', parent_event: spring, is_visible: true, date_begin: at(-20, 9), date_end: at(-20, 16), registration_selection_mode: 'manual' })
+
+  const common = (user: number, ev: number, formId = groupForms['Group application (common questions)']) => upsert(payload, 'form-submissions', { and: [{ form: { equals: formId } }, { user: { equals: user } }, { application_event: { equals: ev } }] }, { form: formId, user, application_event: ev, submissionData: Object.entries(applicationAnswers).map(([field, value]) => ({ field, value: String(value) })) }, `common answers / user ${user} / group ${ev}`, { eventApplication: true })
+  const extra = (user: number, ev: number, answers: Record<string, string>) => upsert(payload, 'form-submissions', { and: [{ form: { equals: groupForms['Suturing experience (session questions)'] } }, { user: { equals: user } }, { application_event: { equals: ev } }] }, { form: groupForms['Suturing experience (session questions)'], user, application_event: ev, submissionData: Object.entries(answers).map(([field, value]) => ({ field, value })) }, `session answers / user ${user} / session ${ev}`, { eventApplication: true, sessionAnswers: true })
+  const m = (key: string) => users[key]
+  for (const [user, rows] of [
+    [member, [[day1, 'confirmed'], [day2, 'subscribed']]],
+    [m('member2@test.com'), [[day1, 'accepted'], [day2, 'confirmed']]],
+    [m('member3@test.com'), [[day1, 'applicant'], [day2, 'applicant']]],
+    [m('member4@test.com'), [[day1, 'rejected']]],
+  ] as [number, [number, string][]][]) {
+    const submission = await common(user, weekend)
+    for (const [ev, status] of rows) {
+      const session_submission = ev === day1 ? await extra(user, day1, { sutured_before: user === member ? 'On models' : 'Never', goal: 'Seeded answer to the session\'s own question.' }) : undefined
+      await upsert(payload, 'registrations', { and: [{ event: { equals: ev } }, { user: { equals: user } }] }, { event: ev, user, status, submission, ...(session_submission ? { session_submission } : {}), ...(['accepted', 'confirmed', 'rejected'].includes(status) ? { selected_by: staff, selected_at: at(-1) } : {}) }, `group registration ${ev} / user ${user} → ${status}`)
+    }
+  }
+  await upsert(payload, 'registrations', { and: [{ event: { equals: springDay } }, { user: { equals: member } }] }, { event: springDay, user: member, status: 'participant', submission: await common(member, spring, groupForms['Group application (past series)']) }, 'past group participant')
+
   // Configure the late fixture only after its confirmed registration exists.
   // The event hook must reconcile that existing confirmation into an active row.
   await payload.update({
     collection: 'events', id: lateReflection, overrideAccess: true,
-    data: { reflection_form: formIds['Post-Event Reflection'], reflection_release_at: at(-9), reflection_deadline: at(3) },
+    data: { reflection_form: formIds['Post-Event Reflection (late)'], reflection_release_at: at(-9), reflection_deadline: at(3) },
   })
 
   // ── Form submissions ─────────────────────────────
@@ -934,7 +1006,7 @@ export async function seedDevData(payloadInstance?: Payload) {
       data: {
         form: formId,
         user: userId,
-        submissionData: Object.entries(data).map(([field, value]) => ({ field, value: String(value) })),
+        submissionData: Object.entries(data).map(([field, value]) => ({ field, value: Array.isArray(value) ? JSON.stringify(value) : String(value) })),
       },
       overrideAccess: true,
     })
@@ -944,15 +1016,15 @@ export async function seedDevData(payloadInstance?: Payload) {
   await submit(formIds['Post-Event Reflection'], users['member2@test.com'], {
     overall_rating: 5,
     difficulty: 7,
-    skills_gained: 'suturing,knots',
-    session_ranking: 'handson,lecture,panel',
+    skills_gained: ['suturing', 'knots'],
+    session_ranking: ['handson', 'lecture', 'panel'],
     takeaway: 'The hands-on station was worth the whole day.',
     improvements: 'More instructors per station.',
   })
   await submit(formIds['Participant Feedback & Registration'], users['member2@test.com'], {
     satisfaction: 4,
-    topics_interest: 'suturing,anatomy',
-    event_ranking: 'morning,afternoon,evening',
+    topics_interest: ['suturing', 'anatomy'],
+    event_ranking: ['morning', 'afternoon', 'evening'],
   })
   await submit(formIds['Workshop Application Form'], users['member3@test.com'], {
     student_id: '6500021',
@@ -1046,19 +1118,16 @@ export async function seedDevData(payloadInstance?: Payload) {
     data: {
       sections: [
         {
-          kicker: 'About The Society',
           heading: 'Where Passion, Determination, and Teamwork Forge the Future',
           body: 'Ramathibodi Surgical Society is a student-driven community dedicated to growth in surgical knowledge, collaboration, and service.',
           imageUrl: '/assets/beta.jpg',
         },
         {
-          kicker: 'What We Do',
           heading: 'Workshops, Lectures, and Theatre Time',
           body: 'From knot-tying drills to observing live operations, our calendar runs the full year with events for every pre-clinical and clinical year.',
           imageUrl: '/assets/beta.jpg',
         },
         {
-          kicker: 'Join Us',
           heading: 'Open to Every Ramathibodi Student',
           body: 'Sign in with your Mahidol account, complete your profile, and you can apply to any open event on the calendar.',
         },

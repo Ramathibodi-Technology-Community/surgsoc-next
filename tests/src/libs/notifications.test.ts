@@ -34,7 +34,7 @@ describe('NotificationService', { timeout: 15000 }, () => {
 
     await NotificationService.sendRegistrationAccepted({
       registration: { id: 99 },
-      event: { id: 10, name: 'Surgery Workshop', date_begin: '2026-03-08T00:00:00.000Z', location: 'Hall A' },
+      event: { id: 10, name: 'Surgery Workshop', date_begin: '2026-03-08T00:00:00.000Z', location: 'Hall A', custom_acceptance_email: 'Meet at reception.' },
       user: { email: 'member@example.com', name_english: { first_name: 'Mina' } },
     })
 
@@ -42,6 +42,15 @@ describe('NotificationService', { timeout: 15000 }, () => {
     const arg = sendEmailMock.mock.calls[0][0]
     expect(arg.to).toBe('member@example.com')
     expect(arg.subject).toBe("You're accepted: Surgery Workshop")
-    expect(arg.react).toBeTruthy()
+    expect(arg.react.props.message).toBe('Meet at reception.')
+    expect(arg.react.props.requiresLoa).toBe(false)
   })
+})
+
+it('links confirmed recipients to their event joining instructions', async () => {
+  process.env.NEXT_PUBLIC_SERVER_URL = 'https://example.com'
+  const { NotificationService } = await import('@/libs/notifications')
+  sendEmailMock.mockClear()
+  await NotificationService.sendRegistrationConfirmed({ registration: { id: 4 }, event: { id: 10, name: 'Workshop', date_begin: '2026-10-01T08:00:00Z' }, user: { email: 'member@example.com' } })
+  expect(sendEmailMock.mock.calls[0][0].react.props.detailsUrl).toBe('https://example.com/events/10')
 })

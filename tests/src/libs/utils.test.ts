@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getErrorMessage } from '@/libs/utils'
+import { getErrorMessage, eventReturnPath } from '@/libs/utils'
 
 describe('getErrorMessage', () => {
   it('returns message from Error instances', () => {
@@ -18,4 +18,9 @@ describe('getErrorMessage', () => {
   it('stringifies non-error objects when possible', () => {
     expect(getErrorMessage({ code: 'E_TEST', detail: 1 })).toBe('{"code":"E_TEST","detail":1}')
   })
+})
+
+it('returns only local event-editor destinations', () => {
+  expect(eventReturnPath('/th/events/12/edit')).toBe('/th/events/12/edit')
+  for (const path of ['https://example.com', '//example.com', '/en/admin', '/en/events/0/edit', '/en/events/1/edit?next=//evil', '/en/events/1/edit/../admin']) expect(eventReturnPath(path)).toBeUndefined()
 })
