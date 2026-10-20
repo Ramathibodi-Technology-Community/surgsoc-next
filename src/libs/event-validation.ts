@@ -48,7 +48,7 @@ export const validateEvent: CollectionBeforeChangeHook = async ({ data, original
 }
 
 export const preventEventDeletion: CollectionBeforeDeleteHook = async ({ id, req }) => {
-  await lockEvent(req.payload, id, req)
+  if (await req.transactionID) await lockEvent(req.payload, id, req)
   const children = await req.payload.count({ collection: 'events', where: { parent_event: { equals: id } }, req })
   const registrations = await req.payload.count({ collection: 'registrations', where: { event: { equals: id } }, req })
   const applications = await req.payload.count({ collection: 'form-submissions', where: { application_event: { equals: id } }, req })
