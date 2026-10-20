@@ -59,15 +59,15 @@ const text = {
 };
 
 const reasonBox = {
-  backgroundColor: '#fff0f0',
-  borderLeft: '4px solid #dc3545',
+  backgroundColor: '#fbeeee',
+  border: '1px solid #b4232a',
   padding: '15px',
   margin: '20px 0',
 };
 
 const reasonTitle = {
   margin: '0 0 5px 0',
-  color: '#dc3545',
+  color: '#b4232a',
 };
 
 const reasonText = {

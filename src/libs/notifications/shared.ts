@@ -28,7 +28,7 @@ export function getPreferredRecipientName(user: UserLike): string {
 }
 
 export function formatNotificationDate(value: string | number | Date): string {
-  return new Date(value).toLocaleDateString()
+  return new Date(value).toLocaleDateString('en-GB', { timeZone: 'Asia/Bangkok', day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 export function getRegistrationDecisionUrls(

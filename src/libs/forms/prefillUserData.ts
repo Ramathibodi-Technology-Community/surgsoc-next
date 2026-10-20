@@ -34,13 +34,18 @@ export function prefillFormData(
   const mappings = [...DEFAULT_MAPPINGS, ...customMappings]
   const prefilled: Record<string, any> = {}
 
-  if (!user || !formFields) return prefilled
+  if (!formFields) return prefilled
 
   formFields.forEach(field => {
     // Only prefill if field has a name property
     if (!field.name) return
+    if (field.defaultValue != null) prefilled[field.name] = field.defaultValue
+    else if (field.blockType === 'ranking') prefilled[field.name] = (field.options || []).map((option: any) => option.value)
+    else if (field.blockType === 'slider' && field.variant === 'slider') prefilled[field.name] = field.min ?? 1
 
-    const mapping = mappings.find(m => m.formFieldName === field.name)
+    const mapping = field.blockType === 'userProfile'
+      ? { userFieldPath: field.profileField }
+      : mappings.find(m => m.formFieldName === field.name)
     if (mapping) {
       let value = getNestedValue(user, mapping.userFieldPath)
       if (mapping.userFieldPath === 'academic.year' && value != null) {

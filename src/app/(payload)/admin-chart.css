@@ -1,0 +1,31 @@
+/*
+  Admin bridge: maps Payload's --theme-* variables onto the Chart tokens
+  (design.md). The admin does not load globals.css, so the values are repeated
+  here; keep them in step with the ramp and status hues in globals.css.
+  Teal replaces Payload's green as the "success" hue, and blue (--info) marks
+  things that are settled. No pills, no uppercase labels: those are in the
+  module CSS next to each admin component.
+*/
+html[data-theme='dark'] {
+  --theme-bg: oklch(23.4% 0.009 255.6);
+  --theme-input-bg: oklch(25.9% 0.013 258.4);
+  --theme-text: oklch(99.4% 0.006 84.6);
+  --theme-elevation-0: oklch(21.3% 0.008 264.4);
+  --theme-elevation-50: oklch(25.9% 0.013 258.4);
+  --theme-elevation-100: oklch(31% 0.015 252.3);
+  --theme-elevation-150: oklch(31% 0.015 252.3);
+  --theme-elevation-200: oklch(37.5% 0.019 251.4);
+  --theme-elevation-250: oklch(44% 0.02 250);
+  --theme-elevation-300: oklch(52% 0.02 249);
+  --theme-elevation-400: oklch(65.9% 0.017 248.1);
+  --theme-elevation-500: oklch(71.1% 0.018 250.9);
+  --theme-elevation-600: oklch(83.6% 0.012 248);
+  --theme-elevation-800: oklch(91.6% 0.008 241.7);
+  --theme-elevation-1000: oklch(99.4% 0.006 84.6);
+
+  --theme-success-500: oklch(54% 0.087 179.5);
+  --theme-success-400: oklch(71.3% 0.116 179.1);
+  --theme-warning-500: oklch(71.3% 0.13 75);
+  --theme-error-500: oklch(71.3% 0.13 20);
+  --theme-error-50: color-mix(in oklab, oklch(71.3% 0.13 20) 14%, transparent);
+}

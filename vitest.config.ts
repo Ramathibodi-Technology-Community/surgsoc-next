@@ -5,6 +5,8 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['tests/**/*.test.{ts,tsx}'],
+    // First dynamic import of a route's module graph takes ~6s cold.
+    testTimeout: 15000,
   },
   resolve: {
     alias: {

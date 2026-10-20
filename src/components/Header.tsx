@@ -13,11 +13,11 @@ export default async function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-surface">
       {/*
-        No wrapping below sm — at 390px the wordmark and the controls just fit
+        Never wraps — the nav swaps for the hamburger below lg so the row always fits. At 390px the wordmark and the controls just fit
         once the gutter and gaps tighten, and wrapping stranded the logo alone
         on its own row.
       */}
-      <div className="mx-auto flex min-h-[68px] max-w-[var(--container-page)] items-center justify-between gap-3 px-4 sm:flex-wrap sm:gap-5 sm:px-7">
+      <div className="mx-auto flex min-h-[68px] max-w-[var(--container-page)] items-center justify-between gap-3 px-4 sm:gap-5 sm:px-7">
         {/* Wordmark: mark, name, and the society's full title beneath it. */}
         <Link href="/" className="flex shrink-0 items-center gap-2.5 py-3">
           <LogoWithFallback />
@@ -25,7 +25,7 @@ export default async function Header() {
             <span className="font-display text-[19px] font-bold leading-none">{shortName}</span>
             {/* Sentence case, like every other caption. The society's name is a
                 name, not a label — setting it in caps was the same tell. */}
-            <span className="hidden text-[11px] leading-none text-muted-foreground sm:inline">
+            <span className="hidden text-xs leading-none text-muted-foreground sm:inline">
               {siteName}
             </span>
           </span>
@@ -39,12 +39,12 @@ export default async function Header() {
           the bar does not reflow when they resolve — same rule as
           HeaderAuthFallback below.
         */}
-        <Suspense fallback={<div className="hidden md:flex h-[38px] w-[260px] shrink-0" />}>
+        <Suspense fallback={<div className="hidden lg:flex h-[38px] w-[260px] shrink-0" />}>
           <HeaderNav />
         </Suspense>
 
         <div className="flex items-center gap-2.5 sm:gap-3.5">
-          <Suspense fallback={<div className="h-[34px] w-[34px] shrink-0 md:hidden" />}>
+          <Suspense fallback={<div className="h-[34px] w-[34px] shrink-0 lg:hidden" />}>
             <MobileMenu enableI18n={enableI18n} />
           </Suspense>
           {/*

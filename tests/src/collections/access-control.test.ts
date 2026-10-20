@@ -1,3 +1,4 @@
+import { publicEventWhere } from '@/libs/event-workflow'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const payloadMock = {
@@ -72,7 +73,7 @@ describe('registrations beforeChange guard', () => {
       operation: 'update',
       data: { status: 'participant', user: 999, selected_by: 999, rejection_reason: 'x' },
     })
-    expect(data).toEqual({ rejection_reason: 'x' })
+    expect(data).toEqual({})
   })
 
   it('leaves manage_events untouched', () => {
@@ -88,8 +89,8 @@ describe('registrations beforeChange guard', () => {
 
 describe('events / attendings read access', () => {
   it('hides invisible events from members and anonymous', () => {
-    expect(Events.access!.read!(as(member))).toEqual({ is_visible: { equals: true } })
-    expect(Events.access!.read!(as(null))).toEqual({ is_visible: { equals: true } })
+    expect(Events.access!.read!(as(member))).toEqual(publicEventWhere)
+    expect(Events.access!.read!(as(null))).toEqual(publicEventWhere)
   })
 
   it('shows everything to manage_events', () => {
@@ -472,8 +473,8 @@ describe('form-assignments access', () => {
 
 describe('events and registrations write access', () => {
   it('scopes event edits to the owner when the user lacks manage_events', () => {
-    expect(Events.access!.update!(as(member))).toEqual({ owner: { equals: 7 } })
-    expect(Events.access!.delete!(as(member))).toEqual({ owner: { equals: 7 } })
+    expect(Events.access!.update!(as(member))).toEqual({ or: [{ owner: { equals: 7 } }, { 'parent_event.owner': { equals: 7 } }] })
+    expect(Events.access!.delete!(as(member))).toEqual({ or: [{ owner: { equals: 7 } }, { 'parent_event.owner': { equals: 7 } }] })
     expect(Events.access!.update!(as(manager))).toBe(true)
     expect(Events.access!.update!(as(anon))).toBe(false)
     expect(Events.access!.delete!(as(anon))).toBe(false)
@@ -483,7 +484,7 @@ describe('events and registrations write access', () => {
     expect(Registrations.access!.create!(as(member))).toBe(false)
     expect(Registrations.access!.create!(as(manager))).toBe(true)
     expect(Registrations.access!.create!(as(visitor))).toBe(false)
-    expect(Registrations.access!.read!(as(member))).toEqual({ user: { equals: 7 } })
+    expect(Registrations.access!.read!(as(member))).toEqual({ or: [{ user: { equals: 7 } }, { 'event.owner': { equals: 7 } }, { 'event.parent_event.owner': { equals: 7 } }] })
     expect(Registrations.access!.update!(as(member))).toEqual({ user: { equals: 7 } })
     expect(Registrations.access!.delete!(as(member))).toBe(false)
     expect(Registrations.access!.delete!(as(manager))).toBe(true)

@@ -40,6 +40,10 @@ describe('notification shared helpers', () => {
     expect(getFormAssignmentUrl('https://example.com', 'abc')).toBe('https://example.com/forms/abc')
   })
 
+  it('uses the Bangkok calendar date across midnight', () => {
+    expect(formatNotificationDate('2026-09-30T18:00:00Z')).toBe('1 Oct 2026')
+  })
+
   it('formats dates to locale string without throwing', () => {
     expect(formatNotificationDate('2026-03-08T00:00:00.000Z')).toBeTypeOf('string')
   })

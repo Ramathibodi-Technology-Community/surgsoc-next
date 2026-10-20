@@ -23,6 +23,8 @@ type NotificationEvent = {
   id: string | number
   name: string
   date_begin: string | number | Date
+  loa_form?: unknown
+  custom_acceptance_email?: string | null
   location?: string | null
 }
 
@@ -66,6 +68,8 @@ export const NotificationService = {
           location={event.location || 'TBA'}
           confirmUrl={confirmUrl}
           declineUrl={declineUrl}
+          message={event.custom_acceptance_email}
+          requiresLoa={!!event.loa_form}
         />
       ),
     })
@@ -101,6 +105,7 @@ export const NotificationService = {
               eventDate={formatNotificationDate(event.date_begin)}
               location={event.location || 'TBA'}
               lineQrCode={registration.line_qr_code ?? ''}
+              detailsUrl={`${getNotificationBaseUrl()}/events/${event.id}`}
             />
           ),
       })

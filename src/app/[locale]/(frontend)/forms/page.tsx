@@ -1,3 +1,6 @@
+import Link from 'next/link'
+import { SlidersHorizontal } from 'lucide-react'
+import { hasPermission } from '@/libs/permissions'
 import React from 'react'
 import type { Metadata } from 'next'
 import { getPayload } from 'payload'
@@ -72,6 +75,7 @@ export default async function FormsPage({
       <PageHeader
         title="Everything waiting on you"
         lead="Membership and session forms are assigned by the committee."
+        aside={hasPermission(user, 'manage_forms') ? <Button asChild variant="outline"><Link href="/forms/manage"><SlidersHorizontal />{t.editor.manage}</Link></Button> : undefined}
       />
 
       {/*
@@ -122,7 +126,7 @@ export default async function FormsPage({
         <div className="rail">
           <h2 className="type-h2">{t.completed_submissions}</h2>
           <span className="rail-bar" />
-          <span className="meta-mono">{submissions.length}</span>
+          <span className="type-figure">{submissions.length}</span>
         </div>
         {submissions.length === 0 ? (
           <div className="empty-note">

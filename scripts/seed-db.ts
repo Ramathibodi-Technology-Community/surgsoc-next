@@ -450,7 +450,6 @@ export async function seedDatabase(payloadInstance?: Payload) {
     data: {
       sections: [
         {
-          kicker: 'About The Society',
           heading: 'Where Passion, Determination, and Teamwork Forge the Future',
           body: 'Ramathibodi Surgical Society is a student-driven community dedicated to growth in surgical knowledge, collaboration, and service.',
           imageUrl: '/assets/beta.jpg',

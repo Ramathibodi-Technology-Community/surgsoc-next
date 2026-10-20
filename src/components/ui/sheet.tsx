@@ -51,7 +51,8 @@ function SheetContent({
   showCloseButton = true,
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Content> & {
-  side?: "top" | "right" | "bottom" | "left"
+  /** "edit": design.md § Edit sheet — bottom sheet with a grabber on a phone, right drawer from md up. */
+  side?: "top" | "right" | "bottom" | "left" | "edit"
   showCloseButton?: boolean
 }) {
   return (
@@ -69,10 +70,13 @@ function SheetContent({
             "data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top inset-x-0 top-0 h-auto border-b",
           side === "bottom" &&
             "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom inset-x-0 bottom-0 h-auto border-t",
+          side === "edit" &&
+            "bg-surface inset-x-0 bottom-0 max-h-[90dvh] rounded-t-[14px] data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom md:inset-x-auto md:inset-y-0 md:right-0 md:left-auto md:h-full md:max-h-none md:w-full md:max-w-md md:rounded-none md:border-l md:data-[state=closed]:slide-out-to-right md:data-[state=open]:slide-in-from-right",
           className
         )}
         {...props}
       >
+        {side === "edit" && <div aria-hidden className="mx-auto mt-2.5 h-1 w-9 flex-none rounded-full bg-border-strong md:hidden" />}
         {children}
         {showCloseButton && (
           <SheetPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-secondary absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none">

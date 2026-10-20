@@ -144,7 +144,7 @@ export const BulkAssignLink: React.FC = () => {
     <div className="mb-4">
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetTrigger asChild>
-          <Button variant="outline" size="sm">Bulk Assign Groups</Button>
+          <Button variant="outline">Bulk Assign Groups</Button>
         </SheetTrigger>
         <SheetContent side="right">
           <SheetHeader>
