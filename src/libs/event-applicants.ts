@@ -6,10 +6,11 @@ export function isCanonicalApplication(submission: any, userId: unknown, parent:
 }
 
 export async function loadEventApplicants(payload: Payload, event: any, eventIds = [event.id]) {
-  const parent = idOf(event.parent_event) ? await payload.findByID({ collection: 'events', id: idOf(event.parent_event)!, depth: 0 }) : event
+  // All callers authorize event management before loading this private staff data.
+  const parent = idOf(event.parent_event) ? await payload.findByID({ collection: 'events', id: idOf(event.parent_event)!, depth: 0, overrideAccess: true }) : event
   const formId = idOf(parent.subscription_form)
-  const form = formId ? await payload.findByID({ collection: 'forms', id: formId, depth: 0 }).catch(() => null) : null
-  const { docs } = await payload.find({ collection: 'registrations', where: { event: { in: eventIds } }, depth: 2, pagination: false })
+  const form = formId ? await payload.findByID({ collection: 'forms', id: formId, depth: 0, overrideAccess: true }).catch(() => null) : null
+  const { docs } = await payload.find({ collection: 'registrations', where: { event: { in: eventIds } }, depth: 2, pagination: false, overrideAccess: true })
   return docs.map(row => {
     const user = typeof row.user === 'object' ? row.user : null
     const submission = typeof row.submission === 'object' ? row.submission : null
