@@ -8,6 +8,7 @@ node_modules
 
 # Next.js
 /.next
+/.next-*
 /out
 
 # Production
@@ -43,7 +44,6 @@ yarn-error.log*
 
 # Agent
 .agent
-TODO.md
 
 # Debug snapshots
 .playwright-mcp

@@ -1,3 +1,4 @@
+import { hasPermission, isPrivilegedUser } from '@/libs/permissions'
 import React from 'react'
 import Link from 'next/link'
 import { getPayload } from 'payload'
@@ -56,8 +57,8 @@ export default async function HeaderAuth() {
     // top of the screen. This menu needs no focus trap or scroll lock, so
     // non-modal avoids the conflict entirely.
     <DropdownMenu modal={false}>
-      <DropdownMenuTrigger className="flex cursor-pointer items-center gap-2.5 outline-none">
-        <span className="hidden text-[13px] leading-none text-secondary-foreground sm:inline">
+      <DropdownMenuTrigger className="hit-area flex cursor-pointer items-center gap-2.5 rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
+        <span className="hidden text-meta leading-none text-secondary-foreground sm:inline">
           {displayName}
         </span>
         <Avatar className="h-[34px] w-[34px] bg-primary">
@@ -78,11 +79,13 @@ export default async function HeaderAuth() {
         <DropdownMenuItem asChild>
           <Link href="/account">My Account</Link>
         </DropdownMenuItem>
-        {user.roles?.some((role) => ['admin', 'superadmin', 'vp', 'deputy_vp'].includes(role)) && (
+        {isPrivilegedUser(user) && (
           <DropdownMenuItem asChild>
             <Link href="/admin">Admin Panel</Link>
           </DropdownMenuItem>
         )}
+        {hasPermission(user, 'manage_events') && <DropdownMenuItem asChild><Link href="/events/manage">Manage events</Link></DropdownMenuItem>}
+        {hasPermission(user, 'manage_forms') && <DropdownMenuItem asChild><Link href="/forms/manage">Manage forms</Link></DropdownMenuItem>}
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href="/admin/logout" className="text-destructive focus:text-destructive">

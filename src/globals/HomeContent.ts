@@ -1,4 +1,6 @@
 import type { GlobalConfig } from 'payload'
+import { revalidateTag } from 'next/cache'
+import { HOME_CONTENT_TAG } from '../libs/site-content'
 import { hasPermission } from '../libs/permissions'
 import type { User } from '@/payload-types'
 
@@ -7,6 +9,17 @@ export const HomeContent: GlobalConfig = {
   label: 'Home Content',
   admin: {
     group: 'Content',
+  },
+  hooks: {
+    afterChange: [
+      () => {
+        try {
+          revalidateTag(HOME_CONTENT_TAG, 'max')
+        } catch {
+          // Outside a Next request (seed/migration scripts) — nothing to invalidate.
+        }
+      },
+    ],
   },
   access: {
     read: () => true,
@@ -21,14 +34,6 @@ export const HomeContent: GlobalConfig = {
         description: 'The banner at the top of the home page. Blank fields fall back to the built-in copy.',
       },
       fields: [
-        {
-          name: 'eyebrow',
-          type: 'text',
-          admin: {
-            description: 'Small line above the title.',
-            placeholder: 'e.g. Since 2024 \u00b7 Faculty of Medicine Ramathibodi Hospital, Mahidol University',
-          },
-        },
         {
           name: 'heading',
           type: 'text',
@@ -147,14 +152,6 @@ export const HomeContent: GlobalConfig = {
         plural: 'Sections',
       },
       fields: [
-        {
-          name: 'kicker',
-          type: 'text',
-          required: false,
-          admin: {
-            description: 'Small label shown above the section title.',
-          },
-        },
         {
           name: 'heading',
           type: 'text',

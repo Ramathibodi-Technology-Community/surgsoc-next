@@ -1,6 +1,7 @@
 {
   "nav": {
     "home": "Home",
+    "skip_to_content": "Skip to content",
     "forms": "Forms",
     "events": "Events",
     "attendings": "Attendings",
@@ -49,5 +50,16 @@
     "title": "Page not found",
     "lead": "The page you're looking for doesn't exist or may have moved.",
     "cta": "Back to home"
+  },
+  "status": {
+    "open": "Open",
+    "live": "Happening now",
+    "waitlist": "Waitlist",
+    "pending": "Pending",
+    "overdue": "Overdue",
+    "cancelled": "Cancelled",
+    "complete": "Complete",
+    "closed": "Closed",
+    "no-deadline": "No deadline"
   }
 }

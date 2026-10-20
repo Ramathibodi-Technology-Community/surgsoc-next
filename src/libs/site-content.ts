@@ -1,3 +1,4 @@
+import { cacheTag } from 'next/cache'
 import config from '@payload-config'
 import { getPayload } from 'payload'
 
@@ -7,7 +8,6 @@ type HeroCTA = {
 }
 
 type Hero = {
-  eyebrow: string
   heading: string
   subheading: string
   lead: string
@@ -26,7 +26,6 @@ type HomeLabels = {
 }
 
 type HomeSection = {
-  kicker?: string
   heading: string
   body: string
   imageUrl?: string
@@ -38,7 +37,6 @@ type TermsSection = {
 }
 
 const DEFAULT_HERO: Hero = {
-  eyebrow: 'Since 2024 \u00b7 Faculty of Medicine Ramathibodi Hospital, Mahidol University',
   heading: 'Ramathibodi Surgical Society',
   subheading: '\u0e0a\u0e21\u0e23\u0e21\u0e28\u0e31\u0e25\u0e22\u0e28\u0e32\u0e2a\u0e15\u0e23\u0e4c \u0e23\u0e32\u0e21\u0e32\u0e18\u0e34\u0e1a\u0e14\u0e35',
   lead: 'A home for learners and leaders in surgery, built around excellence, service, and collaboration.',
@@ -61,7 +59,6 @@ const DEFAULT_HOME_LABELS: HomeLabels = {
 
 const DEFAULT_HOME_SECTIONS: HomeSection[] = [
   {
-    kicker: 'About The Society',
     heading: 'Where Passion, Determination, and Teamwork Forge the Future',
     body: 'Ramathibodi Surgical Society is a student-driven community dedicated to growth in surgical knowledge, collaboration, and service.',
     imageUrl: '/assets/beta.jpg',
@@ -128,7 +125,6 @@ export function sanitizeHero(raw: unknown): Hero {
     : []
 
   return {
-    eyebrow: textOr(hero.eyebrow, DEFAULT_HERO.eyebrow),
     heading: textOr(hero.heading, DEFAULT_HERO.heading),
     subheading: textOr(hero.subheading, DEFAULT_HERO.subheading),
     lead: textOr(hero.lead, DEFAULT_HERO.lead),
@@ -169,7 +165,6 @@ function sanitizeHomeSections(raw: unknown): HomeSection[] {
       if (!heading || !body) return null
 
       return {
-        kicker: typeof section.kicker === 'string' ? section.kicker : undefined,
         heading,
         body,
         imageUrl: typeof section.imageUrl === 'string' ? section.imageUrl : undefined,
@@ -199,7 +194,13 @@ function sanitizeTermsSections(raw: unknown): TermsSection[] {
   return sections.length > 0 ? sections : DEFAULT_TERMS_SECTIONS
 }
 
+export const HOME_CONTENT_TAG = 'home-content'
+
+// Cached so generateMetadata can read it: an uncached Payload call there trips the blocking-route error under cacheComponents.
+// Invalidated by the afterChange hook on the home-content global.
 export async function getHomeContent() {
+  'use cache'
+  cacheTag(HOME_CONTENT_TAG)
   const payload = await getPayload({ config })
   let global: Record<string, unknown> = {}
 

@@ -40,11 +40,11 @@ export default function LoginForm({ redirectTo = '/account' }: { redirectTo?: st
       */}
       <div className="panel w-full max-w-[420px] p-9">
         <h1 className="type-h2 mb-2">{locale === 'th' ? 'ยินดีต้อนรับกลับ' : 'Welcome back'}</h1>
-        <p className="mb-[26px] text-sm leading-relaxed text-muted-foreground">
+        <p className="mb-std text-sm leading-relaxed text-muted-foreground">
           {locale === 'th' ? 'บัญชีมหิดลเข้าสู่ระบบด้วย Google' : 'Mahidol accounts sign in with Google.'}
         </p>
 
-        <Button asChild size="lg" className="h-auto w-full py-[15px] text-[15px]">
+        <Button asChild className="w-full">
           {/* A plain <a>, not next/link: Link's client-side fetch navigation
               would follow this route's redirect to accounts.google.com itself,
               and that fetch is subject to CSP connect-src (unlike a real
@@ -56,7 +56,7 @@ export default function LoginForm({ redirectTo = '/account' }: { redirectTo?: st
 
         <div className="my-[22px] flex items-center gap-3.5">
           <span className="h-px flex-1 bg-border" />
-          <span className="label-mono text-muted-foreground">{t('nav.or')}</span>
+          <span className="type-caption text-muted-foreground">{t('nav.or')}</span>
           <span className="h-px flex-1 bg-border" />
         </div>
 
@@ -65,7 +65,7 @@ export default function LoginForm({ redirectTo = '/account' }: { redirectTo?: st
             <div
               role="alert"
               aria-live="assertive"
-              className="flex items-center gap-2 rounded-[10px] border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
+              className="flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"
             >
               <AlertCircle className="h-4 w-4 flex-shrink-0" />
               {error}
@@ -73,14 +73,14 @@ export default function LoginForm({ redirectTo = '/account' }: { redirectTo?: st
           )}
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="email" className="text-[13px] text-secondary-foreground">
+            <Label htmlFor="email" className="text-meta text-secondary-foreground">
               {t('nav.email')}
             </Label>
             <Input id="email" name="email" type="email" placeholder="you@example.com" required autoComplete="email" />
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="password" className="text-[13px] text-secondary-foreground">
+            <Label htmlFor="password" className="text-meta text-secondary-foreground">
               {t('nav.password')}
             </Label>
             <Input
@@ -96,8 +96,7 @@ export default function LoginForm({ redirectTo = '/account' }: { redirectTo?: st
           <Button
             type="submit"
             variant="outline"
-            size="lg"
-            className="h-auto w-full py-[15px] text-[15px]"
+            className="w-full"
             disabled={isLoading}
             aria-busy={isLoading}
           >

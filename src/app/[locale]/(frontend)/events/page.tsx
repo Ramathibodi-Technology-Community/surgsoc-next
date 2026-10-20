@@ -1,3 +1,7 @@
+import { hasPermission } from '@/libs/permissions'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { eventListPeriod, topLevelEventWhere } from '@/libs/event-workflow'
 import React from 'react'
 import type { Metadata } from 'next'
 import Record from '@/components/Record'
@@ -5,6 +9,8 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import { getCurrentUser } from '@/libs/auth/current-user'
 import EventCard from '@/components/EventCard'
+import NewEventDialog from '@/components/events/NewEventDialog'
+import { SlidersHorizontal } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
 import { mapPayloadEvent, getUserEventStatuses } from '@/libs/event'
 import { getDictionary } from '@/i18n/server'
@@ -26,6 +32,7 @@ export default async function EventsPage({
   const t = (await getDictionary(locale)).events
   const payload = await getPayload({ config })
   const user = await getCurrentUser(payload)
+  const canManage = user && (hasPermission(user, 'manage_events') || (await payload.count({ collection: 'events', where: { or: [{ owner: { equals: user.id } }, { 'parent_event.owner': { equals: user.id } }] } })).totalDocs > 0)
   const now = new Date().toISOString()
   const siteSettings = await getSiteSettings()
   const notSample = sampleWhere(siteSettings.showSampleData)
@@ -33,13 +40,13 @@ export default async function EventsPage({
   const [upcoming, past] = await Promise.all([
     payload.find({
       collection: 'events',
-      where: { date_begin: { greater_than_equal: now }, is_visible: { equals: true }, ...notSample },
+      where: { ...eventListPeriod(now), ...topLevelEventWhere, is_visible: { equals: true }, ...notSample },
       sort: 'date_begin',
       limit: 20,
     }),
     payload.find({
       collection: 'events',
-      where: { date_begin: { less_than: now }, is_visible: { equals: true }, ...notSample },
+      where: { ...eventListPeriod(now, true), ...topLevelEventWhere, is_visible: { equals: true }, ...notSample },
       sort: '-date_begin',
       limit: 20,
     }),
@@ -61,6 +68,12 @@ export default async function EventsPage({
       <PageHeader
         title="Sessions, workshops and observerships"
         lead="Every session is capped. Registration opens ahead of time and closes before the session starts."
+        aside={canManage ? (
+          <div className="flex items-center gap-2">
+            {hasPermission(user, 'manage_events') && <NewEventDialog />}
+            <Button asChild variant="outline"><Link href="/events/manage"><SlidersHorizontal />{t.manage_events}</Link></Button>
+          </div>
+        ) : undefined}
       />
 
       {/*
@@ -77,25 +90,25 @@ export default async function EventsPage({
       <div className="rail">
         <h2 className="type-h2">{t.upcoming}</h2>
         <span className="rail-bar" />
-        <span className="meta-mono">{upcomingEvents.length} upcoming</span>
+        <span className="type-figure">{upcomingEvents.length} upcoming</span>
       </div>
       {upcomingEvents.length > 0 ? (
-        <div className="card-grid mb-[52px]">
+        <div className="card-grid mb-wide">
           {upcomingEvents.map((event) => (
             <EventCard key={event.id} event={event} imageDisplay={siteSettings.eventCardImageDisplay} />
           ))}
         </div>
       ) : (
-        <div className="empty-note mb-[52px]">
+        <div className="empty-note mb-wide">
           <p className="font-medium text-secondary-foreground">{t.no_upcoming}</p>
-          <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">{t.stay_tuned}</p>
+          <p className="mt-1 text-meta leading-relaxed text-muted-foreground">{t.stay_tuned}</p>
         </div>
       )}
 
       <div className="rail">
         <h2 className="type-h2">{t.past}</h2>
         <span className="rail-bar" />
-        <span className="meta-mono">{pastEvents.length}</span>
+        <span className="type-figure">{pastEvents.length}</span>
       </div>
       {pastEvents.length > 0 ? (
         <div className="card-grid">

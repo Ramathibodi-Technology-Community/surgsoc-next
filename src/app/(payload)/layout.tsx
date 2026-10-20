@@ -1,5 +1,6 @@
 import config from '@payload-config'
 import '@payloadcms/next/css'
+import './admin-chart.css'
 import { RootLayout } from '@payloadcms/next/layouts'
 import { connection } from 'next/server'
 import React from 'react'

@@ -34,28 +34,32 @@ export default function EventActions({
 }) {
   const router = useRouter()
   const [loading, setLoading] = useState('')
+  const [error, setError] = useState('')
 
   const handleConfirm = async () => {
     if (loading) return
     setLoading('confirm')
-    await confirmAttendance(eventId)
-    router.refresh()
-    setLoading('')
+    setError('')
+    try { const result = await confirmAttendance(eventId); if (result.success) router.refresh(); else setError(result.message) }
+    catch { setError('Could not confirm. Please try again.') }
+    finally { setLoading('') }
   }
 
   const handleDecline = async () => {
     if (loading) return
     setLoading('decline')
-    await declineAttendance(eventId)
-    router.refresh()
-    setLoading('')
+    setError('')
+    try { const result = await declineAttendance(eventId); if (result.success) router.refresh(); else setError(result.message) }
+    catch { setError('Could not decline. Please try again.') }
+    finally { setLoading('') }
   }
 
   return (
     <div className="flex w-full flex-col gap-3">
+      {error && <p role="alert" className="text-destructive">{error}</p>}
       <Button
         onClick={handleConfirm}
-        className="h-auto w-full py-[15px] text-[15px]"
+        className="h-auto w-full py-[15px] text-body"
         disabled={!!loading}
         aria-busy={loading === 'confirm'}
       >
@@ -67,14 +71,14 @@ export default function EventActions({
         /* A decline that routes to an LOA form is navigation, not the action
            itself — so it is a link, and carries no spinner or busy state. */
         (secondaryAction.href ? (
-          <Button asChild variant="outline" className="h-auto w-full py-3 text-[15px]">
+          <Button asChild variant="outline" className="h-auto w-full py-3 text-body">
             <Link href={secondaryAction.href}>{secondaryAction.label}</Link>
           </Button>
         ) : (
           <Button
             onClick={handleDecline}
             variant="outline"
-            className="h-auto w-full py-3 text-[15px]"
+            className="h-auto w-full py-3 text-body"
             disabled={!!loading}
             aria-busy={loading === 'decline'}
           >

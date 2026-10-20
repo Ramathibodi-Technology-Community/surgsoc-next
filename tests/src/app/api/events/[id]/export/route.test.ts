@@ -1,0 +1,45 @@
+import { beforeEach, expect, it, vi } from 'vitest'
+import { NextRequest } from 'next/server'
+const payload = vi.hoisted(() => ({ auth: vi.fn(), findByID: vi.fn(), logger: { error: vi.fn() } }))
+const applicants = vi.hoisted(() => vi.fn())
+const days = vi.hoisted(() => vi.fn())
+vi.mock('payload', () => ({ getPayload: async () => payload }))
+vi.mock('@payload-config', () => ({ default: {} }))
+vi.mock('@/libs/event-applicants', () => ({ loadEventApplicants: applicants }))
+vi.mock('@/libs/event-workflow', async importOriginal => ({ ...await importOriginal<typeof import('@/libs/event-workflow')>(), eventDays: days }))
+import { GET } from '@/app/api/events/[id]/export/route'
+const request = (kind = 'roster') => GET(new NextRequest(`http://localhost/api/events/1/export?kind=${kind}`), { params: Promise.resolve({ id: '1' }) })
+beforeEach(() => {
+  vi.clearAllMocks()
+  payload.findByID.mockResolvedValue({ id: 1, owner: 7, event_structure: 'multi_day' })
+  days.mockResolvedValue([{ id: 2, name: 'Day A' }, { id: 3, name: 'Day B' }])
+})
+it('requires both export capability and management of the requested event', async () => {
+  payload.auth.mockResolvedValue({ user: null })
+  expect((await request()).status).toBe(401)
+  payload.auth.mockResolvedValue({ user: { id: 7, roles: ['staff'], groups: [] } })
+  expect((await request()).status).toBe(403)
+  payload.auth.mockResolvedValue({ user: { id: 8, roles: ['staff'], groups: [{ permissions: { export_data: true } }] } })
+  expect((await request()).status).toBe(403)
+  expect(applicants).not.toHaveBeenCalled()
+})
+it('scopes to server-selected days, deduplicates shared applications and omits broken answers', async () => {
+  payload.auth.mockResolvedValue({ user: { id: 7, roles: ['staff'], groups: [{ permissions: { export_data: true } }] } })
+  const row = { id: '11', eventId: 2, status: 'confirmed', user: { name_english: { first_name: '=FORMULA' }, email: 'person@test.invalid', academic: { student_id: '123' }, contact: { phone: 'SECRET' } }, submission: { id: 90, submissionData: [{ field: 'answer', value: 'Hello,"world"' }] } }
+  applicants.mockResolvedValue([row, { ...row, id: '12', eventId: 3, status: 'subscribed' }, { ...row, id: '13', integrityWarning: 'broken', submission: { id: 91, submissionData: [{ field: 'bad', value: 'PRIVATE-BROKEN' }] } }])
+  const result = await request('applications')
+  expect(result.status).toBe(200)
+  expect(applicants).toHaveBeenCalledWith(payload, expect.objectContaining({ id: 1 }), [2, 3])
+  const csv = await result.text()
+  expect(csv.match(/Hello/g)).toHaveLength(1)
+  expect(csv).toContain("'=FORMULA")
+  expect(csv).toContain('Day A: confirmed; Day B: subscribed')
+  expect(csv).toContain('"Hello,""world"""')
+  expect(csv).not.toContain('PRIVATE-BROKEN')
+  expect(csv).not.toContain('SECRET')
+  expect(result.headers.get('cache-control')).toBe('private, no-store')
+})
+it('rejects unknown export formats', async () => {
+  payload.auth.mockResolvedValue({ user: { id: 7, roles: ['admin'] } })
+  expect((await request('users')).status).toBe(400)
+})

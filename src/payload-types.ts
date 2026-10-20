@@ -315,11 +315,13 @@ export interface Tag {
  */
 export interface Event {
   id: number;
+  event_structure: 'standalone' | 'multi_day' | 'day';
+  parent_event?: (number | null) | Event;
   name: string;
   /**
    * Managed under Utilities → Tags. Adding a type is a row, not a deploy.
    */
-  event_type: number | Tag;
+  event_type?: (number | null) | Tag;
   department?: (number | null) | Tag;
   date_begin: string;
   date_end?: string | null;
@@ -391,6 +393,16 @@ export interface Event {
    */
   reflection_release_at?: string | null;
   reflection_deadline?: string | null;
+  /**
+   * Links to photo albums from the event. Shown on the event page after it ends.
+   */
+  gallery_links?:
+    | {
+        title: string;
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
   reflection_released_early_at?: string | null;
   reflection_released_early_by?: (number | null) | User;
   is_reflection_open?: boolean | null;
@@ -411,6 +423,7 @@ export interface Event {
 export interface Form {
   id: number;
   title: string;
+  owner?: (number | null) | User;
   fields?:
     | (
         | {
@@ -806,6 +819,7 @@ export interface Registration {
     | ('subscribed' | 'applicant' | 'accepted' | 'rejected' | 'confirmed' | 'declined' | 'participant' | 'withdrawn')
     | null;
   submission?: (number | null) | FormSubmission;
+  session_submission?: (number | null) | FormSubmission;
   selected_at?: string | null;
   selected_by?: (number | null) | User;
   rejection_reason?: string | null;
@@ -827,6 +841,16 @@ export interface FormSubmission {
       }[]
     | null;
   user?: (number | null) | User;
+  application_event?: (number | null) | Event;
+  selected_days?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   single_submission_key?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -1144,6 +1168,8 @@ export interface UsersSelect<T extends boolean = true> {
  * via the `definition` "events_select".
  */
 export interface EventsSelect<T extends boolean = true> {
+  event_structure?: T;
+  parent_event?: T;
   name?: T;
   event_type?: T;
   department?: T;
@@ -1168,6 +1194,13 @@ export interface EventsSelect<T extends boolean = true> {
   reflection_form?: T;
   reflection_release_at?: T;
   reflection_deadline?: T;
+  gallery_links?:
+    | T
+    | {
+        title?: T;
+        url?: T;
+        id?: T;
+      };
   reflection_released_early_at?: T;
   reflection_released_early_by?: T;
   is_reflection_open?: T;
@@ -1203,6 +1236,7 @@ export interface RegistrationsSelect<T extends boolean = true> {
   user?: T;
   status?: T;
   submission?: T;
+  session_submission?: T;
   selected_at?: T;
   selected_by?: T;
   rejection_reason?: T;
@@ -1323,6 +1357,7 @@ export interface FeatureRequestsSelect<T extends boolean = true> {
  */
 export interface FormsSelect<T extends boolean = true> {
   title?: T;
+  owner?: T;
   fields?:
     | T
     | {
@@ -1668,6 +1703,8 @@ export interface FormSubmissionsSelect<T extends boolean = true> {
         id?: T;
       };
   user?: T;
+  application_event?: T;
+  selected_days?: T;
   single_submission_key?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1722,10 +1759,6 @@ export interface HomeContent {
    * The banner at the top of the home page. Blank fields fall back to the built-in copy.
    */
   hero?: {
-    /**
-     * Small line above the title.
-     */
-    eyebrow?: string | null;
     heading?: string | null;
     /**
      * Sits under the title, set in the display face. Used for the Thai name.
@@ -1776,10 +1809,6 @@ export interface HomeContent {
    */
   sections?:
     | {
-        /**
-         * Small label shown above the section title.
-         */
-        kicker?: string | null;
         heading: string;
         body: string;
         /**
@@ -1861,7 +1890,6 @@ export interface HomeContentSelect<T extends boolean = true> {
   hero?:
     | T
     | {
-        eyebrow?: T;
         heading?: T;
         subheading?: T;
         lead?: T;
@@ -1888,7 +1916,6 @@ export interface HomeContentSelect<T extends boolean = true> {
   sections?:
     | T
     | {
-        kicker?: T;
         heading?: T;
         body?: T;
         imageUrl?: T;

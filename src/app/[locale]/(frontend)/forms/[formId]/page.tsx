@@ -9,6 +9,8 @@ import PayloadForm from '@/components/PayloadForm'
 import StatusMark from '@/components/StatusMark'
 import { submitForm } from './actions'
 import { Locale } from '@/i18n/config'
+import { RichText } from '@payloadcms/richtext-lexical/react'
+import { formClosedReason } from '@/libs/forms/availability'
 
 export async function generateMetadata({
   params,
@@ -56,6 +58,11 @@ export default async function FormPage({ params }: { params: Promise<{ formId: s
     alreadySubmitted = existing.totalDocs > 0
   }
 
+  // Closed: the switch is off, the closing date has passed, or the response limit is reached (design board 6).
+  const responses = (form as any).response_limit ? await payload.count({ collection: 'form-submissions', where: { form: { equals: formId } } }) : null
+  const closedReason = formClosedReason(form as any, responses?.totalDocs ?? 0)
+  const closedMessage = (form as any).publish?.closed_message
+
   return (
     <div className="max-w-[680px]">
       {/* 13px, matching the back link on the event detail page. It was 12px
@@ -63,15 +70,22 @@ export default async function FormPage({ params }: { params: Promise<{ formId: s
           the smallest text on it. */}
       <Link
         href="/forms"
-        className="text-[13px] text-muted-foreground transition-colors hover:text-foreground"
+        className="text-meta text-muted-foreground transition-colors hover:text-foreground"
       >
         ← Back to forms
       </Link>
 
-      <h1 className="type-h1 mb-[34px] mt-6 max-w-[24ch]">{form.title}</h1>
+      <h1 className="type-h1 mb-std mt-6 max-w-[24ch]">{form.title}</h1>
 
       <div className="panel p-5 sm:p-[30px]">
-        {alreadySubmitted ? (
+        {closedReason && !alreadySubmitted ? (
+          <>
+            <StatusMark status="closed" label="Closed" className="mb-3" />
+            {closedMessage?.root?.children?.length
+              ? <RichText className="max-w-[52ch] leading-relaxed text-secondary-foreground" data={closedMessage} />
+              : <p className="max-w-[52ch] leading-relaxed text-secondary-foreground">This form is no longer accepting responses. Ask the coordinator if you think this is a mistake.</p>}
+          </>
+        ) : alreadySubmitted ? (
           /*
             Red said this was a problem. It is not: the form is done and on
             record, which in this system is a blue check — the same marker the

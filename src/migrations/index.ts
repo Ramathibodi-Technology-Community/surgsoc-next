@@ -6,6 +6,9 @@ import * as migration_20260923_155724_hotfix_members_and_registration from './20
 import * as migration_20260923_164845_upgrade_payload_3_90 from './20260923_164845_upgrade_payload_3_90';
 import * as migration_20260924_000000_form_assignment_lifecycle from './20260924_000000_form_assignment_lifecycle';
 import * as migration_20260924_000100_team_members_academic_year_tag from './20260924_000100_team_members_academic_year_tag';
+import * as migration_20260928_170806_event_workflows from './20260928_170806_event_workflows';
+import * as migration_20261006_152216_event_group_answers_gallery from './20261006_152216_event_group_answers_gallery';
+import * as migration_20261018_112346_drop_home_eyebrow_kicker from './20261018_112346_drop_home_eyebrow_kicker';
 
 export const migrations = [
   {
@@ -36,7 +39,7 @@ export const migrations = [
   {
     up: migration_20260923_164845_upgrade_payload_3_90.up,
     down: migration_20260923_164845_upgrade_payload_3_90.down,
-    name: '20260923_164845_upgrade_payload_3_90'
+    name: '20260923_164845_upgrade_payload_3_90',
   },
   {
     up: migration_20260924_000000_form_assignment_lifecycle.up,
@@ -47,5 +50,20 @@ export const migrations = [
     up: migration_20260924_000100_team_members_academic_year_tag.up,
     down: migration_20260924_000100_team_members_academic_year_tag.down,
     name: '20260924_000100_team_members_academic_year_tag',
+  },
+  {
+    up: migration_20260928_170806_event_workflows.up,
+    down: migration_20260928_170806_event_workflows.down,
+    name: '20260928_170806_event_workflows',
+  },
+  {
+    up: migration_20261006_152216_event_group_answers_gallery.up,
+    down: migration_20261006_152216_event_group_answers_gallery.down,
+    name: '20261006_152216_event_group_answers_gallery',
+  },
+  {
+    up: migration_20261018_112346_drop_home_eyebrow_kicker.up,
+    down: migration_20261018_112346_drop_home_eyebrow_kicker.down,
+    name: '20261018_112346_drop_home_eyebrow_kicker'
   },
 ];
