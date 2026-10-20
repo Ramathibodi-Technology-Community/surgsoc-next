@@ -15,7 +15,7 @@ export default async function EventManagementEditor({ id, parentId, locale }: { 
   const payload = await getPayload({ config })
   const user = await getCurrentUser(payload)
   if (!user) redirect('/login')
-  const event = id ? await payload.findByID({ collection: 'events', id, depth: 2 }).catch(() => null) : null
+  const event = id ? await payload.findByID({ collection: 'events', id, depth: 2, user, overrideAccess: true }).catch(() => null) : null
   if (id ? !event || !canManageEvent(user, event) : !hasPermission(user, 'manage_events')) notFound()
   const [forms, parents, eventTypes, departments, locations] = await Promise.all([
     payload.find({ collection: 'forms', pagination: false, depth: 0, overrideAccess: false, user }),
