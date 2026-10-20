@@ -153,7 +153,7 @@ export default function FormEditor({ form, user, returnTo, tab, responseCount, c
           <p className="mt-1 text-meta text-muted-foreground">{form?.id ? t('forms.editor.accepting_in_header') : ''}</p>
         </div>
         {!form?.id && <label className="form-check"><input type="checkbox" checked={draft.accept_responses !== false} onChange={e => change('accept_responses', e.target.checked)} />{t('forms.editor.accept_responses')}</label>}
-        <div className="form-label">{t('forms.editor.deadline')} <span className="text-muted-foreground">· {t('forms.editor.optional')}</span><DateTimePicker value={draft.response_deadline} onChange={iso => change('response_deadline', iso)} /></div>
+        <div className="form-label">{t('forms.editor.deadline')} <span className="text-muted-foreground">· {t('forms.editor.optional')}</span><DateTimePicker label={t('forms.editor.deadline')} value={draft.response_deadline} onChange={iso => change('response_deadline', iso)} /></div>
         {input(`${t('forms.editor.limit')} · ${t('forms.editor.optional')}`, draft.response_limit || 0, value => change('response_limit', Number(value)), 'number')}
         <label className="form-check"><input type="checkbox" checked={!!draft.publish?.allow_multiple_submissions} onChange={e => change('publish', { ...draft.publish, allow_multiple_submissions: e.target.checked })} />{t('forms.editor.multiple')}</label>
         <div className="space-y-2">

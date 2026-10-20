@@ -57,7 +57,7 @@ export default function NewEventDialog({ variant = 'outline' }: { variant?: 'def
               {choice('multi_day', t('events.structure.multi_day'), t('events.staff.kind_group_note'))}
             </div>
             <div className="space-y-2"><Label htmlFor="new-event-name" className="text-xs text-muted-foreground">{t('events.editor.name')} <span className="text-destructive">*</span></Label><Input id="new-event-name" required autoFocus value={name} onChange={e => setName(e.target.value)} /></div>
-            <div className="space-y-2"><Label className="text-xs text-muted-foreground">{t('events.editor.date_begin')} <span className="text-destructive">*</span></Label><DateTimePicker required value={begin} onChange={setBegin} /></div>
+            <div className="space-y-2"><Label className="text-xs text-muted-foreground">{t('events.editor.date_begin')} <span className="text-destructive">*</span></Label><DateTimePicker required label={t('events.editor.date_begin')} value={begin} onChange={setBegin} /></div>
             {error && <p role="alert" className="text-meta text-destructive">{error}</p>}
             <div className="mt-2 flex justify-end gap-2.5">
               <Dialog.Close asChild><Button type="button" variant="outline" disabled={pending}>{t('events.cancel')}</Button></Dialog.Close>

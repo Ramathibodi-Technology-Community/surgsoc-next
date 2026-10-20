@@ -79,7 +79,7 @@ export default function SectionSheet({ eventId, title, description, fields, valu
     switch (field.kind) {
       case 'textarea': return <Textarea id={id} rows={field.name === 'description' ? 10 : 4} value={String(value ?? '')} onChange={e => set(field.name, e.target.value)} />
       case 'number': return <Input id={id} type="number" min={0} inputMode="numeric" value={value == null ? '' : String(value)} onChange={e => set(field.name, e.target.value === '' ? null : Number(e.target.value))} />
-      case 'datetime': return <DateTimePicker id={id} required={field.required} value={value} onChange={next => set(field.name, next)} />
+      case 'datetime': return <DateTimePicker id={id} label={t(field.labelKey ?? `events.editor.${field.name}`)} required={field.required} value={value} onChange={next => set(field.name, next)} />
       case 'richtext': return <FormMessageEditor value={value} onChange={next => set(field.name, next)} />
       case 'select': return (
         <Select value={value == null || value === '' ? (field.required ? undefined : NONE) : String(value)} onValueChange={next => set(field.name, next === NONE ? null : /^\d+$/.test(next) ? Number(next) : next)}>

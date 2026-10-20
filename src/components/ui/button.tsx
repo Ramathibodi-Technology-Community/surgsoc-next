@@ -61,8 +61,7 @@ function Button({
       aria-busy={pending || undefined}
       {...props}
     >
-      {pending && !asChild && <Loader2 className="animate-spin" aria-hidden />}
-      {children}
+      {asChild ? children : <>{pending && <Loader2 className="animate-spin" aria-hidden />}{children}</>}
     </Comp>
   )
 }
