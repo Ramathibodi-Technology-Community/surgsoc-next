@@ -114,10 +114,10 @@ export async function queueRegistrationNotification(payload: Payload, registrati
   const send = async () => {
     try {
       // The adapter can swallow a commit error. Verify the write persisted before mailing.
-      const saved = await payload.findByID({ collection: 'registrations', id: registration.id, depth: 0 })
+      const saved = await payload.findByID({ collection: 'registrations', id: registration.id, depth: 0, overrideAccess: true })
       if (saved.status !== registration.status || saved.updatedAt !== registration.updatedAt) return
-      const event = await payload.findByID({ collection: 'events', id: idOf(registration.event)!, depth: 2 })
-      const user = await payload.findByID({ collection: 'users', id: idOf(registration.user)! })
+      const event = await payload.findByID({ collection: 'events', id: idOf(registration.event)!, depth: 2, overrideAccess: true })
+      const user = await payload.findByID({ collection: 'users', id: idOf(registration.user)!, overrideAccess: true })
       const args = { registration, event: { ...event, location: tagPath(event.location) }, user }
       if (registration.status === 'accepted') await NotificationService.sendRegistrationAccepted(args)
       if (registration.status === 'confirmed') await NotificationService.sendRegistrationConfirmed(args)
