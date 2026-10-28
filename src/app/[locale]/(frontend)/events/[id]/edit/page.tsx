@@ -226,7 +226,9 @@ export default async function EditEvent({ params, searchParams }: { params: Prom
                 <Button asChild variant="outline"><Link href={`/events/new?parent=${eventDoc.id}${setup ? `&next=${encodeURIComponent(`/events/${eventDoc.id}/edit?step=sessions`)}` : ''}`}>{t.staff.add_session}</Link></Button>
               </nav>
               {current && c ? (
-                <div className="flex max-w-xl flex-col gap-3.5">
+                <div className="flex min-w-0 flex-col gap-6">
+                  {!setup && <ProgressSteps label={t.staff.tab_sessions} steps={steps} />}
+                  <div className="flex max-w-xl flex-col gap-3.5">
                   <Box title={t.staff.session_section} action={daySheet(current, 'basics', t.staff.basics, t.staff.times_note)} rows={[
                     [t.editor.name, current.name],
                     [t.editor.date_begin, stamp(current.date_begin)],
@@ -247,6 +249,7 @@ export default async function EditEvent({ params, searchParams }: { params: Prom
                     [t.editor.reflection_deadline, stamp(current.reflection_deadline)],
                   ] : [[t.editor.reflection_form, t.staff.no_reflection]]} />}
                   <Box title={t.joining_details} action={daySheet(current, 'joining', t.joining_details, t.staff.joining_note)} rows={[[t.staff.joining_note, current.participant_detail ? t.staff.set : t.staff.empty]]} />
+                  </div>
                 </div>
               ) : null}
             </div>
@@ -320,21 +323,29 @@ export default async function EditEvent({ params, searchParams }: { params: Prom
             edit={{ basics: sheet('basics', t.staff.basics, t.staff.times_note), details: sheet('details', t.about_event), joining: sheet('joining', t.joining_details, t.staff.joining_note) }}
           />
         )}
-        {tab === 'sessions' && structure !== 'day' && <ProgressSteps label={t.staff.tab_sessions} steps={steps} />}
         {tab === 'sessions' && !isGroup && (
-          // A single event is one session: show it the way a group shows its selected session, with the group offer as a footnote.
-          <div className="flex max-w-xl flex-col gap-3.5">
-            <Box
-              title={t.staff.session_section}
-              action={<SectionSheet eventId={eventDoc.id} title={t.staff.session_section} description={t.staff.times_note} fields={sectionFields('basics', structure).filter(field => field.name === 'date_begin' || field.name === 'date_end')} values={values} options={options} />}
-              rows={[[t.editor.date_begin, stamp(eventDoc.date_begin)], [t.editor.date_end, stamp(eventDoc.date_end)]]}
-            />
-            {applicationBox}
-            {structure === 'standalone' && (
-              <div className="mt-3 border-t border-border pt-5">
-                <MakeGroup eventId={eventDoc.id} />
+          // A single event is a group of one: same list-and-boxes layout, with the group conversion where "Add session" would be.
+          <div className="grid items-start gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
+            <nav aria-label={t.days} className="flex flex-col gap-2">
+              <div aria-current="true" className="rounded-md border border-accent bg-card p-3.5">
+                <span className="block font-medium">{eventDoc.name}</span>
+                <span className="block text-meta text-muted-foreground"><time dateTime={eventDoc.date_begin}>{new Date(eventDoc.date_begin).toLocaleDateString(localeStr, { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Asia/Bangkok' })}</time> · {own.seated} / {limit(eventDoc.participant_limit)}{own.pending ? ` · ${own.pending} ${t.staff.pending.toLocaleLowerCase(locale)}` : ''}</span>
               </div>
-            )}
+              {structure === 'standalone' && (applied > 0
+                ? <p className="text-meta text-muted-foreground">{t.staff.make_group_blocked}</p>
+                : <MakeGroup eventId={eventDoc.id} compact />)}
+            </nav>
+            <div className="flex min-w-0 flex-col gap-6">
+              <ProgressSteps label={t.staff.tab_sessions} steps={steps} />
+              <div className="flex max-w-xl flex-col gap-3.5">
+                <Box
+                  title={t.staff.session_section}
+                  action={<SectionSheet eventId={eventDoc.id} title={t.staff.session_section} description={t.staff.times_note} fields={sectionFields('basics', structure).filter(field => field.name === 'date_begin' || field.name === 'date_end')} values={values} options={options} />}
+                  rows={[[t.editor.date_begin, stamp(eventDoc.date_begin)], [t.editor.date_end, stamp(eventDoc.date_end)]]}
+                />
+                {applicationBox}
+              </div>
+            </div>
           </div>
         )}
         {tab === 'sessions' && groupSessions}
