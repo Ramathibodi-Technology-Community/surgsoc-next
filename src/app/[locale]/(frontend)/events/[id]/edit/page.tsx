@@ -322,12 +322,19 @@ export default async function EditEvent({ params, searchParams }: { params: Prom
         )}
         {tab === 'sessions' && structure !== 'day' && <ProgressSteps label={t.staff.tab_sessions} steps={steps} />}
         {tab === 'sessions' && !isGroup && (
-          <div className="grid items-start gap-11 lg:grid-cols-[minmax(0,1fr)_300px]">
-            <section>
-              <div className="rail"><h2 className="type-h2">{t.days}</h2><span className="rail-bar" /></div>
-              {structure === 'standalone' && <MakeGroup eventId={eventDoc.id} />}
-            </section>
-            <aside className="flex flex-col gap-3.5">{applicationBox}</aside>
+          // A single event is one session: show it the way a group shows its selected session, with the group offer as a footnote.
+          <div className="flex max-w-xl flex-col gap-3.5">
+            <Box
+              title={t.staff.session_section}
+              action={<SectionSheet eventId={eventDoc.id} title={t.staff.session_section} description={t.staff.times_note} fields={sectionFields('basics', structure).filter(field => field.name === 'date_begin' || field.name === 'date_end')} values={values} options={options} />}
+              rows={[[t.editor.date_begin, stamp(eventDoc.date_begin)], [t.editor.date_end, stamp(eventDoc.date_end)]]}
+            />
+            {applicationBox}
+            {structure === 'standalone' && (
+              <div className="mt-3 border-t border-border pt-5">
+                <MakeGroup eventId={eventDoc.id} />
+              </div>
+            )}
           </div>
         )}
         {tab === 'sessions' && groupSessions}
