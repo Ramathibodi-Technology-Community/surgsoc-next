@@ -1,5 +1,6 @@
 'use client'
 
+import { DatePicker } from '@/components/ui/date-time-picker'
 import React from 'react'
 import type { FormFieldBlock } from '@payloadcms/plugin-form-builder/types'
 import RadioGroupField from './FormFields/RadioGroupField'
@@ -51,9 +52,11 @@ interface Props {
   value: any
   onChange: (value: any) => void
   user?: any
+  /** Localised instruction for ranking fields; passed in so this stays hook-free. */
+  rankingHint?: string
 }
 
-export default function FormField({ field: fieldProp, value, onChange, user }: Props) {
+export default function FormField({ field: fieldProp, value, onChange, user, rankingHint }: Props) {
   const field = fieldProp as ExtendedFormField
   const fieldName = field.name || ''
   const label = field.label || fieldName
@@ -107,10 +110,12 @@ export default function FormField({ field: fieldProp, value, onChange, user }: P
       return (
         <RankingField
           label={label}
-          options={field.options?.map((o) => o.label) || field.options?.map((o) => o.value) || []}
+          options={field.options?.map((o) => o.value) || []}
+          labels={Object.fromEntries((field.options || []).map(option => [option.value, option.label]))}
           value={value}
           onChange={onChange}
           required={required}
+          hint={rankingHint}
         />
       )
 
@@ -153,7 +158,7 @@ export default function FormField({ field: fieldProp, value, onChange, user }: P
             id={fieldName}
             name={fieldName}
             required={required}
-            value={value || ''}
+            value={value ?? ''}
             onChange={(e) => onChange(e.target.value)}
           />
         </div>
@@ -186,6 +191,7 @@ export default function FormField({ field: fieldProp, value, onChange, user }: P
             value={value}
             onChange={onChange}
             required={required}
+            hint={rankingHint}
           />
         )
       }
@@ -270,14 +276,7 @@ export default function FormField({ field: fieldProp, value, onChange, user }: P
           <Label htmlFor={fieldName}>
             {label} {required && <span className="text-destructive">*</span>}
           </Label>
-          <Input
-            type="date"
-            id={fieldName}
-            name={fieldName}
-            required={required}
-            value={value || ''}
-            onChange={(e) => onChange(e.target.value)}
-          />
+          <DatePicker id={fieldName} name={fieldName} required={required} value={value || ''} onChange={onChange} />
         </div>
       )
 

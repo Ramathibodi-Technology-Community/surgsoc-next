@@ -10,6 +10,7 @@ interface RegistrationConfirmedEmailProps {
   location: string;
   lineQrCode: string; // URL to QR code image or base64
   lineGroupUrl?: string;
+  detailsUrl?: string;
 }
 
 export const RegistrationConfirmedEmail: React.FC<RegistrationConfirmedEmailProps> = ({
@@ -19,6 +20,7 @@ export const RegistrationConfirmedEmail: React.FC<RegistrationConfirmedEmailProp
   location,
   lineQrCode,
   lineGroupUrl,
+  detailsUrl,
 }) => {
   return (
     <BaseTemplate previewText={`Your spot for ${eventName} is confirmed!`}>
@@ -35,7 +37,8 @@ export const RegistrationConfirmedEmail: React.FC<RegistrationConfirmedEmailProp
         <Text style={detailText}>📍 <strong>Location:</strong> {location}</Text>
       </Section>
 
-      <Heading style={h2}>Join the Event Group</Heading>
+      {detailsUrl && <Text style={text}><a href={detailsUrl}>View joining instructions and event details</a></Text>}
+      {(lineQrCode || lineGroupUrl) && <><Heading style={h2}>Join the Event Group</Heading>
       <Text style={text}>
         Please scan the QR code below or click the link to join the official LINE OpenChat for this event.
       </Text>
@@ -50,7 +53,7 @@ export const RegistrationConfirmedEmail: React.FC<RegistrationConfirmedEmailProp
           <Text style={{ ...text, textAlign: 'center' }}>
             <a href={lineGroupUrl}>Click here to join directly</a>
           </Text>
-      )}
+      )}</>}
 
     </BaseTemplate>
   );
@@ -77,7 +80,7 @@ const text = {
 };
 
 const details = {
-  backgroundColor: '#f4f4f4',
+  backgroundColor: '#f3f5f8',
   borderRadius: '4px',
   padding: '16px',
   margin: '20px 0',

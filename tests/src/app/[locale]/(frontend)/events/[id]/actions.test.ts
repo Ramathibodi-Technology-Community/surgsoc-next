@@ -1,12 +1,14 @@
+vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const payloadMock = {
   auth: vi.fn(),
+  count: vi.fn(),
   find: vi.fn(),
   findByID: vi.fn(),
   create: vi.fn(),
   update: vi.fn(),
-  db: { beginTransaction: vi.fn(), commitTransaction: vi.fn(), rollbackTransaction: vi.fn() },
+  db: { sessions: { tx: { db: { execute: vi.fn() } } }, beginTransaction: vi.fn(), commitTransaction: vi.fn(), rollbackTransaction: vi.fn() },
 }
 
 vi.mock('@payload-config', () => ({ default: {} }))
@@ -22,12 +24,14 @@ vi.mock('@/libs/user-action-gate', () => ({
 
 describe('event attendance actions', () => {
   beforeEach(() => {
+    payloadMock.db.beginTransaction.mockResolvedValue('tx')
+    payloadMock.count.mockResolvedValue({ totalDocs: 0 })
     payloadMock.auth.mockReset()
     payloadMock.find.mockReset()
     payloadMock.update.mockReset()
     payloadMock.findByID.mockReset()
     payloadMock.create.mockReset()
-    payloadMock.db.beginTransaction.mockReset()
+    payloadMock.db.beginTransaction.mockResolvedValue('tx')
     payloadMock.db.commitTransaction.mockReset()
     payloadMock.db.rollbackTransaction.mockReset()
   })
@@ -36,7 +40,7 @@ describe('event attendance actions', () => {
     payloadMock.auth.mockResolvedValue({ user: null })
     const { confirmAttendance } = await import('@/app/[locale]/(frontend)/events/[id]/actions')
 
-    const result = await confirmAttendance('evt_1')
+    const result = await confirmAttendance('1')
 
     expect(result).toEqual({ success: false, message: 'Not authenticated' })
     expect(payloadMock.find).not.toHaveBeenCalled()
@@ -44,11 +48,12 @@ describe('event attendance actions', () => {
 
   it('confirms attendance when accepted registration exists', async () => {
     payloadMock.auth.mockResolvedValue({ user: { id: 7 } })
+    payloadMock.findByID.mockResolvedValue({ id: 2 })
     payloadMock.find.mockResolvedValue({ totalDocs: 1, docs: [{ id: 55 }] })
     payloadMock.update.mockResolvedValue({})
 
     const { confirmAttendance } = await import('@/app/[locale]/(frontend)/events/[id]/actions')
-    const result = await confirmAttendance('evt_2')
+    const result = await confirmAttendance('2')
 
     expect(payloadMock.find).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -59,22 +64,25 @@ describe('event attendance actions', () => {
       collection: 'registrations',
       id: 55,
       data: { status: 'confirmed' },
+      req: expect.objectContaining({ transactionID: 'tx' }),
     })
     expect(result).toEqual({ success: true, message: 'Attendance confirmed!' })
   })
 
   it('declines attendance for active registration', async () => {
     payloadMock.auth.mockResolvedValue({ user: { id: 8 } })
+    payloadMock.findByID.mockResolvedValue({ id: 3 })
     payloadMock.find.mockResolvedValue({ totalDocs: 1, docs: [{ id: 99 }] })
     payloadMock.update.mockResolvedValue({})
 
     const { declineAttendance } = await import('@/app/[locale]/(frontend)/events/[id]/actions')
-    const result = await declineAttendance('evt_3')
+    const result = await declineAttendance('3')
 
     expect(payloadMock.update).toHaveBeenCalledWith({
       collection: 'registrations',
       id: 99,
       data: { status: 'declined' },
+      req: expect.objectContaining({ transactionID: 'tx' }),
     })
     expect(result).toEqual({ success: true, message: 'Registration declined.' })
   })

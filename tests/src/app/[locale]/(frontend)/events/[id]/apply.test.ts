@@ -1,11 +1,15 @@
+vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const payloadMock = {
   auth: vi.fn(),
+  count: vi.fn(),
   findByID: vi.fn(),
   find: vi.fn(),
   create: vi.fn(),
+  logger: { error: vi.fn() },
   db: {
+    sessions: { tx_1: { db: { execute: vi.fn() } } },
     beginTransaction: vi.fn(),
     commitTransaction: vi.fn(),
     rollbackTransaction: vi.fn(),
@@ -34,6 +38,7 @@ describe('submitEventApplication', () => {
     payloadMock.auth.mockResolvedValue({ user: { id: 7 } })
     payloadMock.findByID.mockResolvedValue({ id: 3, name: 'Event', subscription_form: 9 })
     payloadMock.find.mockResolvedValue({ totalDocs: 0, docs: [] })
+    payloadMock.count.mockResolvedValue({ totalDocs: 0 })
     payloadMock.db.beginTransaction.mockResolvedValue('tx_1')
     gateMock.mockResolvedValue({ allowed: true })
   })
@@ -47,7 +52,7 @@ describe('submitEventApplication', () => {
   })
 
   it('refuses a second application for the same event', async () => {
-    payloadMock.find.mockResolvedValue({ totalDocs: 1, docs: [{ id: 1 }] })
+    payloadMock.count.mockResolvedValue({ totalDocs: 1 })
     const submitEventApplication = await importAction()
 
     await expect(submitEventApplication('3', { a: 'b' })).rejects.toThrow('already applied')
@@ -66,13 +71,15 @@ describe('submitEventApplication', () => {
         form: 9,
         submissionData: [{ field: 'a', value: 'b' }],
         user: 7,
+        application_event: 3,
+        selected_days: null,
       },
-      req: { transactionID: 'tx_1' },
+      req: expect.objectContaining({ transactionID: 'tx_1' }),
     })
     expect(payloadMock.create).toHaveBeenNthCalledWith(2, {
       collection: 'registrations',
       data: { event: 3, user: 7, status: 'applicant', submission: 1 },
-      req: { transactionID: 'tx_1' },
+      req: expect.objectContaining({ transactionID: 'tx_1' }),
     })
     expect(payloadMock.db.commitTransaction).toHaveBeenCalledWith('tx_1')
     expect(payloadMock.db.rollbackTransaction).not.toHaveBeenCalled()
@@ -84,7 +91,7 @@ describe('submitEventApplication', () => {
       .mockRejectedValueOnce(new Error('db exploded'))
     const submitEventApplication = await importAction()
 
-    await expect(submitEventApplication('3', { a: 'b' })).rejects.toThrow('Failed to submit registration')
+    await expect(submitEventApplication('3', { a: 'b' })).rejects.toThrow('db exploded')
 
     expect(payloadMock.db.rollbackTransaction).toHaveBeenCalledWith('tx_1')
     expect(payloadMock.db.commitTransaction).not.toHaveBeenCalled()
@@ -99,7 +106,7 @@ describe('submitEventApplication', () => {
     )
     const submitEventApplication = await importAction()
 
-    await expect(submitEventApplication('3', { a: 'b' })).rejects.toThrow('This event is full.')
+    await expect(submitEventApplication('3', { a: 'b' })).rejects.toThrow('Could not save the application')
     expect(payloadMock.db.rollbackTransaction).toHaveBeenCalledWith('tx_1')
   })
 
@@ -144,7 +151,7 @@ describe('getUserEventStatuses', () => {
   it('feeds deriveEventCta a real status instead of the phantom user_status field', async () => {
     const { mapPayloadEvent, deriveEventCta } = await import('@/libs/event')
 
-    const doc = { id: 1, name: 'Event', date_begin: '2999-01-01T00:00:00.000Z' }
+    const doc = { id: 1, name: 'Event', subscription_form: 9, date_begin: '2999-01-01T00:00:00.000Z' }
     expect(deriveEventCta(mapPayloadEvent(doc))?.kind).toBe('register')
     expect(deriveEventCta(mapPayloadEvent(doc, 'applicant'))?.kind).toBe('waiting_list')
     expect(deriveEventCta(mapPayloadEvent(doc, 'accepted'))?.kind).toBe('confirm')

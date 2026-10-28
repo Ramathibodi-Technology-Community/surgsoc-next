@@ -7,6 +7,8 @@ import type { Event as PayloadEvent } from '@/payload-types'
 export type SerializedLexicalState = NonNullable<PayloadEvent['participant_detail']>
 
 export type EventAction =
+  | 'view_days'
+  | 'withdraw'
   | 'register'
   | 'waiting_list'
   | 'rejected'
@@ -53,6 +55,8 @@ export interface EventCtaConfig {
 
 export interface Event {
   id: string
+  structure?: 'standalone' | 'multi_day' | 'day'
+  parentId?: string
   name: string
   date: string
   venue: string
@@ -100,6 +104,7 @@ export function deriveEventCta(
       : false)
 
   const userStatus = event.user_status
+  if (event.structure === 'multi_day' && userStatus) return { kind: 'view_days', label: 'View your days', href: `/events/${event.id}#event-days` }
   const scheduleStatus = ResourceScheduling.isOpen({
     opens_at: event.opens_at ?? event.registrationOpensAt,
     closes_at: registrationCutoff(event.date_end, event.closes_at ?? event.registrationClosesAt),
@@ -167,7 +172,7 @@ export function deriveEventCta(
   }
 
   if (userStatus === 'waiting_list' || userStatus === 'subscribed') {
-    return { kind: 'waiting_list', label: 'Waiting List', disabled: true }
+    return { kind: 'waiting_list', label: 'Waiting List', disabled: true, secondaryAction: { kind: 'withdraw', label: 'Withdraw application', href: `/events/${event.id}/withdraw` } }
   }
 
   if ((userStatus === 'rejected' || userStatus === 'declined') && !isPast) {
@@ -181,10 +186,10 @@ export function deriveEventCta(
   // Applicants who already applied must never see "Register" again, even if
   // registration is still open. Keep this check ABOVE the registrationOpen branch.
   if (userStatus === 'applicant') {
-    return { kind: 'waiting_list', label: 'Pending Selection', disabled: true }
+    return { kind: 'waiting_list', label: 'Pending Selection', disabled: true, secondaryAction: { kind: 'withdraw', label: 'Withdraw application', href: `/events/${event.id}/withdraw` } }
   }
 
-  if (registrationOpen && !isPast) {
+  if (registrationOpen && !isPast && event.subscription_form) {
     return {
       kind: 'register',
       label: 'Register',
@@ -210,9 +215,9 @@ export async function getUserEventStatuses(
   const { docs } = await payload.find({
     collection: 'registrations',
     where: {
-      and: [{ user: { equals: userId } }, { event: { in: eventIds } }],
+      and: [{ user: { equals: userId } }, { or: [{ event: { in: eventIds } }, { 'event.parent_event': { in: eventIds } }] }],
     },
-    depth: 0,
+    depth: 1,
     pagination: false,
   })
 
@@ -220,6 +225,8 @@ export async function getUserEventStatuses(
   for (const doc of docs as any[]) {
     const eventId = typeof doc.event === 'object' && doc.event !== null ? doc.event.id : doc.event
     if (doc.status) statuses[String(eventId)] = doc.status
+    const parent = typeof doc.event === 'object' && doc.event?.parent_event
+    if (parent) statuses[String(typeof parent === 'object' ? parent.id : parent)] = 'applied'
   }
   return statuses
 }
@@ -296,7 +303,7 @@ export const mapPayloadEvent = (doc: any, userStatus?: EventUserStatus): Event =
   let venue = ''
   let campus = ''
   if (doc.location && typeof doc.location === 'object') {
-    venue = tagPath(doc.location)
+    venue = tagPath(doc.location, undefined, true)
     campus = tagRootLabel(doc.location) ?? ''
   } else if (typeof doc.location === 'string') {
     venue = doc.location
@@ -308,7 +315,9 @@ export const mapPayloadEvent = (doc: any, userStatus?: EventUserStatus): Event =
   }
 
   return {
-    id: doc.id,
+    id: String(doc.id),
+    structure: doc.event_structure || 'standalone',
+    parentId: doc.parent_event ? String(typeof doc.parent_event === 'object' ? doc.parent_event.id : doc.parent_event) : undefined,
     name: toDisplayText(doc.name) || 'Untitled Event',
     date: doc.date_begin || doc.date_end || doc.date || new Date().toISOString(),
     date_begin: doc.date_begin,

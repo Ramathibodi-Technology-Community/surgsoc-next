@@ -1,3 +1,4 @@
+import { validateFormDefinition, validateFormAnswers } from './libs/forms/validation'
 import { buildConfig } from 'payload'
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
@@ -155,7 +156,10 @@ export default buildConfig({
           },
         },
         hooks: {
-          beforeChange: [({ data, originalDoc, req }) => {
+          beforeChange: [({ data, originalDoc, operation, req }) => {
+            validateFormDefinition({ ...originalDoc, ...data })
+            if (operation === 'create' && req.user) data.owner = req.user.id
+            if (operation === 'update' && Object.hasOwn(data, 'owner')) data.owner = originalDoc.owner
             const policyFields = ['annual_survey_enabled', 'survey_academic_year', 'survey_activation_at', 'survey_deadline']
             const changesPolicy = policyFields.some((field) => Object.prototype.hasOwnProperty.call(data, field) && data[field] !== originalDoc?.[field])
             if (changesPolicy && req.user && !canAssignForms(req.user as User)) {
@@ -191,6 +195,7 @@ export default buildConfig({
           return [
             // Title stays at the top, always visible
             titleField,
+            { name: 'owner', type: 'relationship', relationTo: 'users', admin: { readOnly: true } },
             {
               type: 'tabs' as const,
               tabs: [
@@ -359,6 +364,8 @@ export default buildConfig({
             relationTo: 'users',
             admin: { readOnly: true },
           },
+          { name: 'application_event', type: 'relationship', relationTo: 'events', admin: { readOnly: true } },
+          { name: 'selected_days', type: 'json', admin: { readOnly: true } },
           {
             name: 'single_submission_key',
             type: 'text',
@@ -368,9 +375,10 @@ export default buildConfig({
         ],
         hooks: {
           beforeChange: [
-            async ({ req, data, operation }) => {
+            async ({ req, data, operation, originalDoc }) => {
+              if (operation === 'update' && originalDoc) { data.application_event = originalDoc.application_event; data.selected_days = originalDoc.selected_days; data.user = originalDoc.user; data.form = originalDoc.form }
               // Automatically assign logged-in user to submission
-              if (req.user) {
+              if (req.user && operation === 'create') {
                 data.user = req.user.id
               }
 
@@ -380,16 +388,22 @@ export default buildConfig({
                 const form = await req.payload.findByID({
                   collection: 'forms',
                   id: formId,
+                  req,
                 })
 
                 if (form) {
+                  const respondent = req.user || (data.user ? await req.payload.findByID({ collection: 'users', id: typeof data.user === 'object' ? data.user.id : data.user, req }) : null)
+                  data.submissionData = validateFormAnswers(form, data.submissionData || [], respondent)
+                  if (req.user && !req.context?.eventApplication) { delete data.application_event; delete data.selected_days }
                   const userId = typeof data.user === 'object' ? data.user.id : data.user
-                  if (userId && form.publish?.allow_multiple_submissions !== true) {
+                  // Session answers repeat per session, so one form may be reused by several sessions.
+                  if (userId && form.publish?.allow_multiple_submissions !== true && !req.context?.sessionAnswers) {
                     data.single_submission_key = `${formId}:${userId}`
                     const existing = await req.payload.find({
                       collection: 'form-submissions',
                       where: { and: [{ form: { equals: formId } }, { user: { equals: userId } }] },
                       limit: 1,
+                      req,
                     })
                     if (existing.totalDocs > 0) throw new Error('You have already submitted this form.')
                   } else {
@@ -399,7 +413,7 @@ export default buildConfig({
                   const assigned = await req.payload.find({
                     collection: 'form-assignments',
                     where: { and: [{ form: { equals: formId } }, { user: { equals: userId } }, { completed: { equals: false } }] },
-                    limit: 1, depth: 0,
+                    limit: 1, depth: 0, req,
                   })
                   if (assigned.docs.some((assignment: any) => assignmentState(assignment) === 'dormant')) {
                     throw new Error('This assigned form is not available yet.')
@@ -420,7 +434,7 @@ export default buildConfig({
                       collection: 'form-submissions',
                       where: {
                         form: { equals: formId }
-                      }
+                      }, req,
                     })
 
                     if (!clearingOverdueAssignment && submissionCount.totalDocs >= payloadForm.response_limit) {

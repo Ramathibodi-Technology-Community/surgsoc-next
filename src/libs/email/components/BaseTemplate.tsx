@@ -46,7 +46,7 @@ export const BaseTemplate: React.FC<BaseTemplateProps> = ({ children }) => {
 
 // Styles
 const main = {
-  backgroundColor: '#f6f9fc',
+  backgroundColor: '#f3f5f8',
   fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
 };
 
@@ -66,7 +66,7 @@ const heading = {
   letterSpacing: '-0.5px',
   lineHeight: '1.3',
   fontWeight: '400',
-  color: '#484848',
+  color: '#1b1e22',
   textAlign: 'center' as const,
   padding: '17px 0 0',
 };
@@ -76,7 +76,7 @@ const content = {
 };
 
 const hr = {
-  borderColor: '#e6ebf1',
+  borderColor: '#dadee3',
   margin: '20px 0',
 };
 
@@ -85,11 +85,11 @@ const footer = {
 };
 
 const footerText = {
-  color: '#8898aa',
+  color: '#555f69',
   fontSize: '12px',
   lineHeight: '16px',
 };
 
 const link = {
-  color: '#8898aa',
+  color: '#555f69',
 };

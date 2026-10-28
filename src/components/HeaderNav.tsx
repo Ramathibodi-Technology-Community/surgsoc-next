@@ -30,14 +30,14 @@ export default function HeaderNav() {
   const pathname = usePathname()
 
   return (
-    <nav className="hidden md:flex items-center gap-1.5">
+    <nav className="hidden lg:flex items-center gap-1.5">
       {navLinks.map((link) => (
         <Link
           key={link.href}
           href={link.href}
           aria-current={isActiveSection(pathname, link.href) ? 'page' : undefined}
           className={cn(
-            'rounded-full px-[17px] py-2.5 text-[13px] font-medium leading-none transition-colors',
+            'rounded-full px-[17px] py-2.5 text-meta font-medium leading-none transition-colors',
             isActiveSection(pathname, link.href)
               ? 'bg-accent text-accent-foreground'
               : 'text-secondary-foreground hover:bg-secondary hover:text-foreground',

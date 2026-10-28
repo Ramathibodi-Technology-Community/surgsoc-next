@@ -31,13 +31,13 @@ export default function TeamRoster({
 
   return (
     <>
-      <div className="mb-[34px] flex flex-wrap items-center justify-between gap-3">
-        <p className="text-[15px] text-muted-foreground">{academicYearLabel.replace('{{year}}', year)}</p>
+      <div className="mb-std flex flex-wrap items-center justify-between gap-3">
+        <p className="text-body text-muted-foreground">{academicYearLabel.replace('{{year}}', year)}</p>
         {years.length > 1 && (
           <select
             value={year}
             onChange={(e) => setYear(e.target.value)}
-            className="rounded-full border border-border-strong bg-transparent px-[17px] py-2.5 text-[13px] font-medium leading-none text-secondary-foreground"
+            className="rounded-full border border-border-strong bg-transparent px-[17px] py-2.5 text-meta font-medium leading-none text-secondary-foreground"
           >
             {years.map((y) => (
               <option key={y} value={y} className="bg-surface text-foreground">
@@ -73,11 +73,11 @@ export default function TeamRoster({
 
 function TeamSection({ title, members }: { title: string; members: TeamMemberDoc[] }) {
   return (
-    <section className="mb-[34px]">
+    <section className="mb-std">
       <div className="rail">
         <h2 className="type-h2">{title}</h2>
         <span className="rail-bar" />
-        <span className="meta-mono">{members.length}</span>
+        <span className="type-figure">{members.length}</span>
       </div>
       {/*
         Records, not a poster grid. A department with two people and one with

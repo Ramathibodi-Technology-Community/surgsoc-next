@@ -24,6 +24,8 @@ const contentSecurityPolicy = cspDirectives.join('; ')
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // A second dev server (verification against its own database) needs its own build dir.
+  distDir: process.env.NEXT_DIST_DIR || '.next',
   // Partial Prerendering. Without it, a headers() call ANYWHERE in a route's
   // tree opts the WHOLE route out of static generation — which is why the
   // HeaderAuth <Suspense> split alone left all 31 routes dynamic. Suspense is

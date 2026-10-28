@@ -77,7 +77,7 @@ export default async function FeedbackPage() {
             a second boundary drawn under the one the panel already draws. */}
         <div className="mt-7 flex flex-wrap items-center gap-[18px]">
           <Button type="submit">Send feedback</Button>
-          <span className="text-[13px] leading-relaxed text-muted-foreground">
+          <span className="text-meta leading-relaxed text-muted-foreground">
             Sent as {senderName}
           </span>
         </div>
