@@ -1,0 +1,70 @@
+name: DB backup
+
+# Daily pg_dump of production Postgres (Neon), encrypted with age and kept as a
+# private workflow artifact. This is the copy that survives Neon itself being
+# unavailable, or Neon's point-in-time window having already passed.
+#
+# Also run it by hand (Actions > DB backup > Run workflow) right before
+# `pnpm db:migrate:prod`, with a label like "pre-event-workflows".
+#
+# Secrets (Settings > Secrets and variables > Actions), none stored in the repo:
+#   BACKUP_DATABASE_URL   the *unpooled* Neon connection string (DATABASE_URL_UNPOOLED
+#                         from Vercel). A read-only Neon role is better than the owner.
+#   BACKUP_AGE_RECIPIENT  an age *public* key (age1...). Keep the matching private key
+#                         offline (password manager); without it a backup cannot be opened.
+# Setup and restore steps: docs/db-backup-and-rollback.md
+
+on:
+  schedule:
+    - cron: '20 19 * * *' # 02:20 ICT
+  workflow_dispatch:
+    inputs:
+      label:
+        description: Label for this backup (e.g. pre-event-workflows)
+        default: manual
+
+permissions:
+  contents: read
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      # pg_dump must be at least as new as the server; the runner image lags behind.
+      - name: Install PostgreSQL 17 client and age
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-common age
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y postgresql-client-17
+
+      - name: Dump and encrypt
+        env:
+          DATABASE_URL_UNPOOLED: ${{ secrets.BACKUP_DATABASE_URL }}
+          AGE_RECIPIENT: ${{ secrets.BACKUP_AGE_RECIPIENT }}
+          LABEL: ${{ github.event.inputs.label || 'scheduled' }}
+          BACKUP_DIR: ${{ runner.temp }}/raw
+        run: |
+          set -euo pipefail
+          if [ -z "$DATABASE_URL_UNPOOLED" ] || [ -z "$AGE_RECIPIENT" ]; then
+            echo "BACKUP_DATABASE_URL and BACKUP_AGE_RECIPIENT must both be set." >&2
+            exit 1
+          fi
+          bash scripts/db-snapshot.sh "$LABEL"
+          mkdir -p out
+          for f in "$BACKUP_DIR"/*.dump; do
+            age -r "$AGE_RECIPIENT" -o "out/$(basename "$f").age" "$f"
+          done
+          # Plaintext member data must not outlive the step.
+          rm -rf "$BACKUP_DIR"
+          ls -lh out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: db-backup-${{ github.run_id }}
+          path: out/*.age
+          retention-days: 30
+          if-no-files-found: error

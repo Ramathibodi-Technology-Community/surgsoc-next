@@ -62,3 +62,6 @@ skills-lock.json
 
 # Private working notes (not app docs)
 private/
+
+# local database snapshots (contain member data)
+/backups/

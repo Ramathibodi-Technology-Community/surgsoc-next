@@ -21,6 +21,7 @@
     "db:seed:groups": "tsx --import ./scripts/css-stub.mjs scripts/seed-groups.ts",
     "db:seed:attendings": "tsx --import ./scripts/css-stub.mjs scripts/push-attendings.ts",
     "db:migrate": "pnpm exec payload migrate",
+    "db:snapshot": "bash scripts/db-snapshot.sh",
     "db:migrate:prod": "NODE_ENV=production pnpm exec payload migrate",
     "db:refresh": "tsx --import ./scripts/css-stub.mjs scripts/refresh-db.ts",
     "db:fresh": "pnpm run db:migrate && pnpm run db:seed",
