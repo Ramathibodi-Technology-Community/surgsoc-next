@@ -5,5 +5,7 @@
   "no_members": "No team members to display yet.",
   "admin_dashboard": "Content will be managed through the admin dashboard.",
   "hall_of_fame": "View Hall of Fame",
-  "other_department": "Other"
+  "other_department": "Other",
+  "coming_soon": "Coming soon",
+  "coming_soon_note": "We're getting the team roster ready. Check back shortly."
 }

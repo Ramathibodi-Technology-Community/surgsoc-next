@@ -5,5 +5,7 @@
   "admin_dashboard": "Content will be managed through the admin dashboard.",
   "faculty": "Faculty",
   "email": "Email",
-  "secretary": "Secretary"
+  "secretary": "Secretary",
+  "coming_soon": "Coming soon",
+  "coming_soon_note": "We're confirming details with our faculty advisors. Check back shortly."
 }

@@ -45,7 +45,7 @@ export default async function Page({
   const siteSettings = await getSiteSettings()
   const notSample = sampleWhere(siteSettings.showSampleData)
 
-  const [upcoming, past, memberCount, sessionCount, advisorCount] = await Promise.all([
+  const [upcoming, past, memberCount, sessionCount] = await Promise.all([
     payload.find({
       collection: 'events',
       where: { is_visible: { equals: true }, ...eventListPeriod(now), ...topLevelEventWhere, ...notSample },
@@ -62,7 +62,6 @@ export default async function Page({
     }),
     payload.count({ collection: 'users', where: notSample }),
     payload.count({ collection: 'events', where: { is_visible: { equals: true }, ...topLevelEventWhere, ...notSample } }),
-    payload.count({ collection: 'attendings', where: notSample }),
   ])
 
   // Forms the signed-in student still owes. Drives the "needs your attention"
@@ -87,7 +86,6 @@ export default async function Page({
   // The headline number carries the claim; the rest are supporting detail.
   const secondaryStats = [
     { value: sessionCount.totalDocs, label: labels.sessionStat },
-    { value: advisorCount.totalDocs, label: labels.advisorStat },
   ]
 
   return (
