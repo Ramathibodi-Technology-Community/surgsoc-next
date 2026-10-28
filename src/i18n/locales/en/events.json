@@ -210,6 +210,8 @@
     "settings_experimental": "Experimental. These settings are still being tested and may change or misbehave. Only the event owner, coordinator and VPs see them.",
     "make_group": "Turn into an event group",
     "make_group_note": "This is a single event. To add sessions, make it an event group: the group keeps the application and each session keeps its own seats. Only possible before anyone has applied.",
+    "make_group_short": "Adds sessions, each with its own seats. Not possible once anyone has applied.",
+    "make_group_blocked": "To add sessions, this event needs to be a group, which is not possible once anyone has applied.",
     "day_note": "This is a session of a larger event.",
     "session_section": "Session",
     "seats_section": "Seats and registration",

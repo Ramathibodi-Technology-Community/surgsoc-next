@@ -75,13 +75,14 @@ export function InfoSheet({ label, title, children }: { label: string; title: st
 }
 
 /* A single event becomes an event group so it can hold sessions. The server refuses once anyone has applied. */
-export function MakeGroup({ eventId }: { eventId: number }) {
+export function MakeGroup({ eventId, compact }: { eventId: number; compact?: boolean }) {
   const { t } = useTranslation()
   const { pending, error, run } = useAction()
   return (
     <div className="space-y-3">
-      <p className="text-body text-muted-foreground">{t('events.staff.make_group_note')}</p>
-      <Button variant="outline" pending={pending} onClick={() => run(() => saveEvent(eventId, { event_structure: 'multi_day' }))}>{t('events.staff.make_group')}</Button>
+      {!compact && <p className="text-body text-muted-foreground">{t('events.staff.make_group_note')}</p>}
+      <Button variant="outline" className={compact ? 'w-full' : undefined} pending={pending} onClick={() => run(() => saveEvent(eventId, { event_structure: 'multi_day' }))}>{t('events.staff.make_group')}</Button>
+      {compact && <p className="text-meta text-muted-foreground">{t('events.staff.make_group_short')}</p>}
       {error && <p role="alert" className="text-meta text-destructive">{error}</p>}
     </div>
   )
