@@ -7,7 +7,9 @@ import { eventDays, inEventTransaction, initialRegistrationStatus, lockEvent, vi
 
 /** A session runs its own window; one it leaves blank follows the group. A group switched closed closes every session. */
 export function sessionRegistration(day: Event, parent: Event) {
-  const status_override = parent.status_override === 'closed' || day.status_override === 'closed' ? 'closed' : day.status_override ?? parent.status_override
+  // The registration-closed flag shuts a resource unless that resource is forced open, as the standalone gate does.
+  const flagClosed = (parent.is_registration_closed && parent.status_override !== 'open') || (day.is_registration_closed && day.status_override !== 'open')
+  const status_override = flagClosed || parent.status_override === 'closed' || day.status_override === 'closed' ? 'closed' : day.status_override ?? parent.status_override
   const opens = day.registration_opens_at ?? parent.registration_opens_at
   const closes = registrationCutoff(day.date_end || day.date_begin, day.registration_closes_at ?? parent.registration_closes_at)
   const { isOpen } = ResourceScheduling.isOpen({ opens_at: opens, closes_at: closes, status_override: status_override as 'auto' | 'open' | 'closed' | null })
