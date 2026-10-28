@@ -1,6 +1,7 @@
 import React from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import FillImage from './FillImage'
 import type { Event } from '@/libs/event'
 import { deriveEventCta, eventStatus, eventWhen, campusShort, isOptimizedPosterUrl } from '@/libs/event'
 import type { EventCardImageDisplay } from '@/libs/site-settings'
@@ -77,20 +78,14 @@ export default function EventCard({
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
           ) : (
-            <Image
-              className={fit}
-              alt=""
-              src={event.posterUri}
-              fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            />
+            <FillImage src={event.posterUri} className={fit} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" />
           )
         ) : event.posterUri ? (
-          <img
-            className={expand ? 'w-full' : cn('absolute inset-0 h-full w-full', fit)}
-            alt=""
-            src={event.posterUri}
-          />
+          expand ? (
+            <img className="w-full" alt="" src={event.posterUri} />
+          ) : (
+            <FillImage src={event.posterUri} className={fit} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" />
+          )
         ) : null}
         <span className="event-badge">
           <StatusMark status={status} label={statusLabel} />

@@ -71,16 +71,16 @@ export default function ApplicantPoolManager({ eventId, applicants, participantL
         <thead>
           {/* Three sections, read left to right: who, where they stand, what they wrote. */}
           <tr className="text-xs">
-            <th colSpan={3} className="pb-0 text-left">{t('events.applicants.group_applicant')}</th>
-            <th className="border-l border-border pb-0 text-left">{t('events.applicants.group_status')}</th>
+            <th colSpan={3} className="pb-0 text-left md:sticky md:z-[1] md:bg-[var(--surface)] md:left-0">{t('events.applicants.group_applicant')}</th>
+            <th className="border-l border-border pb-0 text-left md:sticky md:z-[1] md:bg-[var(--surface)] md:left-[324px] md:shadow-[inset_1px_0_0_var(--border)] md:border-l-0">{t('events.applicants.group_status')}</th>
             {fields.length > 0 && <th colSpan={fields.length} className="border-l border-border pb-0 text-left">{t('events.applicants.group_answers')}</th>}
             <th className="sticky right-0 w-24 p-0" />
           </tr>
           <tr>
             <th className="md:sticky md:z-[1] md:bg-[var(--surface)] md:left-[0px] md:w-[36px] md:min-w-[36px]">{selectable.length > 0 && <input type="checkbox" aria-label={t('events.applicants.select_all')} checked={allOn} ref={el => { if (el) el.indeterminate = someOn }} onChange={e => setSelected(e.target.checked ? selectable.map(row => row.id) : [])} />}</th>
             <th className="md:sticky md:z-[1] md:bg-[var(--surface)] md:left-[36px] md:w-[176px] md:min-w-[176px]">{t('events.applicants.table.name')}</th><th className="md:sticky md:z-[1] md:bg-[var(--surface)] md:left-[212px] md:w-[112px] md:min-w-[112px]">{t('events.applicants.table.applied_at')}</th>
-            <th className="border-l border-border md:sticky md:z-[1] md:bg-[var(--surface)] md:left-[324px] md:w-[150px] md:min-w-[150px]">{t('events.applicants.table.status')}</th>
-            {fields.map((field, i) => <th key={field.name} className={`whitespace-nowrap ${i === 0 ? 'border-l border-border' : ''}`}>{field.label}</th>)}
+            <th className="border-l border-border md:border-l-0 md:shadow-[inset_1px_0_0_var(--border)] md:sticky md:z-[1] md:bg-[var(--surface)] md:left-[324px] md:w-[150px] md:min-w-[150px]">{t('events.applicants.table.status')}</th>
+            {fields.map((field, i) => <th key={field.name} className={`whitespace-nowrap ${i === 0 ? 'border-l border-border' : ''} ${i === fields.length - 1 ? 'pr-32' : ''}`}>{field.label}</th>)}
             <th className="sticky right-0 p-0"><span className="sr-only">{t('events.actions_label')}</span></th>
           </tr>
         </thead>
@@ -94,8 +94,8 @@ export default function ApplicantPoolManager({ eventId, applicants, participantL
 
                 </td>
                 <td className="tabular-nums md:sticky md:z-[1] md:bg-[var(--surface)] md:left-[212px] md:w-[112px] md:min-w-[112px]">{new Date(row.createdAt).toLocaleDateString(locale === 'th' ? 'th-TH' : 'en-GB')}</td>
-                <td className="border-l border-border md:sticky md:z-[1] md:bg-[var(--surface)] md:left-[324px] md:w-[150px] md:min-w-[150px]"><StatusMark status={STATUS_MARK[row.status] || 'withdrawn'} label={label(row.status)} />{row.integrityWarning && <p className="text-destructive">{row.integrityWarning}</p>}</td>
-                {fields.map((field, i) => <td key={field.name} lang={locale} className={`max-w-[16rem] truncate text-muted-foreground ${i === 0 ? 'border-l border-border' : ''}`} title={answerOf(row.submission?.submissionData, field.name)}>{answerOf(row.submission?.submissionData, field.name)}</td>)}
+                <td className="border-l border-border md:border-l-0 md:shadow-[inset_1px_0_0_var(--border)] md:sticky md:z-[1] md:bg-[var(--surface)] md:left-[324px] md:w-[150px] md:min-w-[150px]"><StatusMark status={STATUS_MARK[row.status] || 'withdrawn'} label={label(row.status)} />{row.integrityWarning && <p className="text-destructive">{row.integrityWarning}</p>}</td>
+                {fields.map((field, i) => <td key={field.name} lang={locale} className={`truncate text-muted-foreground ${i === fields.length - 1 ? 'max-w-[24rem] pr-32' : 'max-w-[16rem]'} ${i === 0 ? 'border-l border-border' : ''}`} title={answerOf(row.submission?.submissionData, field.name)}>{answerOf(row.submission?.submissionData, field.name)}</td>)}
                 {/* Pinned right, the table blurs into it. Actions (when there are any) then view; view is always last, so it never moves. */}
                 <td className="sticky right-0 border-t border-border p-0">
                   <div className="flex items-center justify-end gap-0.5 bg-gradient-to-l from-[var(--surface)] from-65% to-transparent py-2 pr-3 pl-10 backdrop-blur-[3px]">

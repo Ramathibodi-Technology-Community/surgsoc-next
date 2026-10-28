@@ -1,6 +1,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { cn } from '@/libs/utils'
+import FillImage from './FillImage'
 import StatusMark, { type StatusKey } from './StatusMark'
 
 /**
@@ -121,7 +122,7 @@ export default function Record({
           className={cn('placeholder-hatch record-slot', portrait && 'record-slot-portrait')}
         >
           {imageUrl ? (
-            <img src={imageUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+            <FillImage src={imageUrl} sizes="80px" />
           ) : null}
         </span>
       ) : null}
