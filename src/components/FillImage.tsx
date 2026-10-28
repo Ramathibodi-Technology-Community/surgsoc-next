@@ -1,3 +1,6 @@
+'use client'
+
+import { useState } from 'react'
 import Image from 'next/image'
 import { isOptimizedPosterUrl, posterUrl } from '@/libs/event'
 
@@ -15,9 +18,12 @@ export default function FillImage({ src, alt = '', sizes, priority, className = 
   priority?: boolean
   className?: string
 }) {
+  // A dead link (unshared Drive file, deleted image) leaves the frame's hatch placeholder showing.
+  const [failed, setFailed] = useState(false)
+  if (failed) return null
   const url = posterUrl(src)
   if (isOptimizedPosterUrl(url)) {
-    return <Image src={url} alt={alt} fill sizes={sizes} priority={priority} className={className} />
+    return <Image src={url} alt={alt} fill sizes={sizes} priority={priority} className={className} onError={() => setFailed(true)} />
   }
-  return <img src={url} alt={alt} referrerPolicy="no-referrer" className={`absolute inset-0 h-full w-full ${className}`} />
+  return <img src={url} alt={alt} referrerPolicy="no-referrer" onError={() => setFailed(true)} className={`absolute inset-0 h-full w-full ${className}`} />
 }
