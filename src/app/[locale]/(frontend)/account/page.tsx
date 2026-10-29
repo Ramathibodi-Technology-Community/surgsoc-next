@@ -297,6 +297,7 @@ export default async function AccountPage({
                 tag={event.eventType || null}
                 meta={<time dateTime={event.date_begin || event.date}>{dateOf(event)}</time>}
                 imageUrl={event.posterUri || null}
+                poster
               />
             ))}
           </div>

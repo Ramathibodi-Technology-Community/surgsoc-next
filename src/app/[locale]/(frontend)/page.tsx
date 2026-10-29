@@ -6,7 +6,7 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import EventCard from '@/components/EventCard'
 import Record from '@/components/Record'
-import { mapPayloadEvent, getUserEventStatuses } from '@/libs/event'
+import { mapPayloadEvent, getUserEventStatuses, getSeatedCounts } from '@/libs/event'
 import { Button } from '@/components/ui/button'
 import { getHomeContent } from '@/libs/site-content'
 import { getCurrentUser } from '@/libs/auth/current-user'
@@ -81,7 +81,8 @@ export default async function Page({
   const statuses = user
     ? await getUserEventStatuses(payload, user.id, upcoming.docs.map((e) => e.id))
     : {}
-  const upcomingEvents = upcoming.docs.map((doc) => mapPayloadEvent(doc, statuses[String(doc.id)]))
+  const seated = await getSeatedCounts(payload, upcoming.docs.map((e) => e.id))
+  const upcomingEvents = upcoming.docs.map((doc) => mapPayloadEvent(doc, statuses[String(doc.id)], seated[String(doc.id)] ?? 0))
 
   // The headline number carries the claim; the rest are supporting detail.
   const secondaryStats = [
@@ -223,9 +224,9 @@ export default async function Page({
         </Link>
       </div>
       {upcomingEvents.length > 0 ? (
-        <div className="card-grid mb-wide">
+        <div className="event-grid mb-wide">
           {upcomingEvents.map((event) => (
-            <EventCard key={event.id} event={event} imageDisplay={siteSettings.eventCardImageDisplay} />
+            <EventCard key={event.id} event={event} />
           ))}
         </div>
       ) : (
@@ -266,6 +267,7 @@ export default async function Page({
                     </time>
                   }
                   imageUrl={event.posterUri || null}
+                  poster
                 />
               )
             })}

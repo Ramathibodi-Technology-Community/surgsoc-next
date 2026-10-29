@@ -7,8 +7,7 @@ import { getCurrentUser } from '@/libs/auth/current-user'
 import Link from 'next/link'
 import { Pencil } from 'lucide-react'
 import { notFound } from 'next/navigation'
-import { mapPayloadEvent, getUserEventStatuses } from '@/libs/event'
-import { getSiteSettings } from '@/libs/site-settings'
+import { mapPayloadEvent, getUserEventStatuses, getSeatedCounts } from '@/libs/event'
 import { deriveEventCta } from '@/libs/event'
 import StatusMark, { type StatusKey } from '@/components/StatusMark'
 import { getDictionary } from '@/i18n/server'
@@ -47,7 +46,8 @@ export default async function EventPage({ params, searchParams }: { params: Prom
   if (!eventDoc) notFound()
   const days = eventDoc.event_structure === 'multi_day' ? await eventDays(payload, eventDoc.id, canManageEvent(user, eventDoc)) : []
   const statuses = await getUserEventStatuses(payload, user?.id, [eventDoc.id, ...days.map(day => day.id)])
-  const event = mapPayloadEvent(eventDoc, statuses[String(eventDoc.id)])
+  const seated = await getSeatedCounts(payload, [eventDoc.id])
+  const event = mapPayloadEvent(eventDoc, statuses[String(eventDoc.id)], seated[String(eventDoc.id)] ?? 0)
   const showAcknowledgement = (await searchParams).applied === '1' && !!event.user_status
   const hasConfirmedDay = days.some(day => statuses[String(day.id)] === 'confirmed')
   const assignments = user ? (await payload.find({ collection: 'form-assignments', where: { and: [{ user: { equals: user.id } }, { source_event: { in: [eventDoc.id, ...days.map(day => day.id)] } }] }, pagination: false, depth: 1 })).docs.filter(assignment => ['pending', 'overdue'].includes(assignmentState(assignment))) : []
@@ -66,7 +66,6 @@ export default async function EventPage({ params, searchParams }: { params: Prom
   const mySessions = memberSessions.filter(row => row.status)
   const canAddMore = memberSessions.some(row => !row.status && row.open)
   const photos = (eventDoc.gallery_links ?? []).filter(link => link.url)
-  const { eventDetailImageDisplay } = await getSiteSettings()
 
   // Unified gate: auth → profile → form blocking → scheduling
   const gate = await checkUserActionGate(payload, user, {
@@ -222,7 +221,6 @@ export default async function EventPage({ params, searchParams }: { params: Prom
       event={event}
       locale={locale}
       t={t}
-      imageDisplay={eventDetailImageDisplay}
       isGroup={eventDoc.event_structure === 'multi_day'}
       sessionsSlot={isGroup && user ? <MemberSessions eventId={eventDoc.id} sessions={memberSessions} t={t} locale={locale} /> : undefined}
       sessions={days.map(day => ({ id: day.id, name: day.name, date_begin: day.date_begin, href: `/events/${day.id}`, event: mapPayloadEvent(day, statuses[String(day.id)]), status: statuses[String(day.id)] }))}

@@ -2,6 +2,7 @@ import React from 'react'
 import Link from 'next/link'
 import { cn } from '@/libs/utils'
 import FillImage from './FillImage'
+import PosterImage from './PosterImage'
 import StatusMark, { type StatusKey } from './StatusMark'
 
 /**
@@ -44,6 +45,12 @@ export type RecordProps = {
   imageUrl?: string | null
   /** Portraits crop 4:5 — faces sit badly in a square, and the ratio marks the kind. */
   portrait?: boolean
+  /**
+   * Events: lead with the poster in the shared poster slot (3:4, uncropped over
+   * a blur), on the left. No poster shows the hatch with the seal. People keep
+   * the right-hand slot.
+   */
+  poster?: boolean
   /** Right slot, status form. Used when the record has no image and never will. */
   status?: StatusKey
   statusLabel?: string
@@ -73,6 +80,7 @@ export default function Record({
   meta,
   imageUrl,
   portrait,
+  poster,
   status,
   statusLabel,
   className,
@@ -86,6 +94,12 @@ export default function Record({
 
   const content = (
     <>
+      {poster ? (
+        <span className="placeholder-hatch poster-slot record-slot-poster">
+          {imageUrl ? <PosterImage src={imageUrl} sizes="52px" /> : null}
+        </span>
+      ) : null}
+
       <span className="record-info">
         {leadTag ? (
           <span className={cn('record-tag', tagAccent ? 'text-accent' : 'text-muted-foreground')}>
@@ -115,7 +129,7 @@ export default function Record({
         )}
       </span>
 
-      {status ? (
+      {poster ? null : status ? (
         <StatusMark status={status} label={statusLabel} />
       ) : hasSlot ? (
         <span
@@ -138,7 +152,7 @@ export default function Record({
   if (noLink) {
     return (
       <div
-        className={cn('record', className)}
+        className={cn('record', poster && 'record--poster', className)}
         style={{ '--mq-dur': marqueeDuration(title) } as React.CSSProperties}
       >
         {content}
@@ -149,7 +163,7 @@ export default function Record({
   return (
     <Link
       href={href}
-      className={cn('record group', className)}
+      className={cn('record group', poster && 'record--poster', className)}
       style={{ '--mq-dur': marqueeDuration(title) } as React.CSSProperties}
     >
       {content}

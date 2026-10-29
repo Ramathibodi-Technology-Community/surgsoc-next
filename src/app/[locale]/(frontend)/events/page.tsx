@@ -12,7 +12,7 @@ import EventCard from '@/components/EventCard'
 import NewEventDialog from '@/components/events/NewEventDialog'
 import { SlidersHorizontal } from 'lucide-react'
 import PageHeader from '@/components/PageHeader'
-import { mapPayloadEvent, getUserEventStatuses } from '@/libs/event'
+import { mapPayloadEvent, getUserEventStatuses, getSeatedCounts } from '@/libs/event'
 import { getDictionary } from '@/i18n/server'
 import { Locale } from '@/i18n/config'
 import { sampleWhere } from '@/libs/sample-data'
@@ -57,8 +57,9 @@ export default async function EventsPage({
     user?.id,
     [...upcoming.docs, ...past.docs].map((doc) => doc.id),
   )
+  const seated = await getSeatedCounts(payload, upcoming.docs.map((doc) => doc.id))
   const mapWithStatus = (doc: (typeof upcoming.docs)[number]) =>
-    mapPayloadEvent(doc, statuses[String(doc.id)])
+    mapPayloadEvent(doc, statuses[String(doc.id)], seated[String(doc.id)] ?? 0)
 
   const upcomingEvents = upcoming.docs.map(mapWithStatus)
   const pastEvents = past.docs.map(mapWithStatus)
@@ -81,7 +82,7 @@ export default async function EventsPage({
         session is a decision and gets a card; a past one is history and gets a
         record. Both being the same grid is what made five pages feel like one.
 
-        They do share a *track*, though — `.card-grid`. The two rules are not in
+        They do share a *gap*, though — `.event-grid` and `.card-grid` use the same one. The two rules are not in
         tension: what must differ is the component, what must match is the
         rhythm it sits on. These had drifted to 240px/18px against 310px/12px,
         which put four columns above three on column widths 4px apart, so the
@@ -93,9 +94,9 @@ export default async function EventsPage({
         <span className="type-figure">{upcomingEvents.length} upcoming</span>
       </div>
       {upcomingEvents.length > 0 ? (
-        <div className="card-grid mb-wide">
+        <div className="event-grid mb-wide">
           {upcomingEvents.map((event) => (
-            <EventCard key={event.id} event={event} imageDisplay={siteSettings.eventCardImageDisplay} />
+            <EventCard key={event.id} event={event} />
           ))}
         </div>
       ) : (
@@ -136,6 +137,7 @@ export default async function EventsPage({
                 </>
               }
               imageUrl={event.posterUri || null}
+              poster
             />
           ))}
         </div>

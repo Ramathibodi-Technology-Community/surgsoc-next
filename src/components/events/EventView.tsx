@@ -1,10 +1,10 @@
 import React from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { RichText } from '@payloadcms/richtext-lexical/react'
-import { type Event, eventStatus, eventWhen, formatEventDuration, isOptimizedPosterUrl } from '@/libs/event'
+import { type Event, eventStatus, eventWhen, formatEventDuration } from '@/libs/event'
 import StatusMark, { type StatusKey } from '@/components/StatusMark'
 import MiniRecord from '@/components/Record'
+import PosterFigure from '@/components/events/PosterFigure'
 import type { getDictionary } from '@/i18n/server'
 import type { Locale } from '@/i18n/config'
 import { cn } from '@/libs/utils'
@@ -16,12 +16,11 @@ export type EventViewSession = { id: number; name: string; date_begin: string; h
   the edit page *is* the preview. Routes own data and the aside; this owns
   layout. `edit` slots put a control beside the region it changes.
 */
-export default function EventView({ event, locale, t, imageDisplay, sessions, isGroup, showJoining, joiningNote, top, after, aside, edit, bare, titleAction, stickyAside = true, sessionsSlot }: {
+export default function EventView({ event, locale, t, sessions, isGroup, showJoining, joiningNote, top, after, aside, edit, bare, titleAction, stickyAside = true, sessionsSlot }: {
   sessionsSlot?: React.ReactNode
   event: Event
   locale: Locale
   t: Awaited<ReturnType<typeof getDictionary>>['events']
-  imageDisplay?: string | null
   sessions: EventViewSession[]
   isGroup: boolean
   showJoining: boolean
@@ -33,12 +32,10 @@ export default function EventView({ event, locale, t, imageDisplay, sessions, is
   bare?: boolean
   // Sits on the title row, after the title (e.g. the staff "Edit event" link on the public page).
   titleAction?: React.ReactNode
-  edit?: { basics: React.ReactNode; details: React.ReactNode; joining: React.ReactNode; sessions?: React.ReactNode }
-  // A single action card sticks; a stack of staff panels would outgrow the viewport.
+  edit?: { basics: React.ReactNode; poster?: React.ReactNode; details: React.ReactNode; joining: React.ReactNode; sessions?: React.ReactNode }
+  // The action card sticks under the poster while the text scrolls; a stack of staff panels would outgrow the viewport.
   stickyAside?: boolean
 }) {
-  const fullSizeImage = imageDisplay === 'full-size'
-  const fit = imageDisplay === 'crop-to-fit' ? 'object-cover' : 'object-contain'
   const localeStr = locale === 'th' ? 'th-TH' : 'en-GB'
   const when = eventWhen(event, localeStr)
   const specs: { label: string; value: React.ReactNode }[] = [
@@ -64,46 +61,48 @@ export default function EventView({ event, locale, t, imageDisplay, sessions, is
 
       {top}
 
-      {/* The card at full size: same slots, same order, more room — arriving
-          from a card reads as zooming rather than navigating. */}
-      {/* Staff: the one Edit covers date, time, title and kind, so it leads the block it edits. */}
-      {bare && edit?.basics && <div className="mt-6 flex justify-end">{edit.basics}</div>}
-      <div className={cn(bare ? 'mt-3' : 'mt-6', 'mb-2.5 flex flex-wrap items-baseline gap-x-3 gap-y-2')}>
-        <p className="text-meta font-medium tabular-nums text-secondary-foreground">
-          {when.date}
-          {when.time ? <span className="font-normal text-muted-foreground"> · {when.time}</span> : null}
-        </p>
-        <span className="ml-auto"><StatusMark status={eventStatus(event)} /></span>
-      </div>
+      {/*
+        Two columns: poster and action on the left, the page on the right. The
+        header is its own block so that on a phone it reads first, then the
+        poster and the action, then the text. The left column is as tall as the
+        page; only the action card sticks inside it, so the poster scrolls away
+        and the button stays reachable while the description scrolls.
+      */}
+      <article className={cn(bare ? 'mt-3' : 'mt-6', 'grid items-start gap-x-11 lg:grid-cols-[340px_minmax(0,1fr)] lg:grid-rows-[auto_1fr]')}>
+        <header className="min-w-0 lg:col-start-2 lg:row-start-1">
+          {/* Staff: the one Edit covers date, time, title and kind, so it leads the block it edits. */}
+          {bare && edit?.basics && <div className="flex justify-end">{edit.basics}</div>}
+          <div className={cn(bare ? 'mt-3' : 'mt-0', 'mb-2.5 flex flex-wrap items-baseline gap-x-3 gap-y-2')}>
+            <p className="text-meta font-medium tabular-nums text-secondary-foreground">
+              {when.date}
+              {when.time ? <span className="font-normal text-muted-foreground"> · {when.time}</span> : null}
+            </p>
+            <span className="ml-auto"><StatusMark status={eventStatus(event)} /></span>
+          </div>
 
-      {!bare && (
-        <div className="mb-3 flex items-start gap-4">
-          <h1 className="type-h1 min-w-0 flex-1">{event.name}</h1>
-          {titleAction}
-          {edit?.basics}
+          {!bare && (
+            <div className="mb-3 flex items-start gap-4">
+              <h1 className="type-h1 min-w-0 flex-1">{event.name}</h1>
+              {titleAction}
+              {edit?.basics}
+            </div>
+          )}
+
+          <div className="mb-7 flex flex-wrap gap-x-3 gap-y-1.5 text-meta text-muted-foreground">
+            {event.eventType && <span className="font-medium text-accent">{event.eventType}</span>}
+            {event.eventType && event.department ? <span aria-hidden="true">·</span> : null}
+            {event.department && <span>{event.department}</span>}
+          </div>
+        </header>
+
+        <div className="mb-9 flex flex-col gap-3.5 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:mb-0 lg:self-stretch">
+          <PosterFigure src={event.posterUri} alt={event.name}>
+            {edit?.poster && <div className="absolute left-2.5 top-2.5 z-[2]">{edit.poster}</div>}
+          </PosterFigure>
+          {aside && <aside className={cn('flex flex-col gap-3.5', stickyAside && 'lg:sticky lg:top-24')}>{aside}</aside>}
         </div>
-      )}
 
-      <div className="mb-7 flex flex-wrap gap-x-3 gap-y-1.5 text-meta text-muted-foreground">
-        {event.eventType && <span className="font-medium text-accent">{event.eventType}</span>}
-        {event.eventType && event.department ? <span aria-hidden="true">·</span> : null}
-        {event.department && <span>{event.department}</span>}
-      </div>
-
-      <div className={cn('placeholder-hatch relative mb-9 rounded-md border border-border', fullSizeImage ? 'overflow-hidden' : 'aspect-[21/8] overflow-hidden')}>
-        {!event.posterUri ? null : isOptimizedPosterUrl(event.posterUri) ? (
-          fullSizeImage
-            ? <Image className="h-auto w-full" style={{ width: '100%', height: 'auto' }} alt={event.name} src={event.posterUri} width={1600} height={900} sizes="(max-width: 1280px) 100vw, 1200px" />
-            : <Image className={fit} alt={event.name} src={event.posterUri} fill sizes="(max-width: 1280px) 100vw, 1200px" />
-        ) : (
-          <img className={fullSizeImage ? 'w-full' : cn('absolute inset-0 h-full w-full', fit)} alt={event.name} src={event.posterUri} />
-        )}
-      </div>
-
-      {/* Detail first, action second: the aside sticks so the action stays
-          reachable while the description scrolls. */}
-      <article className={cn('grid items-start gap-11', aside && 'lg:grid-cols-[minmax(0,1fr)_300px]')}>
-        <div className="min-w-0">
+        <div className="min-w-0 lg:col-start-2 lg:row-start-2">
           {/* No description, no heading — unless staff are here to write one. */}
           {(event.details?.trim() || edit) && (
             <>
@@ -169,7 +168,6 @@ export default function EventView({ event, locale, t, imageDisplay, sessions, is
           </dl>
         </div>
 
-        {aside && <aside className={cn('flex flex-col gap-3.5', stickyAside && 'lg:sticky lg:top-24')}>{aside}</aside>}
       </article>
     </>
   )

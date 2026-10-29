@@ -193,6 +193,8 @@
     "cancelled": "Cancelled",
     "responses": "Form and responses",
     "edit_event": "Edit event",
+    "edit_poster": "Edit poster",
+    "poster_hint": "Portrait works best (A-series or 2:3), at least 900px wide. A landscape file works too: cards show it letterboxed, the event page at its own height.",
     "roster": "Export roster",
     "applications": "Export responses",
     "email_preview": "Notification preview",

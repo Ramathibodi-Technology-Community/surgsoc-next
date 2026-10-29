@@ -46,6 +46,7 @@ export default async function ManageEvents({ params }: { params: Promise<{ local
               </>
             }
             imageUrl={event.image_url || null}
+            poster
           />
         ))}
       </div>

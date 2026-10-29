@@ -16,6 +16,8 @@ import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Combobox } from '@/components/ui/combobox'
 import { Pencil } from 'lucide-react'
+import PosterImage from '@/components/PosterImage'
+import { cn } from '@/libs/utils'
 
 export type Option = { value: string; label: string; hint?: string }
 const NONE = '__none'
@@ -25,7 +27,9 @@ const NONE = '__none'
   Registration can never blank Basics. Errors stay inside the sheet, beside
   the button that failed.
 */
-export default function SectionSheet({ eventId, title, description, fields, values, options, create, inline }: {
+export default function SectionSheet({ eventId, title, description, fields, values, options, create, inline, triggerClassName }: {
+  // Extra classes for the Edit button, e.g. a solid fill where it sits on top of an image.
+  triggerClassName?: string
   // Editing an existing event on the page instead of in a sheet (the stepped setup); saving moves on to `next`.
   inline?: { next: string; label: string }
   eventId: number | null
@@ -123,9 +127,10 @@ export default function SectionSheet({ eventId, title, description, fields, valu
       case 'poster': return (
         <div className="flex flex-col gap-3">
           <Input id={id} type="url" inputMode="url" value={String(value ?? '')} onChange={e => set(field.name, e.target.value)} />
-          {/* The poster under its URL at the size members see: a typo shows up as a broken image, not a broken page. */}
-          <div className="placeholder-hatch aspect-[21/8] w-full overflow-hidden rounded-md border border-border">
-            {typeof value === 'string' && value && <img src={value} alt="" className="h-full w-full object-cover" />}
+          <p className="text-meta text-muted-foreground">{t('events.staff.poster_hint')}</p>
+          {/* The poster in the frame cards use: a typo shows up as the hatch and seal, not as a broken page. */}
+          <div className="placeholder-hatch poster-slot aspect-[3/4] w-40 rounded-md border border-border">
+            {typeof value === 'string' && value.trim() && <PosterImage src={value.trim()} sizes="160px" />}
           </div>
         </div>
       )
@@ -157,7 +162,7 @@ export default function SectionSheet({ eventId, title, description, fields, valu
   return (
     <Sheet open={open} onOpenChange={toggle}>
       <SheetTrigger asChild>
-        <Button variant="outline" className="h-[34px] pointer-coarse:h-11 shrink-0 gap-1.5 px-3" aria-label={`${t('events.staff.edit')}: ${title}`}><Pencil aria-hidden="true" />{t('events.staff.edit')}</Button>
+        <Button variant="outline" className={cn('h-[34px] pointer-coarse:h-11 shrink-0 gap-1.5 px-3', triggerClassName)} aria-label={`${t('events.staff.edit')}: ${title}`}><Pencil aria-hidden="true" />{t('events.staff.edit')}</Button>
       </SheetTrigger>
       <SheetContent className="w-full gap-0 sm:max-w-lg">
         <form onSubmit={save} className="flex h-full flex-col">
