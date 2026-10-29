@@ -790,6 +790,31 @@
   .record-slot-portrait {
     height: 78px;
   }
+  /*
+    Events lead with their poster, on the left, in the shared poster slot
+    (5:7 — the A-series most posters are, uncropped over a blur). People keep the right-hand portrait slot.
+  */
+  .record-slot-poster {
+    width: 50px;
+    height: 70px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    --poster-blur: 8px;
+  }
+  .placeholder-hatch.record-slot-poster::after {
+    inset: 4px;
+  }
+  .record--poster {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    padding-left: 0.6875rem;
+  }
+  /* The venue line stays one line, so the record keeps the poster's height. */
+  .record--poster .record-sub {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+    overflow: hidden;
+  }
   .record-chevron {
     color: var(--muted-foreground);
     font-size: 17px;
@@ -825,15 +850,48 @@
     animation: chart-marquee var(--mq-dur, 6s) ease-in-out infinite alternate;
   }
 
-  /* Full card — upcoming events only, where a poster earns its place. */
+  /*
+    Poster slot. One frame, poster-shaped, on the left of every event record:
+    the poster sits inside it uncropped (object-contain) over a blurred, darkened
+    copy of itself, so a poster that does not match the frame leaves soft bars
+    rather than hard ones. No poster, or one that fails to load, leaves the hatch
+    with the seal fitted to the frame. Landscape posters letterbox in the same
+    frame; the detail page shows the poster at its own height instead.
+  */
+  .poster-slot {
+    position: relative;
+    overflow: hidden;
+    --poster-blur: 18px;
+  }
+  .placeholder-hatch.poster-slot::after {
+    content: "";
+    position: absolute;
+    inset: 8%;
+    background: url('/assets/logo_surgsoc.png') center / contain no-repeat;
+    opacity: 0.9;
+  }
+  .poster-slot > img {
+    z-index: 1;
+  }
+  /* The seal belongs to the empty frame: once an image is mounted it never shows through. */
+  .placeholder-hatch.poster-slot:has(> img)::after {
+    display: none;
+  }
+  .poster-backdrop {
+    transform: scale(1.2);
+    filter: blur(var(--poster-blur)) brightness(0.55);
+  }
+
+  /* Full card — upcoming events only, where a poster earns its place. Fixed
+     height set by the poster slot: a long title clamps, it never lengthens the card. */
   .event-card {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     border: 1px solid var(--border);
     border-radius: var(--radius);
     background: var(--card);
     overflow: hidden;
-    height: 100%;
+    height: 11.375rem;
   }
   /* Event group: two cards peek out beneath, so a group reads as several sessions. */
   .event-card[data-group] {
@@ -842,43 +900,46 @@
       0 5px 0 -2px var(--card), 0 6px 0 -2px var(--border),
       0 10px 0 -4px var(--card), 0 11px 0 -4px var(--border);
   }
+  /* The slot is as tall as the card and 5:7 wide, the shape of an A-series poster, so no width goes to blur. */
   .event-poster {
-    aspect-ratio: 21 / 10;
-    position: relative;
+    flex: none;
+    height: 100%;
+    aspect-ratio: 5 / 7;
   }
-  /* Site setting: "Expand card to fit image" — the card grows to the
-     poster's own proportions instead of a fixed ratio the image is fit into. */
-  .event-poster--expand {
-    aspect-ratio: auto;
-  }
-  .event-badge {
-    position: absolute;
-    top: 0.625rem;
-    left: 0.625rem;
-    background: color-mix(in oklab, var(--surface) 86%, transparent);
-    border: 1px solid var(--border-strong);
-    border-radius: 7px;
-    padding: 0.3125rem 0.5625rem;
-    backdrop-filter: blur(6px);
+  .event-main {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
   }
   .event-body {
     display: flex;
     flex-direction: column;
-    gap: 0.4375rem;
-    padding: 0.9375rem 0.9375rem 0;
+    gap: 0.3rem;
+    padding: 0.75rem 0.9375rem 0;
     flex: 1;
+    min-height: 0;
+    overflow: hidden;
   }
   /* No border-top: rule 5, space separates before a line does. */
   .event-foot {
     display: flex;
     align-items: center;
     gap: 0.625rem;
-    padding: 0.8125rem 0.9375rem;
+    padding: 0.4375rem 0.9375rem 0.625rem;
   }
+  /* Every line in the body keeps its own height: a flex item that may shrink is
+     what cut a title or a venue in half when the column ran short. */
+  .event-body > * {
+    flex: none;
+  }
+  /* Date and status share one line and one centre line; the date gives way, the status never does. */
   .event-overline {
     display: flex;
-    align-items: baseline;
-    gap: 0.625rem;
+    align-items: center;
+    justify-content: space-between;
+    column-gap: 0.5rem;
+    line-height: 1.2;
     font-size: 0.8125rem;
     font-weight: 500;
     color: var(--secondary-foreground);
@@ -886,22 +947,126 @@
     margin: 0;
     min-width: 0;
   }
+  .event-overline > :first-child {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .event-overline .mark {
+    flex: none;
+    font-size: inherit;
+  }
   .event-overline .at {
     color: var(--muted-foreground);
     font-weight: 400;
   }
-  /* Campus, not venue — the venue is on the detail page. */
-  .campus-chip {
-    margin-left: auto;
-    flex: none;
-    align-self: flex-start;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--muted-foreground);
-    border: 1px solid var(--border-strong);
-    border-radius: 5px;
-    padding: 0.125rem 0.375rem;
+  .event-title {
+    font-size: 1.0625rem;
+    line-height: 1.24;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+  /* The full location: it replaced the campus tag, so it may take two lines. */
+  .event-venue,
+  .event-meta {
+    font-size: 0.8125rem;
     line-height: 1.4;
+    color: var(--muted-foreground);
+    margin: 0;
+  }
+  .event-venue {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+  /* Kind and seats on one line, the way a mini record joins its tag and date. */
+  .event-meta {
+    display: flex;
+    align-items: center;
+    gap: 0 0.5625rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .event-kind {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .event-meta > :not(.event-kind) {
+    flex: none;
+  }
+  .event-meta .sep {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--border-strong);
+    flex: none;
+  }
+  /*
+    With a mouse the title is one line that slides on hover, like the mini
+    record's. A touch screen has no hover, so it keeps two clamped lines —
+    otherwise the end of a long title could never be read.
+  */
+  @media (hover: hover) and (pointer: fine) {
+    .event-title {
+      display: block;
+      container-type: inline-size;
+      height: 1.24em;
+    }
+    .event-venue {
+      display: block;
+      container-type: inline-size;
+      height: 1.4em;
+    }
+    .event-title > span,
+    .event-venue > span,
+    .record--poster .record-sub > span {
+      display: inline-block;
+      width: max-content;
+      white-space: nowrap;
+    }
+    .event-card:hover :is(.event-title, .event-venue) > span,
+    .event-card:focus-within :is(.event-title, .event-venue) > span,
+    .record--poster:hover .record-sub > span,
+    .record--poster:focus-within .record-sub > span {
+      animation: chart-marquee var(--mq-dur, 6s) ease-in-out infinite alternate;
+    }
+    .record--poster .record-sub {
+      display: block;
+      container-type: inline-size;
+      height: 1.3em;
+    }
+  }
+  @media (pointer: coarse) {
+    .event-venue {
+      -webkit-line-clamp: 1;
+    }
+  }
+  @media (max-width: 40rem) {
+    .event-card {
+      height: 11rem;
+    }
+
+    .event-body {
+      padding: 0.625rem 0.75rem 0;
+      gap: 0.2rem;
+    }
+    .event-overline {
+      font-size: 0.75rem;
+    }
+    .event-title {
+      font-size: 0.9375rem;
+    }
+    .event-venue {
+      -webkit-line-clamp: 1;
+    }
+    .event-foot {
+      padding: 0.25rem 0.75rem 0.5rem;
+    }
   }
 
   /*
@@ -924,6 +1089,17 @@
   .card-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(310px, 100%), 1fr));
+    gap: 0.875rem;
+  }
+
+  /*
+    The sideways full card needs more room than a mini record: two across from
+    about 1000px, one below. It shares .card-grid's gap so the sections still
+    read as one rhythm.
+  */
+  .event-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(460px, 100%), 1fr));
     gap: 0.875rem;
   }
 
