@@ -93,7 +93,7 @@ export default function EventCard({
             <p className="event-meta">
               {event.eventType ? <span className="font-medium">{event.eventType}</span> : null}
               {event.eventType && showCount ? <span className="sep" /> : null}
-              {showCount ? <span>{event.participantCount ?? 0} / {event.participantLimit || '∞'} participants</span> : null}
+              {showCount ? <span>{event.participantLimit ? `${event.participantCount ?? 0} / ${event.participantLimit}` : '∞'} participants</span> : null}
             </p>
           ) : null}
         </div>
