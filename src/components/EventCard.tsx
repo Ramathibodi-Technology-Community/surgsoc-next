@@ -91,7 +91,7 @@ export default function EventCard({
           ) : null}
           {event.eventType || showCount ? (
             <p className="event-meta">
-              {event.eventType ? <span className="font-medium">{event.eventType}</span> : null}
+              {event.eventType ? <span className="event-kind font-medium">{event.eventType}</span> : null}
               {event.eventType && showCount ? <span className="sep" /> : null}
               {showCount ? <span>{event.participantLimit ? `${event.participantCount ?? 0} / ${event.participantLimit}` : '∞'} participants</span> : null}
             </p>
@@ -100,7 +100,7 @@ export default function EventCard({
 
         <div className="event-foot">
           {showPrimary ? (
-            <Button asChild variant={cta.kind === 'register' ? 'default' : 'outline'}>
+            <Button asChild variant={cta.kind === 'register' ? 'default' : 'outline'} className="min-w-0 justify-start overflow-hidden text-ellipsis whitespace-nowrap">
               <Link href={cta.href ?? `/events/${event.id}`}>{label(cta.label)}</Link>
             </Button>
           ) : null}

@@ -9,7 +9,7 @@ import { isOptimizedPosterUrl } from '@/libs/event'
  * The poster on the event page: the column's width, the image's own height, so
  * nothing needs a blur to fill a frame. Only a very tall poster is capped, and
  * then the blurred copy fills the bars beside it. No poster, or one that fails
- * to load, leaves the 3:4 hatch with the seal, so the column does not jump.
+ * to load, leaves the 5:7 hatch with the seal, so the column does not jump.
  *
  * `fit`: the poster is pinned beside the page together with the action card, so
  * it is capped to what is left of the viewport and the card never slides off.
@@ -20,7 +20,7 @@ export default function PosterFigure({ src, alt, fit, children }: { src: string;
   const cap = fit ? 'max-h-[max(12rem,calc(100svh_-_26rem))]' : 'max-h-[35rem]'
 
   if (!src || failed) {
-    return <div className={`placeholder-hatch poster-slot aspect-[3/4] ${frame}`}>{children}</div>
+    return <div className={`placeholder-hatch poster-slot aspect-[5/7] ${frame}`}>{children}</div>
   }
 
   return (

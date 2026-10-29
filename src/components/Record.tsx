@@ -47,7 +47,7 @@ export type RecordProps = {
   /** Portraits crop 4:5 — faces sit badly in a square, and the ratio marks the kind. */
   portrait?: boolean
   /**
-   * Events: lead with the poster in the shared poster slot (3:4, uncropped over
+   * Events: lead with the poster in the shared poster slot (5:7, uncropped over
    * a blur), on the left. No poster shows the hatch with the seal. People keep
    * the right-hand slot.
    */

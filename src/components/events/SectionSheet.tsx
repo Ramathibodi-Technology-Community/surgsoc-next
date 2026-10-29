@@ -129,7 +129,7 @@ export default function SectionSheet({ eventId, title, description, fields, valu
           <Input id={id} type="url" inputMode="url" value={String(value ?? '')} onChange={e => set(field.name, e.target.value)} />
           <p className="text-meta text-muted-foreground">{t('events.staff.poster_hint')}</p>
           {/* The poster in the frame cards use: a typo shows up as the hatch and seal, not as a broken page. */}
-          <div className="placeholder-hatch poster-slot aspect-[3/4] w-40 rounded-md border border-border">
+          <div className="placeholder-hatch poster-slot aspect-[5/7] w-40 rounded-md border border-border">
             {typeof value === 'string' && value.trim() && <PosterImage src={value.trim()} sizes="160px" />}
           </div>
         </div>

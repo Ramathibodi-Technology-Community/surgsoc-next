@@ -792,11 +792,11 @@
   }
   /*
     Events lead with their poster, on the left, in the shared poster slot
-    (3:4, uncropped over a blur). People keep the right-hand portrait slot.
+    (5:7 — the A-series most posters are, uncropped over a blur). People keep the right-hand portrait slot.
   */
   .record-slot-poster {
-    width: 52px;
-    height: 69px;
+    width: 50px;
+    height: 70px;
     border-radius: 6px;
     border: 1px solid var(--border);
     --poster-blur: 8px;
@@ -900,9 +900,11 @@
       0 5px 0 -2px var(--card), 0 6px 0 -2px var(--border),
       0 10px 0 -4px var(--card), 0 11px 0 -4px var(--border);
   }
+  /* The slot is as tall as the card and 5:7 wide, the shape of an A-series poster, so no width goes to blur. */
   .event-poster {
     flex: none;
-    width: 8.5rem;
+    height: 100%;
+    aspect-ratio: 5 / 7;
   }
   .event-main {
     display: flex;
@@ -926,18 +928,34 @@
     gap: 0.625rem;
     padding: 0.4375rem 0.9375rem 0.625rem;
   }
+  /* Every line in the body keeps its own height: a flex item that may shrink is
+     what cut a title or a venue in half when the column ran short. */
+  .event-body > * {
+    flex: none;
+  }
+  /* Date and status share one line and one centre line; the date gives way, the status never does. */
   .event-overline {
     display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
     column-gap: 0.5rem;
+    line-height: 1.2;
     font-size: 0.8125rem;
     font-weight: 500;
     color: var(--secondary-foreground);
     font-variant-numeric: tabular-nums;
     margin: 0;
     min-width: 0;
+  }
+  .event-overline > :first-child {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .event-overline .mark {
+    flex: none;
+    font-size: inherit;
   }
   .event-overline .at {
     color: var(--muted-foreground);
@@ -968,10 +986,18 @@
   /* Kind and seats on one line, the way a mini record joins its tag and date. */
   .event-meta {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
     gap: 0 0.5625rem;
     font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .event-kind {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .event-meta > :not(.event-kind) {
+    flex: none;
   }
   .event-meta .sep {
     width: 3px;
@@ -1022,11 +1048,9 @@
   }
   @media (max-width: 40rem) {
     .event-card {
-      height: 10.75rem;
+      height: 11rem;
     }
-    .event-poster {
-      width: 8rem;
-    }
+
     .event-body {
       padding: 0.625rem 0.75rem 0;
       gap: 0.2rem;
