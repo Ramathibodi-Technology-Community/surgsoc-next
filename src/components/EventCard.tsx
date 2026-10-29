@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import PosterImage from './PosterImage'
 import StatusMark from './StatusMark'
 import { cn } from '@/libs/utils'
+import { marqueeDuration } from '@/libs/marquee'
 
 /**
  * The full card. See design.md § Components.
@@ -61,7 +62,12 @@ export default function EventCard({
   const showCount = event.structure !== 'multi_day' && Boolean(event.participantLimit)
 
   return (
-    <article className={cn('event-card', className)} data-group={event.structure === 'multi_day' ? '' : undefined} {...props}>
+    <article
+      className={cn('event-card', className)}
+      data-group={event.structure === 'multi_day' ? '' : undefined}
+      style={{ '--mq-dur': marqueeDuration(event.name) } as React.CSSProperties}
+      {...props}
+    >
       <div className="placeholder-hatch poster-slot event-poster">
         {event.posterUri ? (
           <PosterImage src={event.posterUri} sizes="(max-width: 640px) 128px, 160px" />
@@ -77,7 +83,7 @@ export default function EventCard({
             </span>
             <StatusMark status={status} label={statusLabel} />
           </p>
-          <h3 className="event-title type-card-title">{event.name}</h3>
+          <h3 className="event-title type-card-title"><span>{event.name}</span></h3>
           {event.venue ? <p className="event-venue">{event.venue}</p> : null}
           {showCount ? (
             <p className="event-count">{event.participantCount ?? 0} / {event.participantLimit} participants</p>

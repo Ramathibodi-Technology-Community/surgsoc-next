@@ -808,6 +808,13 @@
     grid-template-columns: auto minmax(0, 1fr) auto;
     padding-left: 0.6875rem;
   }
+  /* The venue line stays one line, so the record keeps the poster's height. */
+  .record--poster .record-sub {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+    overflow: hidden;
+  }
   .record-chevron {
     color: var(--muted-foreground);
     font-size: 17px;
@@ -866,6 +873,10 @@
   .poster-slot > img {
     z-index: 1;
   }
+  /* The seal belongs to the empty frame: once an image is mounted it never shows through. */
+  .placeholder-hatch.poster-slot:has(> img)::after {
+    display: none;
+  }
   .poster-backdrop {
     transform: scale(1.2);
     filter: blur(var(--poster-blur)) brightness(0.55);
@@ -880,7 +891,7 @@
     border-radius: var(--radius);
     background: var(--card);
     overflow: hidden;
-    height: 13.4375rem;
+    height: 11.375rem;
   }
   /* Event group: two cards peek out beneath, so a group reads as several sessions. */
   .event-card[data-group] {
@@ -891,7 +902,7 @@
   }
   .event-poster {
     flex: none;
-    width: 10rem;
+    width: 8.5rem;
   }
   .event-main {
     display: flex;
@@ -957,9 +968,35 @@
   .event-count {
     font-variant-numeric: tabular-nums;
   }
+  /*
+    With a mouse the title is one line that slides on hover, like the mini
+    record's. A touch screen has no hover, so it keeps two clamped lines —
+    otherwise the end of a long title could never be read.
+  */
+  @media (hover: hover) and (pointer: fine) {
+    .event-title {
+      display: block;
+      container-type: inline-size;
+      height: 1.24em;
+    }
+    .event-title > span {
+      display: inline-block;
+      width: max-content;
+      white-space: nowrap;
+    }
+    .event-card:hover .event-title > span,
+    .event-card:focus-within .event-title > span {
+      animation: chart-marquee var(--mq-dur, 6s) ease-in-out infinite alternate;
+    }
+  }
+  @media (pointer: coarse) {
+    .event-venue {
+      -webkit-line-clamp: 1;
+    }
+  }
   @media (max-width: 40rem) {
     .event-card {
-      height: 11.875rem;
+      height: 10.75rem;
     }
     .event-poster {
       width: 8rem;

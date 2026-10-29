@@ -118,6 +118,7 @@ export default async function EventsPage({
               key={event.id}
               href={`/events/${event.id}`}
               title={event.name}
+              sub={event.venue || null}
               tag={event.eventType || null}
               meta={
                 <>

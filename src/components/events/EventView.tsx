@@ -33,7 +33,7 @@ export default function EventView({ event, locale, t, sessions, isGroup, showJoi
   // Sits on the title row, after the title (e.g. the staff "Edit event" link on the public page).
   titleAction?: React.ReactNode
   edit?: { basics: React.ReactNode; poster?: React.ReactNode; details: React.ReactNode; joining: React.ReactNode; sessions?: React.ReactNode }
-  // The action card sticks under the poster while the text scrolls; a stack of staff panels would outgrow the viewport.
+  // The poster and the action card stick while the text scrolls; a stack of staff panels would outgrow the viewport.
   stickyAside?: boolean
 }) {
   const localeStr = locale === 'th' ? 'th-TH' : 'en-GB'
@@ -54,9 +54,12 @@ export default function EventView({ event, locale, t, sessions, isGroup, showJoi
   return (
     <>
       {!bare && (
-        <Link href={event.parentId ? `/events/${event.parentId}` : '/events'} className="hit-area text-meta text-muted-foreground hover:text-foreground">
-          ← {event.parentId ? t.parent_event : t.back_to_events}
-        </Link>
+        <div className="flex items-center justify-between gap-3">
+          <Link href={event.parentId ? `/events/${event.parentId}` : '/events'} className="hit-area text-meta text-muted-foreground hover:text-foreground">
+            ← {event.parentId ? t.parent_event : t.back_to_events}
+          </Link>
+          {titleAction}
+        </div>
       )}
 
       {top}
@@ -65,25 +68,26 @@ export default function EventView({ event, locale, t, sessions, isGroup, showJoi
         Two columns: poster and action on the left, the page on the right. The
         header is its own block so that on a phone it reads first, then the
         poster and the action, then the text. The left column is as tall as the
-        page; only the action card sticks inside it, so the poster scrolls away
-        and the button stays reachable while the description scrolls.
+        page; the poster and the action card stick together inside it, so both
+        stay in view while the description scrolls.
       */}
       <article className={cn(bare ? 'mt-3' : 'mt-6', 'grid items-start gap-x-11 lg:grid-cols-[340px_minmax(0,1fr)] lg:grid-rows-[auto_1fr]')}>
         <header className="min-w-0 lg:col-start-2 lg:row-start-1">
-          {/* Staff: the one Edit covers date, time, title and kind, so it leads the block it edits. */}
-          {bare && edit?.basics && <div className="flex justify-end">{edit.basics}</div>}
-          <div className={cn(bare ? 'mt-3' : 'mt-0', 'mb-2.5 flex flex-wrap items-baseline gap-x-3 gap-y-2')}>
+          <div className={cn('mb-2.5 flex flex-wrap gap-x-3 gap-y-2', bare ? 'items-center' : 'items-baseline')}>
             <p className="text-meta font-medium tabular-nums text-secondary-foreground">
               {when.date}
               {when.time ? <span className="font-normal text-muted-foreground"> · {when.time}</span> : null}
             </p>
-            <span className="ml-auto"><StatusMark status={eventStatus(event)} /></span>
+            {/* Staff: the one Edit covers date, time, title and kind, so it sits on their row. */}
+            <span className="ml-auto flex items-center gap-3">
+              <StatusMark status={eventStatus(event)} />
+              {bare && edit?.basics}
+            </span>
           </div>
 
           {!bare && (
             <div className="mb-3 flex items-start gap-4">
               <h1 className="type-h1 min-w-0 flex-1">{event.name}</h1>
-              {titleAction}
               {edit?.basics}
             </div>
           )}
@@ -96,10 +100,12 @@ export default function EventView({ event, locale, t, sessions, isGroup, showJoi
         </header>
 
         <div className="mb-9 flex flex-col gap-3.5 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:mb-0 lg:self-stretch">
-          <PosterFigure src={event.posterUri} alt={event.name}>
-            {edit?.poster && <div className="absolute left-2.5 top-2.5 z-[2]">{edit.poster}</div>}
-          </PosterFigure>
-          {aside && <aside className={cn('flex flex-col gap-3.5', stickyAside && 'lg:sticky lg:top-24')}>{aside}</aside>}
+          <div className={cn('flex flex-col gap-3.5', stickyAside && 'lg:sticky lg:top-24')}>
+            <PosterFigure src={event.posterUri} alt={event.name} fit={stickyAside && Boolean(aside)}>
+              {edit?.poster && <div className="absolute left-2.5 top-2.5 z-[2]">{edit.poster}</div>}
+            </PosterFigure>
+            {aside && <aside className="flex flex-col gap-3.5">{aside}</aside>}
+          </div>
         </div>
 
         <div className="min-w-0 lg:col-start-2 lg:row-start-2">
