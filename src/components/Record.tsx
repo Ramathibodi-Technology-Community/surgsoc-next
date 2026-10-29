@@ -104,8 +104,8 @@ export default function Record({
 
         {/* Missing lines close up — no reserved gap, no dangling separator. */}
         {sub ? (
-          <span className="record-sub" lang={subLang}>
-            {sub}
+          <span className="record-sub" lang={subLang} style={{ '--mq-dur': marqueeDuration(sub) } as React.CSSProperties}>
+            <span>{sub}</span>
           </span>
         ) : null}
 

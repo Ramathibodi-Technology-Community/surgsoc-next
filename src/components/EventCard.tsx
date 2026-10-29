@@ -58,8 +58,8 @@ export default function EventCard({
     return raw
   }
 
-  // A group has no seat count of its own; each day does.
-  const showCount = event.structure !== 'multi_day' && Boolean(event.participantLimit)
+  // A group has no seat count of its own; each day does. No limit reads as infinite.
+  const showCount = event.structure !== 'multi_day'
 
   return (
     <article
@@ -84,9 +84,17 @@ export default function EventCard({
             <StatusMark status={status} label={statusLabel} />
           </p>
           <h3 className="event-title type-card-title"><span>{event.name}</span></h3>
-          {event.venue ? <p className="event-venue">{event.venue}</p> : null}
-          {showCount ? (
-            <p className="event-count">{event.participantCount ?? 0} / {event.participantLimit} participants</p>
+          {event.venue ? (
+            <p className="event-venue" style={{ '--mq-dur': marqueeDuration(event.venue) } as React.CSSProperties}>
+              <span>{event.venue}</span>
+            </p>
+          ) : null}
+          {event.eventType || showCount ? (
+            <p className="event-meta">
+              {event.eventType ? <span className="font-medium">{event.eventType}</span> : null}
+              {event.eventType && showCount ? <span className="sep" /> : null}
+              {showCount ? <span>{event.participantCount ?? 0} / {event.participantLimit || '∞'} participants</span> : null}
+            </p>
           ) : null}
         </div>
 

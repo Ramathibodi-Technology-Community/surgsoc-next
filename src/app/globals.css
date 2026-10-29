@@ -953,7 +953,7 @@
   }
   /* The full location: it replaced the campus tag, so it may take two lines. */
   .event-venue,
-  .event-count {
+  .event-meta {
     font-size: 0.8125rem;
     line-height: 1.4;
     color: var(--muted-foreground);
@@ -965,8 +965,20 @@
     -webkit-line-clamp: 2;
     overflow: hidden;
   }
-  .event-count {
+  /* Kind and seats on one line, the way a mini record joins its tag and date. */
+  .event-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 0.5625rem;
     font-variant-numeric: tabular-nums;
+  }
+  .event-meta .sep {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--border-strong);
+    flex: none;
   }
   /*
     With a mouse the title is one line that slides on hover, like the mini
@@ -979,14 +991,28 @@
       container-type: inline-size;
       height: 1.24em;
     }
-    .event-title > span {
+    .event-venue {
+      display: block;
+      container-type: inline-size;
+      height: 1.4em;
+    }
+    .event-title > span,
+    .event-venue > span,
+    .record--poster .record-sub > span {
       display: inline-block;
       width: max-content;
       white-space: nowrap;
     }
-    .event-card:hover .event-title > span,
-    .event-card:focus-within .event-title > span {
+    .event-card:hover :is(.event-title, .event-venue) > span,
+    .event-card:focus-within :is(.event-title, .event-venue) > span,
+    .record--poster:hover .record-sub > span,
+    .record--poster:focus-within .record-sub > span {
       animation: chart-marquee var(--mq-dur, 6s) ease-in-out infinite alternate;
+    }
+    .record--poster .record-sub {
+      display: block;
+      container-type: inline-size;
+      height: 1.3em;
     }
   }
   @media (pointer: coarse) {

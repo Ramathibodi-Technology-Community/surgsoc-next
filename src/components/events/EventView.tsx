@@ -102,7 +102,7 @@ export default function EventView({ event, locale, t, sessions, isGroup, showJoi
         <div className="mb-9 flex flex-col gap-3.5 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:mb-0 lg:self-stretch">
           <div className={cn('flex flex-col gap-3.5', stickyAside && 'lg:sticky lg:top-24')}>
             <PosterFigure src={event.posterUri} alt={event.name} fit={stickyAside && Boolean(aside)}>
-              {edit?.poster && <div className="absolute left-2.5 top-2.5 z-[2]">{edit.poster}</div>}
+              {edit?.poster && <div className="absolute right-2.5 top-2.5 z-[2]">{edit.poster}</div>}
             </PosterFigure>
             {aside && <aside className="flex flex-col gap-3.5">{aside}</aside>}
           </div>
