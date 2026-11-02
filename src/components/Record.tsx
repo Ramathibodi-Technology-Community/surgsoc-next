@@ -2,6 +2,8 @@ import React from 'react'
 import Link from 'next/link'
 import { cn } from '@/libs/utils'
 import FillImage from './FillImage'
+import PosterImage from './PosterImage'
+import { marqueeDuration } from '@/libs/marquee'
 import StatusMark, { type StatusKey } from './StatusMark'
 
 /**
@@ -44,22 +46,18 @@ export type RecordProps = {
   imageUrl?: string | null
   /** Portraits crop 4:5 — faces sit badly in a square, and the ratio marks the kind. */
   portrait?: boolean
+  /**
+   * Events: lead with the poster in the shared poster slot (5:7, uncropped over
+   * a blur), on the left. No poster shows the hatch with the seal. People keep
+   * the right-hand slot.
+   */
+  poster?: boolean
   /** Right slot, status form. Used when the record has no image and never will. */
   status?: StatusKey
   statusLabel?: string
   className?: string
   /** No page to go to — renders as a plain div with no chevron, e.g. person cards. */
   noLink?: boolean
-}
-
-/**
- * Constant speed, not constant duration: a fixed duration makes a long title
- * race and a short one crawl. The travel distance is proportional to the text
- * length, so deriving the duration from it keeps px/sec roughly even. Titles
- * that already fit never animate — their travel computes to zero.
- */
-function marqueeDuration(title: string): string {
-  return `${Math.min(14, Math.max(4, title.length * 0.11)).toFixed(1)}s`
 }
 
 export default function Record({
@@ -73,6 +71,7 @@ export default function Record({
   meta,
   imageUrl,
   portrait,
+  poster,
   status,
   statusLabel,
   className,
@@ -86,6 +85,12 @@ export default function Record({
 
   const content = (
     <>
+      {poster ? (
+        <span className="placeholder-hatch poster-slot record-slot-poster">
+          {imageUrl ? <PosterImage src={imageUrl} sizes="52px" /> : null}
+        </span>
+      ) : null}
+
       <span className="record-info">
         {leadTag ? (
           <span className={cn('record-tag', tagAccent ? 'text-accent' : 'text-muted-foreground')}>
@@ -99,8 +104,8 @@ export default function Record({
 
         {/* Missing lines close up — no reserved gap, no dangling separator. */}
         {sub ? (
-          <span className="record-sub" lang={subLang}>
-            {sub}
+          <span className="record-sub" lang={subLang} style={{ '--mq-dur': marqueeDuration(sub) } as React.CSSProperties}>
+            <span>{sub}</span>
           </span>
         ) : null}
 
@@ -115,7 +120,7 @@ export default function Record({
         )}
       </span>
 
-      {status ? (
+      {poster ? null : status ? (
         <StatusMark status={status} label={statusLabel} />
       ) : hasSlot ? (
         <span
@@ -138,7 +143,7 @@ export default function Record({
   if (noLink) {
     return (
       <div
-        className={cn('record', className)}
+        className={cn('record', poster && 'record--poster', className)}
         style={{ '--mq-dur': marqueeDuration(title) } as React.CSSProperties}
       >
         {content}
@@ -149,7 +154,7 @@ export default function Record({
   return (
     <Link
       href={href}
-      className={cn('record group', className)}
+      className={cn('record group', poster && 'record--poster', className)}
       style={{ '--mq-dur': marqueeDuration(title) } as React.CSSProperties}
     >
       {content}

@@ -1,5 +1,6 @@
 import { ResourceScheduling, registrationCutoff } from './resource-scheduling'
 import { tagLabel, tagPath, tagRootLabel } from './tags'
+import { SEATED_STATUSES } from './applicant-status'
 import type { Payload } from 'payload'
 import type { Event as PayloadEvent } from '@/payload-types'
 
@@ -231,8 +232,34 @@ export async function getUserEventStatuses(
   return statuses
 }
 
+/**
+ * Seats taken per event, the same statuses the database capacity trigger
+ * counts. A real count: cards and the detail page show `taken / limit`, so it
+ * cannot be a placeholder zero.
+ */
+export async function getSeatedCounts(
+  payload: Payload,
+  eventIds: (string | number)[],
+): Promise<Record<string, number>> {
+  if (eventIds.length === 0) return {}
+  const { docs } = await payload.find({
+    collection: 'registrations',
+    where: { and: [{ event: { in: eventIds } }, { status: { in: SEATED_STATUSES } }] },
+    depth: 0,
+    pagination: false,
+    select: { event: true },
+  })
+  const counts: Record<string, number> = {}
+  for (const doc of docs as { event: unknown }[]) {
+    const id = String(typeof doc.event === 'object' && doc.event !== null ? (doc.event as { id: unknown }).id : doc.event)
+    counts[id] = (counts[id] ?? 0) + 1
+  }
+  return counts
+}
+
+/** '' when the event has no poster: the frame then shows the site logo on the hatch. */
 export function posterUrl(imageUrl: unknown): string {
-  if (typeof imageUrl !== 'string' || !imageUrl.trim()) return '/assets/beta.jpg'
+  if (typeof imageUrl !== 'string' || !imageUrl.trim()) return ''
 
   const url = imageUrl.trim()
   const driveFile = url.match(/^https:\/\/(?:www\.)?drive\.google\.com\/file\/d\/([^/?#]+)/)
@@ -267,7 +294,7 @@ export function isOptimizedPosterUrl(url: string): boolean {
   }
 }
 
-export const mapPayloadEvent = (doc: any, userStatus?: EventUserStatus): Event => {
+export const mapPayloadEvent = (doc: any, userStatus?: EventUserStatus, participantCount = 0): Event => {
   const toDisplayText = (value: unknown): string => {
     if (typeof value === 'string') return value
     if (typeof value === 'number') return String(value)
@@ -328,7 +355,7 @@ export const mapPayloadEvent = (doc: any, userStatus?: EventUserStatus): Event =
     posterUri: posterUrl(doc.image_url),
     action: 'register',
     registrationOpen: !doc.is_registration_closed,
-    participantCount: 0,
+    participantCount,
     eventPhase: (() => {
       const begin = doc.date_begin ? new Date(doc.date_begin) : null
       const end = doc.date_end ? new Date(doc.date_end) : null

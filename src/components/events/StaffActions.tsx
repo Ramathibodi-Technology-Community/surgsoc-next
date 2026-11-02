@@ -32,9 +32,9 @@ export function PublishToggle({ eventId, visible, applied = 0 }: { eventId: numb
   return (
     <span className="flex flex-col items-end gap-1">
       <span className="flex items-center gap-3">
-        <span className="flex flex-col items-end">
-          <span id="publish-label" className="text-meta font-medium">{t('events.staff.published_label')}</span>
-          <span className="text-meta text-muted-foreground">{visible ? t('events.staff.published_on') : t('events.staff.published_off')}</span>
+        <span className="flex items-baseline gap-2 text-meta">
+          <span id="publish-label" className="font-medium">{t('events.staff.published_label')}</span>
+          <span className="hidden text-muted-foreground sm:inline">{visible ? t('events.staff.published_on') : t('events.staff.published_off')}</span>
         </span>
         <ConfirmSwitch
           aria-labelledby="publish-label"

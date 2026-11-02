@@ -12,6 +12,7 @@ import StatusMark from '@/components/StatusMark'
 import MiniRecord from '@/components/Record'
 import { Button } from '@/components/ui/button'
 import { formatStamp } from '@/libs/utils'
+import { mapPayloadEvent } from '@/libs/event'
 
 export default async function ManageEvents({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale } = await params
@@ -19,7 +20,7 @@ export default async function ManageEvents({ params }: { params: Promise<{ local
   const user = await getCurrentUser(payload)
   if (!user) redirect('/login')
   const manager = hasPermission(user, 'manage_events')
-  const events = await payload.find({ collection: 'events', where: { and: [{ parent_event: { exists: false } }, ...(manager ? [] : [{ owner: { equals: user.id } }])] }, sort: '-date_begin', pagination: false, depth: 0 })
+  const events = await payload.find({ collection: 'events', where: { and: [{ parent_event: { exists: false } }, ...(manager ? [] : [{ owner: { equals: user.id } }])] }, sort: '-date_begin', pagination: false, depth: 2 })
   if (!manager && !events.totalDocs) notFound()
   const t = (await getDictionary(locale)).events
   const counts = await Promise.all(events.docs.map(event => payload.count({ collection: 'registrations', where: event.event_structure === 'multi_day' ? { 'event.parent_event': { equals: event.id } } : { event: { equals: event.id } } })))
@@ -35,6 +36,7 @@ export default async function ManageEvents({ params }: { params: Promise<{ local
             key={event.id}
             href={`/events/${event.id}/edit`}
             title={event.name}
+            sub={mapPayloadEvent(event).venue || null}
             tag={(t.structure as Record<string, string>)[event.event_structure || 'standalone']}
             meta={
               <>
@@ -46,6 +48,7 @@ export default async function ManageEvents({ params }: { params: Promise<{ local
               </>
             }
             imageUrl={event.image_url || null}
+            poster
           />
         ))}
       </div>

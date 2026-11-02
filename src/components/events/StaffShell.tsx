@@ -29,15 +29,16 @@ export default function StaffShell({ event, t, tab, counts, showReflections, sho
   ]
   return (
     <>
-      <Link href="/events" className="hit-area text-meta text-muted-foreground hover:text-foreground">← {t.back_to_events}</Link>
-      <div className="mt-5 mb-6 flex flex-wrap items-end gap-x-6 gap-y-4">
-        <div className="min-w-0 flex-1">
-          <h1 className="type-h1">{event.name}</h1>
-          <p className="mt-2 flex items-center gap-3 text-meta text-muted-foreground">
-            <span>{t.structure[(event.event_structure || 'standalone') as keyof typeof t.structure]}</span>
-          </p>
-        </div>
+      {/* The Published switch sits where the public page's Edit event does: on the Back row, so neither adds height above the title. */}
+      <div className="flex items-center justify-between gap-3">
+        <Link href="/events" className="hit-area text-meta text-muted-foreground hover:text-foreground">← {t.back_to_events}</Link>
         <PublishToggle eventId={event.id} visible={!!event.is_visible} applied={counts.applied} />
+      </div>
+      <div className="mt-2 mb-6">
+        <h1 className="type-h1">{event.name}</h1>
+        <p className="mt-2 flex items-center gap-3 text-meta text-muted-foreground">
+          <span>{t.structure[(event.event_structure || 'standalone') as keyof typeof t.structure]}</span>
+        </p>
       </div>
       <SectionTabs label={t.staff.tabs_label} value={tab} tabs={tabs} />
       {children}

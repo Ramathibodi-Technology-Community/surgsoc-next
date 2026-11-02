@@ -7,7 +7,7 @@
 export type FieldKind = 'text' | 'textarea' | 'number' | 'datetime' | 'select' | 'choice' | 'search' | 'multiselect' | 'richtext' | 'poster'
 export type SectionField = { name: string; kind: FieldKind; required?: boolean; labelKey?: string }
 export type EventStructure = 'standalone' | 'multi_day' | 'day'
-export type EventSection = 'basics' | 'details' | 'joining' | 'registration' | 'reflection' | 'people'
+export type EventSection = 'basics' | 'poster' | 'details' | 'joining' | 'registration' | 'reflection' | 'people'
 
 // The group asks the common questions once; each session owns its seats, its window and any extra questions.
 const APPLICATION: SectionField[] = [
@@ -38,6 +38,8 @@ export function sectionFields(section: EventSection, structure: EventStructure =
       { name: 'location', kind: 'select' },
       { name: 'image_url', kind: 'poster' },
     ]
+    // The staff page edits the poster from a button on the poster itself, so it has a sheet of its own as well as its place in the create steps.
+    case 'poster': return [{ name: 'image_url', kind: 'poster' }]
     case 'details': return [{ name: 'description', kind: 'textarea' }]
     case 'joining': return [{ name: 'participant_detail', kind: 'richtext' }]
     case 'registration': return structure === 'multi_day' ? APPLICATION : structure === 'day' ? SEATS : [...APPLICATION, ...SEATS.slice(3)]

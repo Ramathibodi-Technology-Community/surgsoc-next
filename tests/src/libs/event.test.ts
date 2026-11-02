@@ -7,4 +7,10 @@ describe('posterUrl', () => {
       'https://lh3.googleusercontent.com/d/1hv_5klGA-Il54vcsrf6I1N97nMJsKV5N=w1000',
     )
   })
+
+  it('has no poster to show when the event has none', () => {
+    expect(posterUrl('')).toBe('')
+    expect(posterUrl(undefined)).toBe('')
+    expect(posterUrl('   ')).toBe('')
+  })
 })
