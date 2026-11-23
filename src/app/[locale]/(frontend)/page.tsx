@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import EventCard from '@/components/EventCard'
+import UpcomingCalendar, { type CalendarEntry } from '@/components/home/UpcomingCalendar'
 import Record from '@/components/Record'
 import { mapPayloadEvent, getUserEventStatuses } from '@/libs/event'
 import { Button } from '@/components/ui/button'
@@ -45,12 +46,20 @@ export default async function Page({
   const siteSettings = await getSiteSettings()
   const notSample = sampleWhere(siteSettings.showSampleData)
 
-  const [upcoming, past, memberCount, sessionCount] = await Promise.all([
+  // The calendar needs every dot, not six cards: a half-year back and all that is scheduled ahead.
+  const windowStart = new Date(Date.now() - 180 * 86_400_000).toISOString()
+
+  const [calendarDocs, past, memberCount, sessionCount] = await Promise.all([
     payload.find({
       collection: 'events',
-      where: { is_visible: { equals: true }, ...eventListPeriod(now), ...topLevelEventWhere, ...notSample },
+      where: {
+        is_visible: { equals: true },
+        or: [{ date_end: { greater_than_equal: windowStart } }, { date_begin: { greater_than_equal: windowStart } }],
+        ...topLevelEventWhere,
+        ...notSample,
+      },
       sort: 'date_begin',
-      limit: 6,
+      limit: 200,
       depth: 2,
     }),
     payload.find({
@@ -78,10 +87,42 @@ export default async function Page({
       ).docs.filter((assignment: any) => ['pending', 'overdue'].includes(assignmentState(assignment)))
     : []
 
+  const isUpcoming = (doc: any) => new Date(doc.date_end || doc.date_begin).getTime() >= Date.now()
+  const upcomingDocs = calendarDocs.docs.filter(isUpcoming)
   const statuses = user
-    ? await getUserEventStatuses(payload, user.id, upcoming.docs.map((e) => e.id))
+    ? await getUserEventStatuses(payload, user.id, upcomingDocs.map((e) => e.id))
     : {}
-  const upcomingEvents = upcoming.docs.map((doc) => mapPayloadEvent(doc, statuses[String(doc.id)]))
+
+  // Calendar days in Bangkok time, so a 07:00 session is not filed under the day before.
+  const dayKey = (iso: string) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok' }).format(new Date(iso))
+  const daysOf = (doc: any) => {
+    const first = dayKey(doc.date_begin || doc.date_end)
+    const last = doc.date_end ? dayKey(doc.date_end) : first
+    const days = [first]
+    for (let d = new Date(first + 'T00:00:00Z'); days.length < 60; ) {
+      d.setUTCDate(d.getUTCDate() + 1)
+      const key = d.toISOString().slice(0, 10)
+      if (key > last) break
+      days.push(key)
+    }
+    return days
+  }
+  const calendarEntries: CalendarEntry[] = calendarDocs.docs
+    .filter((doc: any) => doc.date_begin || doc.date_end)
+    .map((doc) => ({
+      id: String(doc.id),
+      days: daysOf(doc),
+      upcoming: isUpcoming(doc),
+      card: (
+        <EventCard
+          event={mapPayloadEvent(doc, statuses[String(doc.id)])}
+          imageDisplay={siteSettings.eventCardImageDisplay}
+        />
+      ),
+    }))
+  // "Most recent" = the next thing coming up; if nothing is, the last thing that happened.
+  const defaultEntry =
+    calendarEntries.find((e) => e.upcoming) ?? calendarEntries[calendarEntries.length - 1]
 
   // The headline number carries the claim; the rest are supporting detail.
   const secondaryStats = [
@@ -222,11 +263,9 @@ export default async function Page({
           {t.see_more}
         </Link>
       </div>
-      {upcomingEvents.length > 0 ? (
-        <div className="card-grid mb-wide">
-          {upcomingEvents.map((event) => (
-            <EventCard key={event.id} event={event} imageDisplay={siteSettings.eventCardImageDisplay} />
-          ))}
+      {calendarEntries.length > 0 ? (
+        <div className="mb-wide">
+          <UpcomingCalendar entries={calendarEntries} defaultId={defaultEntry?.id ?? null} />
         </div>
       ) : (
         <div className="empty-note mb-wide">
