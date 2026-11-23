@@ -117,8 +117,8 @@ export default async function EditEvent({ params, searchParams }: { params: Prom
   // Relations go to the sheets as IDs; everything else as stored.
   const valuesOf = (doc: object) => Object.fromEntries(Object.entries(doc).map(([key, value]) => [key, key === 'groups' ? ((value || []) as never[]).map(v => idOf(v)) : value && typeof value === 'object' && 'id' in value ? idOf(value as never) : value]))
   const values = valuesOf(eventDoc)
-  const sheet = (section: EventSection, title: string, description?: string) => (
-    <SectionSheet eventId={eventDoc.id} title={title} description={description} fields={sectionFields(section, structure)} values={values} options={options} />
+  const sheet = (section: EventSection, title: string, description?: string, triggerClassName?: string) => (
+    <SectionSheet eventId={eventDoc.id} title={title} description={description} fields={sectionFields(section, structure)} values={values} options={options} triggerClassName={triggerClassName} />
   )
   const daySheet = (day: (typeof days)[number], section: EventSection, title: string, description?: string) => (
     <SectionSheet eventId={day.id} title={title} description={description} fields={sectionFields(section, 'day')} values={valuesOf(day)} options={options} />
@@ -297,7 +297,7 @@ export default async function EditEvent({ params, searchParams }: { params: Prom
           {setup === 'review' && (
             <div className="space-y-6">
               <p className="text-meta text-muted-foreground">{t.staff.review_note}</p>
-              <EventView bare event={eventView} locale={locale} t={t} imageDisplay={settings.eventDetailImageDisplay} isGroup sessions={days.map(day => ({ id: day.id, name: day.name, date_begin: day.date_begin, href: `/events/${eventDoc.id}/edit?step=sessions&session=${day.id}`, event: mapPayloadEvent(day), sub: `${limit(day.participant_limit)} ${t.staff.seats}` }))} showJoining={false} />
+              <EventView bare event={eventView} locale={locale} t={t} isGroup sessions={days.map(day => ({ id: day.id, name: day.name, date_begin: day.date_begin, href: `/events/${eventDoc.id}/edit?step=sessions&session=${day.id}`, event: mapPayloadEvent(day), sub: `${limit(day.participant_limit)} ${t.staff.seats}` }))} showJoining={false} />
               <div className="flex items-center gap-3 border-t border-border pt-5"><span className="flex-1 text-meta text-muted-foreground">{t.staff.ready_note}</span><Button asChild variant="outline"><Link href="/events/manage">{t.staff.keep_draft}</Link></Button><PublishNow eventId={eventDoc.id} label={t.staff.publish} /></div>
             </div>
           )}
@@ -315,12 +315,11 @@ export default async function EditEvent({ params, searchParams }: { params: Prom
             event={eventView}
             locale={locale}
             t={t}
-            imageDisplay={settings.eventDetailImageDisplay}
             isGroup={false}
             sessions={[]}
             showJoining
             joiningNote={t.staff.joining_note}
-            edit={{ basics: sheet('basics', t.staff.basics, t.staff.times_note), details: sheet('details', t.about_event), joining: sheet('joining', t.joining_details, t.staff.joining_note) }}
+            edit={{ basics: sheet('basics', t.staff.basics, t.staff.times_note), poster: sheet('poster', t.staff.edit_poster, undefined, 'bg-card hover:bg-card/90 dark:bg-card dark:hover:bg-card/90'), details: sheet('details', t.about_event), joining: sheet('joining', t.joining_details, t.staff.joining_note) }}
           />
         )}
         {tab === 'sessions' && !isGroup && (
